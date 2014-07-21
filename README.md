@@ -64,7 +64,7 @@ Point field for GeoDjango
     from drf_extra_fields.geo_fields import PointField
 
     class PointFieldSerializer(serializers.Serializer):
-        file = PointField(required=False)
+        point = PointField(required=False)
         created = serializers.DateTimeField()
 
     #use the serializer
