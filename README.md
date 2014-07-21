@@ -22,14 +22,16 @@ An image representation for Base64ImageField
 
 Intherited by `ImageField`
 
+
 **Signature:** `Base64ImageField()`
 
  - It takes a base64 image as a string.
  - a base64 image:  `data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7`
  - Base64ImageField accepts only the part after base64, `R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7`
+ 
 
- **Example:**
-
+**Example:**
+ 
     #serializer
     from drf_extra_fields.fields import Base64ImageField
 
@@ -41,7 +43,7 @@ Intherited by `ImageField`
     file = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
     serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
     
-
+    
 ## PointField
 
 Point field for GeoDjango
@@ -51,12 +53,10 @@ Point field for GeoDjango
 
  - It takes a dictionary contains latitude and longitude keys like below
 
-
     {
-        "latitude": 49.8782482189424,
-        "longitude": 24.452545489
+     "latitude": 49.8782482189424,
+     "longitude": 24.452545489
     }
-
     
 **Example:**
 
