@@ -5,3 +5,4 @@ env/
 dist/
 *.egg-info
 .idea
+.pypirc

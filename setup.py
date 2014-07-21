@@ -15,7 +15,8 @@ setup(
     license=' License',  # example license
     description='Additional fields for Django Rest Framework.',
     long_description=README,
-    author='Hipo',
+    author='hipo',
+    author_email='pypi@hipolabs.com',
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',
