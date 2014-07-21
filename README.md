@@ -1,4 +1,4 @@
-drf-extra-fields
+DRF-EXTRA-FIELDS
 ================
 
 Extra Fields for Django Rest Framework
@@ -74,6 +74,17 @@ Point field for GeoDjango
         }    
     serializer = PointFieldSerializer(data={'created': now, 'point': point})
 
+
+CONTRIBUTION
+=================
+
+*TESTS*
+- Make sure that you add the test for contributed field to test/test_fields.py
+and run with command before sending a pull request: 
+ `python drf_extra_fields/runtests/runtests.py`
+
+*README*
+- Make sure that you add the documentation for the field added to README.md
 
 
 LICENSE
