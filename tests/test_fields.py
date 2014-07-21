@@ -72,7 +72,7 @@ class PointSerializer(serializers.Serializer):
 
     def restore_object(self, attrs, instance=None):
         if instance:
-            instance.file = attrs['point']
+            instance.point = attrs['point']
             instance.created = attrs['created']
             return instance
         return SavePoint(**attrs)
@@ -81,7 +81,7 @@ class PointSerializerTest(TestCase):
 
     def test_create(self):
         """
-        Test for creating Base64 image in the server side
+        Test for creating Point field in the server side
         """
         now = datetime.datetime.now()
         point = {
@@ -96,7 +96,7 @@ class PointSerializerTest(TestCase):
 
     def test_validation_error_with_non_file(self):
         """
-        Passing non-base64 should raise a validation error.
+        Passing non-dict contains latitude and longitude should raise a validation error.
         """
         now = datetime.datetime.now()
         serializer = PointSerializer(data={'created': now, 'point': '123'})
@@ -105,7 +105,7 @@ class PointSerializerTest(TestCase):
 
     def test_remove_with_empty_string(self):
         """
-        Passing empty string as data should cause image to be removed
+        Passing empty string as data should cause point to be removed
         """
         now = datetime.datetime.now()
         point = {
