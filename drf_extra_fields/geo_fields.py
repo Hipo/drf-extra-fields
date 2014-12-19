@@ -42,7 +42,7 @@ class PointField(serializers.Field):
                 msg = self.error_messages['invalid']
                 raise serializers.ValidationError(msg)
 
-        if value:
+        if value and type(value) is dict:
             latitude = value.get("latitude")
             longitude = value.get("longitude")
             if latitude and longitude:
@@ -51,6 +51,7 @@ class PointField(serializers.Field):
                     "latitude": latitude,
                 })
                 return point_object
+        else:
             msg = self.error_messages['invalid']
             raise serializers.ValidationError(msg)
 

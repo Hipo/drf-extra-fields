@@ -15,12 +15,12 @@ class UploadedBase64ImageSerializer(serializers.Serializer):
     file = Base64ImageField(required=False)
     created = serializers.DateTimeField()
 
-    def restore_object(self, attrs, instance=None):
-        if instance:
-            instance.file = attrs['file']
-            instance.created = attrs['created']
-            return instance
-        return UploadedBase64Image(**attrs)
+    def update(self, instance, validated_data):
+        instance.file = validated_data['file']
+        return instance
+
+    def create(self, validated_data):
+        return UploadedBase64Image(**validated_data)
 
 
 class Base64ImageSerializerTests(TestCase):
@@ -70,12 +70,12 @@ class PointSerializer(serializers.Serializer):
     point = PointField(required=False)
     created = serializers.DateTimeField()
 
-    def restore_object(self, attrs, instance=None):
-        if instance:
-            instance.point = attrs['point']
-            instance.created = attrs['created']
-            return instance
-        return SavePoint(**attrs)
+    def update(self, instance, validated_data):
+        instance.point = validated_data['point']
+        return instance
+
+    def create(self, validated_data):
+        return SavePoint(**validated_data)
 
 
 class PointSerializerTest(TestCase):
@@ -92,7 +92,7 @@ class PointSerializerTest(TestCase):
         serializer = PointSerializer(data={'created': now, 'point': point})
         saved_point = SavePoint(point=point, created=now)
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer['created'], saved_point.created)
+        self.assertEqual(serializer.validated_data['created'], saved_point.created)
         self.assertFalse(serializer.validated_data is saved_point)
 
     def test_validation_error_with_non_file(self):
@@ -115,5 +115,5 @@ class PointSerializerTest(TestCase):
         saved_point = SavePoint(point=point, created=now)
         serializer = PointSerializer(data={'created': now, 'point': ''})
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer['created'], saved_point.created)
+        self.assertEqual(serializer.validated_data['created'], saved_point.created)
         self.assertIsNone(serializer.validated_data['point'])
