@@ -92,7 +92,7 @@ class PointSerializerTest(TestCase):
         serializer = PointSerializer(data={'created': now, 'point': point})
         saved_point = SavePoint(point=point, created=now)
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer.['created'], saved_point.created)
+        self.assertEqual(serializer['created'], saved_point.created)
         self.assertFalse(serializer.validated_data is saved_point)
 
     def test_validation_error_with_non_file(self):
@@ -115,5 +115,5 @@ class PointSerializerTest(TestCase):
         saved_point = SavePoint(point=point, created=now)
         serializer = PointSerializer(data={'created': now, 'point': ''})
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer.['created'], saved_point.created)
+        self.assertEqual(serializer['created'], saved_point.created)
         self.assertIsNone(serializer.validated_data['point'])
