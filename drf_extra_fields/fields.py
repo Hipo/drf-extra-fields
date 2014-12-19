@@ -13,7 +13,7 @@ ALLOWED_IMAGE_TYPES = (
     "jpg",
     "png",
     "gif"
-    )
+)
 
 EMPTY_VALUES = (None, '', [], (), {})
 
@@ -23,7 +23,7 @@ class Base64ImageField(ImageField):
     A django-rest-framework field for handling image-uploads through raw post data.
     It uses base64 for en-/decoding the contents of the file.
     """
-    def from_native(self, base64_data):
+    def to_internal_value(self, base64_data):
         # Check if this is a base64 string
         if base64_data in EMPTY_VALUES:
             return None
@@ -35,17 +35,17 @@ class Base64ImageField(ImageField):
             except TypeError:
                 raise ValidationError(_("Please upload a valid image."))
             # Generate file name:
-            file_name = str(uuid.uuid4())[:12] # 12 characters are more than enough.
+            file_name = str(uuid.uuid4())[:12]  # 12 characters are more than enough.
             # Get the file name extension:
             file_extension = self.get_file_extension(file_name, decoded_file)
             if file_extension not in ALLOWED_IMAGE_TYPES:
                 raise ValidationError(_("The type of the image couldn't been determined."))
             complete_file_name = file_name + "." + file_extension
             data = ContentFile(decoded_file, name=complete_file_name)
-            return super(Base64ImageField, self).from_native(data)
+            return super(Base64ImageField, self).to_internal_value(data)
         raise ValidationError(_('This is not an base64 string'))
 
-    def to_native(self, value):
+    def to_representation(self, value):
         # Return url including domain name.
         return value.name
 

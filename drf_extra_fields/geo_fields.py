@@ -1,13 +1,15 @@
 import json
 from django.contrib.gis.geos import GEOSGeometry
 from django.core import validators
+from django.utils.encoding import smart_str
 from django.utils.translation import ugettext_lazy as _
 
 from rest_framework import serializers
 
 EMPTY_VALUES = (None, '', [], (), {})
 
-class PointField(serializers.WritableField):
+
+class PointField(serializers.Field):
     """
     A field for handling GeoDjango Point fields as a json format.
     Expected input format:
@@ -22,10 +24,10 @@ class PointField(serializers.WritableField):
 
     default_error_messages = {
         'invalid': _('Location field has wrong format. Use {"latitude": 45.67294621, "longitude": 26.43156}'),
-        }
+    }
 
-    def from_native(self, value):
-        """c
+    def to_internal_value(self, value):
+        """
         Parse json data and return a point object
         """
         if value in EMPTY_VALUES:
@@ -47,12 +49,12 @@ class PointField(serializers.WritableField):
                 point_object = GEOSGeometry('POINT(%(longitude)s %(latitude)s)' % {
                     "longitude": longitude,
                     "latitude": latitude,
-                    })
+                })
                 return point_object
             msg = self.error_messages['invalid']
             raise serializers.ValidationError(msg)
 
-    def to_native(self, value):
+    def to_representation(self, value):
         """
         Transform POINT object to json.
         """
@@ -61,7 +63,7 @@ class PointField(serializers.WritableField):
 
         if isinstance(value, GEOSGeometry):
             value = {
-                    "latitude": str(value.y),
-                    "longitude": str(value.x)
-                    }
+                "latitude": smart_str(value.y),
+                "longitude": smart_str(value.x)
+            }
         return value
