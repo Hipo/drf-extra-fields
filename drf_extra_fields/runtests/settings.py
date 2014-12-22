@@ -99,10 +99,10 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     'rest_framework',
     'rest_framework.authtoken',
-    'rest_framework.tests',
-    'rest_framework.tests.accounts',
-    'rest_framework.tests.records',
-    'rest_framework.tests.users',
+    # 'rest_framework.tests',
+    # 'rest_framework.tests.accounts',
+    # 'rest_framework.tests.records',
+    # 'rest_framework.tests.users',
 )
 
 # OAuth is optional and won't work if there is no oauth_provider & oauth2
@@ -158,7 +158,6 @@ import django
 
 if django.VERSION < (1, 3):
     INSTALLED_APPS += ('staticfiles',)
-
 
 # If we're running on the Jenkins server we want to archive the coverage reports as XML.
 import os
