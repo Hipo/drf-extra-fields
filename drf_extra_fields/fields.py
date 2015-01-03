@@ -1,11 +1,13 @@
 import base64
 import imghdr
 import uuid
+import sys
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils.translation import ugettext_lazy as _
 
 from rest_framework.fields import ImageField
+
 
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
 ALLOWED_IMAGE_TYPES = (
@@ -18,6 +20,12 @@ ALLOWED_IMAGE_TYPES = (
 EMPTY_VALUES = (None, '', [], (), {})
 
 
+if sys.version_info.major == 3:
+    string_type = str
+else:
+    string_type = basestring
+
+
 class Base64ImageField(ImageField):
     """
     A django-rest-framework field for handling image-uploads through raw post data.
@@ -28,7 +36,7 @@ class Base64ImageField(ImageField):
         if base64_data in EMPTY_VALUES:
             return None
 
-        if isinstance(base64_data, basestring):
+        if isinstance(base64_data, string_type):
             # Try to decode the file. Return validation error if it fails.
             try:
                 decoded_file = base64.b64decode(base64_data)
