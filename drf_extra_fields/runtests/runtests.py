@@ -15,7 +15,8 @@ def usage():
 
     You can pass the Class name of the `UnitTestClass` you want to test.
 
-    Append a method name if you only want to test a specific method of that class.
+    Append a method name if you only want to test a specific method of
+    that class.
     """
 
 

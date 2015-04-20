@@ -23,7 +23,8 @@ class PointField(serializers.Field):
     type_label = 'point'
 
     default_error_messages = {
-        'invalid': _('Location field has wrong format. Use {"latitude": 45.67294621, "longitude": 26.43156}'),
+        'invalid': _('Location field has wrong format.'
+                     ' Use {"latitude": 45.67294621, "longitude": 26.43156}'),
     }
 
     def to_internal_value(self, value):
@@ -46,10 +47,11 @@ class PointField(serializers.Field):
             latitude = value.get("latitude")
             longitude = value.get("longitude")
             if latitude and longitude:
-                point_object = GEOSGeometry('POINT(%(longitude)s %(latitude)s)' % {
-                    "longitude": longitude,
-                    "latitude": latitude,
-                })
+                point_object = GEOSGeometry(
+                    'POINT(%(longitude)s %(latitude)s)' % {
+                        "longitude": longitude,
+                        "latitude": latitude,
+                    })
                 return point_object
         else:
             msg = self.error_messages['invalid']

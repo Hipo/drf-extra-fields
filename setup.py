@@ -12,7 +12,7 @@ setup(
     version='0.3',
     packages=['drf_extra_fields'],
     include_package_data=True,
-    license=' License',  # example license
+    license='License',  # example license
     description='Additional fields for Django Rest Framework.',
     long_description=README,
     author='hipo',
