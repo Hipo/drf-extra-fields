@@ -1,7 +1,8 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir, os.pardir))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'drf_extra_fields.runtests.settings'
 
 import django
@@ -15,7 +16,8 @@ def usage():
 
     You can pass the Class name of the `UnitTestClass` you want to test.
 
-    Append a method name if you only want to test a specific method of that class.
+    Append a method name if you only want to test a specific method of
+    that class.
     """
 
 

@@ -43,7 +43,8 @@ class Base64ImageSerializerTests(TestCase):
         """
         now = datetime.datetime.now()
         errmsg = "Please upload a valid image."
-        serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': 'abc'})
+        serializer = UploadedBase64ImageSerializer(data={'created': now,
+                                                         'file': 'abc'})
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors, {'file': [errmsg]})
 

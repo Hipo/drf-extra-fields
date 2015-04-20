@@ -1,7 +1,7 @@
 import json
 from django.contrib.gis.geos import GEOSGeometry
-from django.core import validators
 from django.utils.encoding import smart_str
+from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
 from rest_framework import serializers
@@ -23,7 +23,8 @@ class PointField(serializers.Field):
     type_label = 'point'
 
     default_error_messages = {
-        'invalid': _('Location field has wrong format. Use {"latitude": 45.67294621, "longitude": 26.43156}'),
+        'invalid': _('Location field has wrong format.'
+                     ' Use {"latitude": 45.67294621, "longitude": 26.43156}'),
     }
 
     def to_internal_value(self, value):
@@ -33,8 +34,7 @@ class PointField(serializers.Field):
         if value in EMPTY_VALUES:
             return None
 
-        value_type = type(value)
-        if value_type is str or value_type is unicode:
+        if isinstance(value, six.string_types):
             try:
                 value = value.replace("'", '"')
                 value = json.loads(value)
@@ -46,10 +46,11 @@ class PointField(serializers.Field):
             latitude = value.get("latitude")
             longitude = value.get("longitude")
             if latitude and longitude:
-                point_object = GEOSGeometry('POINT(%(longitude)s %(latitude)s)' % {
-                    "longitude": longitude,
-                    "latitude": latitude,
-                })
+                point_object = GEOSGeometry(
+                    'POINT(%(longitude)s %(latitude)s)' % {
+                        "longitude": longitude,
+                        "latitude": latitude,
+                    })
                 return point_object
         else:
             msg = self.error_messages['invalid']
