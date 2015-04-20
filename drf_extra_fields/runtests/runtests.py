@@ -1,7 +1,8 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir, os.pardir))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'drf_extra_fields.runtests.settings'
 
 import django

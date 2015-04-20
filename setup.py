@@ -10,7 +10,9 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 setup(
     name='django-extra-fields',
     version='0.3',
-    packages=['drf_extra_fields'],
+    packages=['drf_extra_fields',
+              'drf_extra_fields.runtests',
+              ],
     include_package_data=True,
     license='License',  # example license
     description='Additional fields for Django Rest Framework.',
