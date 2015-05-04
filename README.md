@@ -6,9 +6,11 @@ Extra Fields for Django Rest Framework
 Usage
 ================
  
- install the package
+install the package
  
- `pip install django-extra-fields`
+```bash
+pip install django-extra-fields
+```
 
 **Note:** 
 - Install version 0.1 for Django Rest Framework 2.*
@@ -35,16 +37,19 @@ Intherited by `ImageField`
 
 **Example:**
  
-    #serializer
-    from drf_extra_fields.fields import Base64ImageField
+```python
+# serializer
 
-    class UploadedBase64ImageSerializer(serializers.Serializer):
-        file = serializers.Base64ImageField(required=False)
-        created = serializers.DateTimeField()
+from drf_extra_fields.fields import Base64ImageField
 
-    #use the serializer
-    file = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
-    serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
+class UploadedBase64ImageSerializer(serializers.Serializer):
+    file = serializers.Base64ImageField(required=False)
+    created = serializers.DateTimeField()
+
+# use the serializer
+file = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
+serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
+```
     
     
 ## PointField
@@ -63,28 +68,34 @@ Point field for GeoDjango
     
 **Example:**
 
-    #serializer
-    from drf_extra_fields.geo_fields import PointField
+```python
+# serializer
 
-    class PointFieldSerializer(serializers.Serializer):
-        point = PointField(required=False)
-        created = serializers.DateTimeField()
+from drf_extra_fields.geo_fields import PointField
 
-    #use the serializer
-    point = {
-        "latitude": 49.8782482189424,
-        "longitude": 24.452545489
-        }    
-    serializer = PointFieldSerializer(data={'created': now, 'point': point})
+class PointFieldSerializer(serializers.Serializer):
+    point = PointField(required=False)
+    created = serializers.DateTimeField()
 
+# use the serializer
+point = {
+    "latitude": 49.8782482189424,
+    "longitude": 24.452545489
+    }
+serializer = PointFieldSerializer(data={'created': now, 'point': point})
+```
 
 CONTRIBUTION
 =================
 
 *TESTS*
 - Make sure that you add the test for contributed field to test/test_fields.py
-and run with command before sending a pull request: 
- `python drf_extra_fields/runtests/runtests.py`
+and run with command before sending a pull request:
+
+```bash
+$ pip install tox  # if not already installed
+$ tox
+```
 
 *README*
 - Make sure that you add the documentation for the field added to README.md

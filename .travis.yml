@@ -1,0 +1,14 @@
+language: python
+
+env:
+    - TESTENV=py27
+    - TESTENV=py34
+
+install:
+    - pip install tox
+
+script:
+    - tox -e $TESTENV
+
+notifications:
+    email: false
