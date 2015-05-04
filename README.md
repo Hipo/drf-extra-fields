@@ -3,6 +3,8 @@ DRF-EXTRA-FIELDS
 
 Extra Fields for Django Rest Framework
 
+![https://travis-ci.org/Hipo/drf-extra-fields.svg?branch=master](https://travis-ci.org/Hipo/drf-extra-fields.svg?branch=master)
+
 Usage
 ================
  
