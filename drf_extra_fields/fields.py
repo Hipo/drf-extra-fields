@@ -21,6 +21,23 @@ ALLOWED_IMAGE_TYPES = (
 
 EMPTY_VALUES = (None, '', [], (), {})
 
+# Python 3 Compatibility
+# Issue: basestring in Python3 raises a NameError exception!
+import types
+try:
+    unicode = unicode
+except NameError:
+    # 'unicode' is undefined, must be Python 3
+    str = str
+    unicode = str
+    bytes = bytes
+    basestring = (str,bytes)
+else:
+    # 'unicode' exists, must be Python 2
+    str = str
+    unicode = unicode
+    bytes = str
+    basestring = basestring
 
 class Base64ImageField(ImageField):
     """
