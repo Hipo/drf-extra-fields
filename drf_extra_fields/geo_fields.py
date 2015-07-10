@@ -31,8 +31,8 @@ class PointField(serializers.Field):
         """
         Parse json data and return a point object
         """
-        if value in EMPTY_VALUES:
-            self.fail('null')
+        if value in EMPTY_VALUES and not self.required:
+            return None
 
         if isinstance(value, six.string_types):
             try:
@@ -41,7 +41,7 @@ class PointField(serializers.Field):
             except ValueError:
                 self.fail('invalid')
 
-        if value and type(value) is dict:
+        if value and isinstance(value, dict):
             try:
                 latitude = value.get("latitude")
                 longitude = value.get("longitude")

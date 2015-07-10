@@ -118,3 +118,21 @@ class PointSerializerTest(TestCase):
         self.assertTrue(serializer.is_valid())
         self.assertEqual(serializer.validated_data['created'], saved_point.created)
         self.assertIsNone(serializer.validated_data['point'])
+
+    def test_empty_latitude(self):
+        now = datetime.datetime.now()
+        point = {
+            "latitude": 49.8782482189424,
+            "longitude": ""
+        }
+        serializer = PointSerializer(data={'created': now, 'point': point})
+        self.assertFalse(serializer.is_valid())
+
+    def test_invalid_latitude(self):
+        now = datetime.datetime.now()
+        point = {
+            "latitude": 49.8782482189424,
+            "longitude": "fdff"
+        }
+        serializer = PointSerializer(data={'created': now, 'point': point})
+        self.assertFalse(serializer.is_valid())
