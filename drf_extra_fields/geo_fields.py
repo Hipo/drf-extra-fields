@@ -1,5 +1,6 @@
 import json
 from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.geos.error import GEOSException
 from django.utils.encoding import smart_str
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
@@ -23,15 +24,14 @@ class PointField(serializers.Field):
     type_label = 'point'
 
     default_error_messages = {
-        'invalid': _('Location field has wrong format.'
-                     ' Use {"latitude": 45.67294621, "longitude": 26.43156}'),
+        'invalid': _('Enter a valid location.'),
     }
 
     def to_internal_value(self, value):
         """
         Parse json data and return a point object
         """
-        if value in EMPTY_VALUES:
+        if value in EMPTY_VALUES and not self.required:
             return None
 
         if isinstance(value, six.string_types):
@@ -39,22 +39,19 @@ class PointField(serializers.Field):
                 value = value.replace("'", '"')
                 value = json.loads(value)
             except ValueError:
-                msg = self.error_messages['invalid']
-                raise serializers.ValidationError(msg)
+                self.fail('invalid')
 
-        if value and type(value) is dict:
-            latitude = value.get("latitude")
-            longitude = value.get("longitude")
-            if latitude and longitude:
-                point_object = GEOSGeometry(
-                    'POINT(%(longitude)s %(latitude)s)' % {
-                        "longitude": longitude,
-                        "latitude": latitude,
-                    })
-                return point_object
-        else:
-            msg = self.error_messages['invalid']
-            raise serializers.ValidationError(msg)
+        if value and isinstance(value, dict):
+            try:
+                latitude = value.get("latitude")
+                longitude = value.get("longitude")
+                return GEOSGeometry('POINT(%(longitude)s %(latitude)s)' % {
+                    "longitude": longitude,
+                    "latitude": latitude}
+                )
+            except (GEOSException, ValueError):
+                self.fail('invalid')
+        self.fail('invalid')
 
     def to_representation(self, value):
         """
