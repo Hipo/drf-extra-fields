@@ -16,7 +16,7 @@ pip install django-extra-fields
 
 **Note:** 
 - Install version 0.1 for Django Rest Framework 2.*
-- Install version 0.3 for Django Rest Framework 3.*
+- Install version 0.3 or greater for Django Rest Framework 3.*
 
 
 Fields:
