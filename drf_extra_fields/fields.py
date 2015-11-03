@@ -49,10 +49,6 @@ class Base64ImageField(ImageField):
             return super(Base64ImageField, self).to_internal_value(data)
         raise ValidationError(_('This is not an base64 string'))
 
-    def to_representation(self, value):
-        # Return url including domain name.
-        return value.name
-
     def get_file_extension(self, filename, decoded_file):
         extension = imghdr.what(filename, decoded_file)
         extension = "jpg" if extension == "jpeg" else extension
