@@ -11,8 +11,7 @@ setup(
     name='django-extra-fields',
     version='0.4',
     packages=['drf_extra_fields',
-              'drf_extra_fields.runtests',
-              ],
+              'drf_extra_fields.runtests'],
     include_package_data=True,
     license='License',  # example license
     description='Additional fields for Django Rest Framework.',
