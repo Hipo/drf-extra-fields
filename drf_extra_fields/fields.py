@@ -2,13 +2,26 @@ import base64
 import binascii
 import imghdr
 import uuid
-import sys
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
-from rest_framework.fields import ImageField
+from rest_framework.fields import (
+    DateField,
+    DateTimeField,
+    DictField,
+    FloatField,
+    ImageField,
+    IntegerField,
+)
+from rest_framework.utils import html, humanize_datetime, representation
+from .compat import (
+    DateRange,
+    DateTimeTZRange,
+    NumericRange,
+    postgres_fields,
+)
 
 
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
@@ -53,3 +66,79 @@ class Base64ImageField(ImageField):
         extension = imghdr.what(filename, decoded_file)
         extension = "jpg" if extension == "jpeg" else extension
         return extension
+
+
+class RangeField(DictField):
+
+    range_type = None
+
+    default_error_messages = {
+        'not_a_dict': _('Expected a dictionary of items but got type "{input_type}".'),
+        'too_much_content': _('Extra content not allowed "{extra}".'),
+    }
+
+    def to_internal_value(self, data):
+        """
+        Range instances <- Dicts of primitive datatypes.
+        """
+        if html.is_html_input(data):
+            data = html.parse_html_dict(data)
+        if not isinstance(data, dict):
+            self.fail('not_a_dict', input_type=type(data).__name__)
+        validated_dict = {}
+        for key in ('lower', 'upper'):
+            try:
+                value = data.pop(key)
+            except KeyError:
+                continue
+            validated_dict[six.text_type(key)] = self.child.run_validation(value)
+        for key in ('bounds', 'empty'):
+            try:
+                value = data.pop(key)
+            except KeyError:
+                continue
+            validated_dict[six.text_type(key)] = value
+        if data:
+            self.fail('too_much_content', extra=', '.join(map(str, data.keys())))
+        return self.range_type(**validated_dict)
+
+    def to_representation(self, value):
+        """
+        Range instances -> dicts of primitive datatypes.
+        """
+        if value.isempty:
+            return {'empty': True}
+        lower = self.child.to_representation(value.lower) if value.lower is not None else None
+        upper = self.child.to_representation(value.upper) if value.upper is not None else None
+        return {'lower': lower,
+                'upper': upper,
+                'bounds': value._bounds}
+
+
+class IntegerRangeField(RangeField):
+    child = IntegerField()
+    range_type = NumericRange
+
+
+class FloatRangeField(RangeField):
+    child = FloatField()
+    range_type = NumericRange
+
+
+class DateTimeRangeField(RangeField):
+    child = DateTimeField()
+    range_type = DateTimeTZRange
+
+
+class DateRangeField(RangeField):
+    child = DateField()
+    range_type = DateRange
+
+if postgres_fields is not None:
+    # monkey patch modelserializer to map Native django Range fields to
+    # drf_extra_fiels's Range fields.
+    from rest_framework.serializers import ModelSerializer
+    ModelSerializer.serializer_field_mapping[postgres_fields.DateTimeRangeField] = DateTimeRangeField
+    ModelSerializer.serializer_field_mapping[postgres_fields.DateRangeField] = DateRangeField
+    ModelSerializer.serializer_field_mapping[postgres_fields.IntegerRangeField] = IntegerRangeField
+    ModelSerializer.serializer_field_mapping[postgres_fields.FloatRangeField] = FloatRangeField

@@ -87,6 +87,70 @@ point = {
 serializer = PointFieldSerializer(data={'created': now, 'point': point})
 ```
 
+## IntegerRangeField
+
+```python
+from rest_framework import serializers
+from drf_extra_fields.fields import IntegerRangeField
+
+
+class RangeSerizalizer(serializers.Serializer):
+    ranges = IntegerRangeField()
+
+
+serializer = RangeSerizalizer(data={'ranges': {'upper': 0, 'upper': 1}})
+
+```
+
+## FloatRangeField
+
+```python
+from rest_framework import serializers
+from drf_extra_fields.fields import FloatRangeField
+
+
+class RangeSerizalizer(serializers.Serializer):
+    ranges = FloatRangeField()
+
+
+serializer = IntegerRangeSerizalizer(data={'ranges': {'upper': 0., 'upper': 1.}})
+
+```
+
+## DateRangeField
+
+```python
+import datetime
+
+from rest_framework import serializers
+from drf_extra_fields.fields import DateRangeField
+
+
+class RangeSerizalizer(serializers.Serializer):
+    ranges = DateRangeField()
+
+
+serializer = RangeSerizalizer(data={'ranges': {'upper': datetime.date(2015, 1, 1), 'upper': datetime.date(2015, 2, 1)}})
+
+```
+
+## DateTimeRangeField
+
+```python
+import datetime
+
+from rest_framework import serializers
+from drf_extra_fields.fields import DateTimeRangeField
+
+
+class RangeSerizalizer(serializers.Serializer):
+    ranges = DateTimeRangeField()
+
+
+serializer = RangeSerizalizer(data={'ranges': {'upper': datetime.datetime(2015, 1, 1, 0), 'upper': datetime.datetime(2015, 2, 1, 0)}})
+
+```
+
 CONTRIBUTION
 =================
 
