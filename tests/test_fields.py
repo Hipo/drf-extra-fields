@@ -1,8 +1,11 @@
 import datetime
+import base64
+import os
 
 import django
 from django.test import TestCase, override_settings
 from django.utils import timezone
+from django.db import models
 from rest_framework import serializers
 
 from drf_extra_fields import compat
@@ -25,6 +28,15 @@ class UploadedBase64Image(object):
         self.created = created or datetime.datetime.now()
 
 
+class DownloadableBase64Image(object):
+    class ImageFieldFile(object):
+        def __init__(self, path):
+            self.path = path
+
+    def __init__(self, image_path):
+        self.image = self.ImageFieldFile(path=image_path)
+
+
 class UploadedBase64ImageSerializer(serializers.Serializer):
     file = Base64ImageField(required=False)
     created = serializers.DateTimeField()
@@ -35,6 +47,10 @@ class UploadedBase64ImageSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return UploadedBase64Image(**validated_data)
+
+
+class DownloadableBase64ImageSerializer(serializers.Serializer):
+    image = Base64ImageField(represent_in_base64=True)
 
 
 class Base64ImageSerializerTests(TestCase):
@@ -73,6 +89,19 @@ class Base64ImageSerializerTests(TestCase):
         self.assertTrue(serializer.is_valid())
         self.assertEqual(serializer.validated_data['created'], uploaded_image.created)
         self.assertIsNone(serializer.validated_data['file'])
+
+    def test_download(self):
+        encoded_source = 'R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs='
+
+        with open('im.jpg', 'wb') as im_file:
+            im_file.write(base64.b64decode(encoded_source))
+        image = DownloadableBase64Image(os.path.abspath('im.jpg'))
+        serializer = DownloadableBase64ImageSerializer(image)
+
+        try:
+            self.assertEqual(serializer.data['image'], encoded_source)
+        finally:
+            os.remove('im.jpg')
 
 
 class SavePoint(object):
