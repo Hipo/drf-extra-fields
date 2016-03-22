@@ -40,6 +40,11 @@ class Base64ImageField(ImageField):
     A django-rest-framework field for handling image-uploads through raw post data.
     It uses base64 for en-/decoding the contents of the file.
     """
+
+    def __init__(self, *args, **kwargs):
+        self.represent_in_base64 = kwargs.pop('represent_in_base64', False)
+        super(Base64ImageField, self).__init__(*args, **kwargs)
+
     def to_internal_value(self, base64_data):
         # Check if this is a base64 string
         if base64_data in EMPTY_VALUES:
@@ -66,6 +71,16 @@ class Base64ImageField(ImageField):
         extension = imghdr.what(filename, decoded_file)
         extension = "jpg" if extension == "jpeg" else extension
         return extension
+
+    def to_representation(self, image):
+        if self.represent_in_base64:
+            try:
+                with open(image.path, 'rb') as f:
+                    return base64.b64encode(f.read()).decode()
+            except StandardError as err:
+                raise IOError("Error encoding image file")
+        else:
+            return super(ImageField, self).to_representation(image)
 
 
 class RangeField(DictField):
