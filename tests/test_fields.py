@@ -67,6 +67,18 @@ class Base64ImageSerializerTests(TestCase):
         self.assertEqual(serializer.validated_data['created'], uploaded_image.created)
         self.assertFalse(serializer.validated_data is uploaded_image)
 
+    def test_create_with_base64_prefix(self):
+        """
+        Test for creating Base64 image in the server side
+        """
+        now = datetime.datetime.now()
+        file = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
+        serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
+        uploaded_image = UploadedBase64Image(file=file, created=now)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['created'], uploaded_image.created)
+        self.assertFalse(serializer.validated_data is uploaded_image)
+
     def test_validation_error_with_non_file(self):
         """
         Passing non-base64 should raise a validation error.
