@@ -2,11 +2,15 @@ import base64
 import binascii
 import imghdr
 import uuid
+import urllib
+import cStringIO
+
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
+from rest_framework.compat import URLValidator
 from rest_framework.fields import (
     DateField,
     DateTimeField,
@@ -85,6 +89,55 @@ class Base64ImageField(ImageField):
                 raise IOError("Error encoding image file")
         else:
             return super(ImageField, self).to_representation(image)
+
+
+class URLorBase64ImageField(Base64ImageField):
+    """
+    A field that accepts an image with an URL or in base64 format.
+
+    Ex:
+    "image": "http://hipo.s3.amazonaws.com/assets/hero.png"
+    or:
+    "image": "/9j/4AAQSkZJRgABAgAAAQABAAD/7QCE.....GKWGn5L9f/Z"
+
+    Both representations will be accepted.
+
+    If it is an URL, the server will try to download the image from that location and save as an ImageField.
+
+    This is especially useful for pre-uploading images.
+    The mobile client can start uploading the image to a temporary bucket as soon as the image is selected.
+    When the user submits the screen, he doesn't have to wait for the upload process of the image.
+    The app will only send the URL of the image.
+    The rest will be handled at the server side, providing a much faster experience.
+    """
+
+    def read_file_from_url(self, url):
+        """
+        Reads the file from URL and returns its base64 representation.
+        """
+        try:
+            file = cStringIO.StringIO(urllib.urlopen(url).read())
+        except IOError:
+            raise ValidationError(_("The URL you provided cannot be read."))
+
+        try:
+            return base64.b64encode(file.read()).decode()
+        except StandardError as err:
+            raise ValidationError(_("The file at given file can not be decoded."))
+
+    def to_internal_value(self, base64_data):
+        # Check if the incoming string is an URL:
+        validate = URLValidator()
+        try:
+            url = validate("base64_data")
+        except ValidationError:
+            pass
+
+        # If there is a URL, try to read it.
+        if url:
+            base64_data = self.read_file_from_url(url)
+
+        return super(URLorBase64ImageField, self).to_internal_value(base64_data)
 
 
 class RangeField(DictField):

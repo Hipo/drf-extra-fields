@@ -12,6 +12,7 @@ from drf_extra_fields import compat
 from drf_extra_fields.geo_fields import PointField
 from drf_extra_fields.fields import (
     Base64ImageField,
+    URLorBase64ImageField,
     DateRangeField,
     DateTimeRangeField,
     FloatRangeField,
@@ -51,6 +52,21 @@ class UploadedBase64ImageSerializer(serializers.Serializer):
 
 class DownloadableBase64ImageSerializer(serializers.Serializer):
     image = Base64ImageField(represent_in_base64=True)
+
+
+class UploadedURLorBase64ImageSerializer(serializers.Serializer):
+    """
+    A serializer for testing the URL or Base64 image serializer
+    """
+    file = URLorBase64ImageField(required=False)
+    created = serializers.DateTimeField()
+
+    def update(self, instance, validated_data):
+        instance.file = validated_data['file']
+        return instance
+
+    def create(self, validated_data):
+        return UploadedBase64Image(**validated_data)
 
 
 class Base64ImageSerializerTests(TestCase):
@@ -114,6 +130,21 @@ class Base64ImageSerializerTests(TestCase):
             self.assertEqual(serializer.data['image'], encoded_source)
         finally:
             os.remove('im.jpg')
+
+
+class URLorBase64ImageSerializerTests(TestCase):
+
+    def test_create_from_url(self):
+        """
+        Test for creating image in the server side from an URL or Base64 string.
+        """
+        now = datetime.datetime.now()
+        file = 'http://hipo.s3.amazonaws.com/assets/hero.png'
+        serializer = UploadedURLorBase64ImageSerializer(data={'created': now, 'file': file})
+        uploaded_image = UploadedBase64Image(file=file, created=now)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['created'], uploaded_image.created)
+        self.assertFalse(serializer.validated_data is uploaded_image)
 
 
 class SavePoint(object):
