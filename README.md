@@ -155,16 +155,32 @@ serializer = RangeSerizalizer(data={'ranges': {'upper': datetime.datetime(2015, 
 CONTRIBUTION
 =================
 
-*TESTS*
+**TESTS**
 - Make sure that you add the test for contributed field to test/test_fields.py
 and run with command before sending a pull request:
 
 ```bash
 $ pip install tox  # if not already installed
-$ tox
+$ tox -e py27
 ```
 
-*README*
+Or, if you prefer using Docker (interactively):
+
+```bash
+docker pull lambdacomplete/drf-extra-fields
+docker run -i -t lambdacomplete/drf-extra-fields /bin/bash
+$ tox -e py27
+```
+
+To build the image yourself and run the tests automatically:
+```bash
+docker build -t ${MY_IMAGE} .
+docker run ${MY_IMAGE}
+```
+
+*Note:* mounting the working directory via `-v` prevents tox from running (tox uses hard links which do not work with mounted directories). We are still working on this.
+
+**README**
 - Make sure that you add the documentation for the field added to README.md
 
 
