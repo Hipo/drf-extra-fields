@@ -81,7 +81,7 @@ class Base64ImageField(ImageField):
             try:
                 with open(image.path, 'rb') as f:
                     return base64.b64encode(f.read()).decode()
-            except StandardError as err:
+            except Exception:
                 raise IOError("Error encoding image file")
         else:
             return super(ImageField, self).to_representation(image)
