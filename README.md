@@ -152,6 +152,65 @@ serializer = RangeSerizalizer(data={'ranges': {'upper': datetime.datetime(2015, 
 
 ```
 
+## PresentablePrimaryKeyRelatedField
+
+Represents related object with a serializer.
+
+```
+from drf_extra_fields.relations import PresentablePrimaryKeyRelatedField
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            "username",
+        )
+
+class PostSerializer(serializers.ModelSerializer):
+    user = PresentablePrimaryKeyRelatedField(
+        queryset=User.objects,
+        presentation_serializer=UserSerializer
+    )
+    class Meta:
+        model = Post
+        fields = (
+            "id",
+            "title",
+            "user",
+        )
+```
+
+**Serializer data:**
+```
+{
+    "user": 1,
+    "title": "test"
+}
+```
+
+**Serialized data with PrimaryKeyRelatedField:**
+```
+{
+    "id":1,
+    "user": 1,
+    "title": "test"
+}
+```
+
+**Serialized data with PresentablePrimaryKeyRelatedField:**
+```
+{
+    "id":1,
+    "user": {
+        "id": 1,
+        "username": "test"
+    },
+    "title": "test"
+}
+```
+
+
 CONTRIBUTION
 =================
 
