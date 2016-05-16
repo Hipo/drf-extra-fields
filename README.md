@@ -156,7 +156,7 @@ serializer = RangeSerizalizer(data={'ranges': {'upper': datetime.datetime(2015, 
 
 Represents related object with a serializer.
 
-```
+```python
 from drf_extra_fields.relations import PresentablePrimaryKeyRelatedField
 
 class UserSerializer(serializers.ModelSerializer):
