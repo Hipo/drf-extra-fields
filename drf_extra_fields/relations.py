@@ -22,4 +22,4 @@ class PresentablePrimaryKeyRelatedField(PrimaryKeyRelatedField):
         super(PresentablePrimaryKeyRelatedField, self).__init__(**kwargs)
 
     def to_representation(self, data):
-        return self.presentation_serializer(data).data
+        return self.presentation_serializer(data, context=self.context).data
