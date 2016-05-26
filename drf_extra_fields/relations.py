@@ -18,7 +18,10 @@ class PresentablePrimaryKeyRelatedField(PrimaryKeyRelatedField):
         return False
 
     def __init__(self, **kwargs):
-        self.presentation_serializer = kwargs.pop('presentation_serializer')
+        self.presentation_serializer = kwargs.pop('presentation_serializer', None)
+        assert self.presentation_serializer is not None, (
+            'PresentablePrimaryKeyRelatedField must provide a `presentation_serializer` argument'
+        )
         super(PresentablePrimaryKeyRelatedField, self).__init__(**kwargs)
 
     def to_representation(self, data):
