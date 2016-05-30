@@ -1,8 +1,11 @@
+from __future__ import unicode_literals
+
 import base64
 import binascii
 import imghdr
 import uuid
-from django.core.exceptions import ValidationError
+
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
@@ -15,7 +18,9 @@ from rest_framework.fields import (
     ImageField,
     IntegerField,
 )
-from rest_framework.utils import html, humanize_datetime, representation
+from rest_framework.serializers import RelatedField
+from rest_framework.utils import html
+
 from .compat import (
     DateRange,
     DateTimeTZRange,
@@ -161,3 +166,37 @@ if postgres_fields is not None:
     ModelSerializer.serializer_field_mapping[postgres_fields.DateRangeField] = DateRangeField
     ModelSerializer.serializer_field_mapping[postgres_fields.IntegerRangeField] = IntegerRangeField
     ModelSerializer.serializer_field_mapping[postgres_fields.FloatRangeField] = FloatRangeField
+
+
+class SerializableRelatedField(RelatedField):
+    default_error_messages = {
+        'required': _('This field is required.'),
+        'does_not_exist': _('Invalid pk "{pk_value}" - object does not exist.'),
+        'incorrect_type': _('Incorrect type. Expected pk value, received {data_type}.'),
+    }
+
+    def __init__(self, **kwargs):
+        self.serializer_class = kwargs.pop('serializer_class', None)
+        assert self.serializer_class is not None, (
+            '{cls} field must provide a `serializer_class` argument'
+            .format(cls=self.__class__.__name__)
+        )
+        self.serializer_params = kwargs.pop('serializer_params', dict())
+        from rest_framework.serializers import ModelSerializer
+        if 'queryset' not in kwargs and issubclass(self.serializer_class, ModelSerializer):
+            kwargs['queryset'] = self.serializer_class.Meta.model.objects.all()
+        kwargs['style'] = {'base_template': 'input.html', 'input_type': 'numeric'}
+        super(SerializableRelatedField, self).__init__(**kwargs)
+
+    def to_internal_value(self, data):
+        try:
+            return self.get_queryset().get(pk=data)
+        except ObjectDoesNotExist:
+            self.fail('does_not_exist', pk_value=data)
+        except (TypeError, ValueError):
+            self.fail('incorrect_type', data_type=type(data).__name__)
+
+    def to_representation(self, value):
+        return (self
+                .serializer_class(instance=value, context=self.context, **self.serializer_params)
+                .data)

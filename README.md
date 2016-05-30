@@ -152,6 +152,51 @@ serializer = RangeSerizalizer(data={'ranges': {'upper': datetime.datetime(2015, 
 
 ```
 
+## SerializableRelatedField
+
+`SerializableRelatedField` may be used to represent the target of the relationship using serializer passed as argument.
+
+For example, if we pass `TrackSerializer` the following serializer:
+
+    class AlbumSerializer(serializers.ModelSerializer):
+        tracks = serializers.SerializableRelatedField(many=True, serializer_class=TrackSerializer)
+
+        class Meta:
+            model = Album
+            fields = ('album_name', 'artist', 'tracks')
+
+Would serialize to a representation like this:
+
+    {
+        'album_name': 'The Roots',
+        'artist': 'Undun',
+        'tracks': [
+            {
+                'order': 1, 
+                'title': 'Public Service Announcement', 
+                'duration': 245,
+            },
+            {
+                'order': 2, 
+                'title': 'What More Can I Say', 
+                'duration': 264,
+            },
+            ...
+        ]
+    }
+
+By default this field take queryset from passed `serializer_class`.
+
+**Arguments**:
+
+* `queryset` - The queryset used for model instance lookups when validating the field input. Relationships must either set a queryset explicitly, or set `read_only=True`.
+* `many` - If applied to a to-many relationship, you should set this argument to `True`.
+* `allow_null` - If set to `True`, the field will accept values of `None` or the empty string for nullable relationships. Defaults to `False`.
+* `serializer_class` - serializer class to represent the target of the relationship, required field
+* `serializer_params` - Parameters, passed to serializer
+
+
+
 CONTRIBUTION
 =================
 
