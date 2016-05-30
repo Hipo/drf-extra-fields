@@ -189,7 +189,7 @@ By default this field take queryset from passed `serializer_class`.
 
 **Arguments**:
 
-* `queryset` - The queryset used for model instance lookups when validating the field input. Relationships must either set a queryset explicitly, or set `read_only=True`.
+* `queryset` - The queryset used for model instance lookups when validating the field input. Relationships must either set a queryset explicitly, or it based on ModelSerializer model or you set `read_only=True`.
 * `many` - If applied to a to-many relationship, you should set this argument to `True`.
 * `allow_null` - If set to `True`, the field will accept values of `None` or the empty string for nullable relationships. Defaults to `False`.
 * `serializer_class` - serializer class to represent the target of the relationship, required field

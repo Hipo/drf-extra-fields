@@ -18,7 +18,7 @@ from rest_framework.fields import (
     ImageField,
     IntegerField,
 )
-from rest_framework.serializers import RelatedField
+from rest_framework.serializers import ModelSerializer, RelatedField
 from rest_framework.utils import html
 
 from .compat import (
@@ -161,7 +161,6 @@ class DateRangeField(RangeField):
 if postgres_fields is not None:
     # monkey patch modelserializer to map Native django Range fields to
     # drf_extra_fiels's Range fields.
-    from rest_framework.serializers import ModelSerializer
     ModelSerializer.serializer_field_mapping[postgres_fields.DateTimeRangeField] = DateTimeRangeField
     ModelSerializer.serializer_field_mapping[postgres_fields.DateRangeField] = DateRangeField
     ModelSerializer.serializer_field_mapping[postgres_fields.IntegerRangeField] = IntegerRangeField
@@ -178,14 +177,14 @@ class SerializableRelatedField(RelatedField):
     def __init__(self, **kwargs):
         self.serializer_class = kwargs.pop('serializer_class', None)
         assert self.serializer_class is not None, (
-            '{cls} field must provide a `serializer_class` argument'
-            .format(cls=self.__class__.__name__)
+            '{cls} must provide a `serializer_class` argument'.format(cls=self.__class__.__name__)
         )
         self.serializer_params = kwargs.pop('serializer_params', dict())
-        from rest_framework.serializers import ModelSerializer
         if 'queryset' not in kwargs and issubclass(self.serializer_class, ModelSerializer):
             kwargs['queryset'] = self.serializer_class.Meta.model.objects.all()
         kwargs['style'] = {'base_template': 'input.html', 'input_type': 'numeric'}
+        self.serializer = self.serializer_class(**self.serializer_params)
+        self.serializer.parent = self
         super(SerializableRelatedField, self).__init__(**kwargs)
 
     def to_internal_value(self, data):
@@ -197,6 +196,4 @@ class SerializableRelatedField(RelatedField):
             self.fail('incorrect_type', data_type=type(data).__name__)
 
     def to_representation(self, value):
-        return (self
-                .serializer_class(instance=value, context=self.context, **self.serializer_params)
-                .data)
+        return self.serializer.to_representation(value)
