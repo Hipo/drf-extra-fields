@@ -30,7 +30,7 @@ class ManyToManySourceRepresentationSerializer(serializers.ModelSerializer):
 
 
 class ManyToManyTargetSerializer(serializers.ModelSerializer):
-    sources = fields.SerializableRelatedField(
+    sources = fields.SerializablePKRelatedField(
         serializer_class=ManyToManySourceRepresentationSerializer,
         many=True
     )
@@ -41,7 +41,7 @@ class ManyToManyTargetSerializer(serializers.ModelSerializer):
 
 
 class ManyToManySourceSerializer(serializers.ModelSerializer):
-    targets = fields.SerializableRelatedField(
+    targets = fields.SerializablePKRelatedField(
         serializer_class=ManyToManyTargetRepresentationSerializer,
         many=True
     )
@@ -65,7 +65,7 @@ class ForeignKeyTargetRepresentationSerializer(serializers.ModelSerializer):
 
 
 class ForeignKeyTargetSerializer(serializers.ModelSerializer):
-    sources = fields.SerializableRelatedField(
+    sources = fields.SerializablePKRelatedField(
         serializer_class=ForeignKeySourceRepresentationSerializer,
         many=True
     )
@@ -76,7 +76,7 @@ class ForeignKeyTargetSerializer(serializers.ModelSerializer):
 
 
 class ForeignKeySourceSerializer(serializers.ModelSerializer):
-    target = fields.SerializableRelatedField(
+    target = fields.SerializablePKRelatedField(
         serializer_class=ForeignKeyTargetRepresentationSerializer
     )
 
@@ -87,7 +87,7 @@ class ForeignKeySourceSerializer(serializers.ModelSerializer):
 
 # Nullable ForeignKey
 class NullableForeignKeySourceSerializer(serializers.ModelSerializer):
-    target = fields.SerializableRelatedField(
+    target = fields.SerializablePKRelatedField(
         serializer_class=ForeignKeyTargetRepresentationSerializer,
         allow_null=True
     )
@@ -99,7 +99,7 @@ class NullableForeignKeySourceSerializer(serializers.ModelSerializer):
 
 # Nullable OneToOne
 class NullableOneToOneTargetSerializer(serializers.ModelSerializer):
-    nullable_source = fields.SerializableRelatedField(
+    nullable_source = fields.SerializablePKRelatedField(
         serializer_class=ForeignKeyTargetRepresentationSerializer,
         allow_null=True
     )

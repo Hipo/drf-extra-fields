@@ -5,11 +5,10 @@ import binascii
 import imghdr
 import uuid
 
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
-
 from rest_framework.fields import (
     DateField,
     DateTimeField,
@@ -18,7 +17,7 @@ from rest_framework.fields import (
     ImageField,
     IntegerField,
 )
-from rest_framework.serializers import ModelSerializer, RelatedField
+from rest_framework.serializers import ModelSerializer, PrimaryKeyRelatedField
 from rest_framework.utils import html
 
 from .compat import (
@@ -167,13 +166,7 @@ if postgres_fields is not None:
     ModelSerializer.serializer_field_mapping[postgres_fields.FloatRangeField] = FloatRangeField
 
 
-class SerializableRelatedField(RelatedField):
-    default_error_messages = {
-        'required': _('This field is required.'),
-        'does_not_exist': _('Invalid pk "{pk_value}" - object does not exist.'),
-        'incorrect_type': _('Incorrect type. Expected pk value, received {data_type}.'),
-    }
-
+class SerializablePKRelatedField(PrimaryKeyRelatedField):
     def __init__(self, **kwargs):
         self.serializer_class = kwargs.pop('serializer_class', None)
         assert self.serializer_class is not None, (
@@ -182,18 +175,12 @@ class SerializableRelatedField(RelatedField):
         self.serializer_params = kwargs.pop('serializer_params', dict())
         if 'queryset' not in kwargs and issubclass(self.serializer_class, ModelSerializer):
             kwargs['queryset'] = self.serializer_class.Meta.model.objects.all()
-        kwargs['style'] = {'base_template': 'input.html', 'input_type': 'numeric'}
         self.serializer = self.serializer_class(**self.serializer_params)
         self.serializer.parent = self
-        super(SerializableRelatedField, self).__init__(**kwargs)
+        super(SerializablePKRelatedField, self).__init__(**kwargs)
 
-    def to_internal_value(self, data):
-        try:
-            return self.get_queryset().get(pk=data)
-        except ObjectDoesNotExist:
-            self.fail('does_not_exist', pk_value=data)
-        except (TypeError, ValueError):
-            self.fail('incorrect_type', data_type=type(data).__name__)
+    def use_pk_only_optimization(self):
+        return False
 
     def to_representation(self, value):
         return self.serializer.to_representation(value)
