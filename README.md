@@ -159,7 +159,7 @@ serializer = RangeSerizalizer(data={'ranges': {'upper': datetime.datetime(2015, 
 For example, if we pass `TrackSerializer` the following serializer:
 
     class AlbumSerializer(serializers.ModelSerializer):
-        tracks = serializers.SerializableRelatedField(many=True, serializer_class=TrackSerializer)
+        tracks = serializers.SerializablePKRelatedField(many=True, serializer_class=TrackSerializer)
 
         class Meta:
             model = Album
