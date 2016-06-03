@@ -109,7 +109,7 @@ class NullableOneToOneTargetSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'nullable_source')
 
 
-class SerializableManyToManyTests(TestCase):
+class SerializablePKManyToManyTests(TestCase):
     def setUp(self):
         for idx in range(1, 4):
             target = ManyToManyTarget(name='target-%d' % idx)
@@ -400,7 +400,7 @@ class SerializableManyToManyTests(TestCase):
         self.assertEqual(serializer.data, expected)
 
 
-class SerializableForeignKeyTests(TestCase):
+class SerializablePKForeignKeyTests(TestCase):
     def setUp(self):
         target = ForeignKeyTarget(name='target-1')
         target.save()
@@ -627,7 +627,7 @@ class SerializableForeignKeyTests(TestCase):
         self.assertEqual(serializer.data['target'], None)
 
 
-class SerializableNullableForeignKeyTests(TestCase):
+class SerializablePKNullableForeignKeyTests(TestCase):
     def setUp(self):
         target = ForeignKeyTarget(name='target-1')
         target.save()
@@ -732,7 +732,7 @@ class SerializableNullableForeignKeyTests(TestCase):
         self.assertEqual(serializer.data, expected)
 
 
-class SerializableNullableOneToOneTests(TestCase):
+class SerializablePKNullableOneToOneTests(TestCase):
     def setUp(self):
         target = OneToOneTarget(name='target-1')
         target.save()
