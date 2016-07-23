@@ -65,7 +65,7 @@ class Base64ImageField(ImageField):
             # Get the file name extension:
             file_extension = self.get_file_extension(file_name, decoded_file)
             if file_extension not in ALLOWED_IMAGE_TYPES:
-                raise ValidationError(_("The type of the image couldn't been determined."))
+                raise ValidationError(_("The type of the image couldn't be determined."))
             complete_file_name = file_name + "." + file_extension
             data = ContentFile(decoded_file, name=complete_file_name)
             return super(Base64ImageField, self).to_internal_value(data)
