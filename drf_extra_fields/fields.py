@@ -1,12 +1,14 @@
+from __future__ import unicode_literals
+
 import base64
 import binascii
 import imghdr
 import uuid
+
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
-
 from rest_framework.fields import (
     DateField,
     DateTimeField,
@@ -15,7 +17,9 @@ from rest_framework.fields import (
     ImageField,
     IntegerField,
 )
-from rest_framework.utils import html, humanize_datetime, representation
+from rest_framework.serializers import ModelSerializer, PrimaryKeyRelatedField
+from rest_framework.utils import html
+
 from .compat import (
     DateRange,
     DateTimeTZRange,
@@ -156,8 +160,27 @@ class DateRangeField(RangeField):
 if postgres_fields is not None:
     # monkey patch modelserializer to map Native django Range fields to
     # drf_extra_fiels's Range fields.
-    from rest_framework.serializers import ModelSerializer
     ModelSerializer.serializer_field_mapping[postgres_fields.DateTimeRangeField] = DateTimeRangeField
     ModelSerializer.serializer_field_mapping[postgres_fields.DateRangeField] = DateRangeField
     ModelSerializer.serializer_field_mapping[postgres_fields.IntegerRangeField] = IntegerRangeField
     ModelSerializer.serializer_field_mapping[postgres_fields.FloatRangeField] = FloatRangeField
+
+
+class SerializablePKRelatedField(PrimaryKeyRelatedField):
+    def __init__(self, **kwargs):
+        self.serializer_class = kwargs.pop('serializer_class', None)
+        assert self.serializer_class is not None, (
+            '{cls} must provide a `serializer_class` argument'.format(cls=self.__class__.__name__)
+        )
+        self.serializer_params = kwargs.pop('serializer_params', dict())
+        if 'queryset' not in kwargs and issubclass(self.serializer_class, ModelSerializer):
+            kwargs['queryset'] = self.serializer_class.Meta.model.objects.all()
+        self.serializer = self.serializer_class(**self.serializer_params)
+        self.serializer.parent = self
+        super(SerializablePKRelatedField, self).__init__(**kwargs)
+
+    def use_pk_only_optimization(self):
+        return False
+
+    def to_representation(self, value):
+        return self.serializer.to_representation(value)
