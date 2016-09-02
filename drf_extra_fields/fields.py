@@ -65,9 +65,7 @@ class Base64FieldMixin(ImageField):
         raise ValidationError(_('This is not an base64 string'))
 
     def get_file_extension(self, filename, decoded_file):
-        extension = imghdr.what(filename, decoded_file)
-        extension = "jpg" if extension == "jpeg" else extension
-        return extension
+        raise NotImplemented
 
     def to_representation(self, image):
         if self.represent_in_base64:
@@ -93,6 +91,11 @@ class Base64ImageField(Base64FieldMixin, ImageField):
     )
     INVALID_FILE_MESSAGE = _("Please upload a valid image.")
     INVALID_TYPE_MESSAGE = _("The type of the image couldn't be determined.")
+
+    def get_file_extension(self, filename, decoded_file):
+        extension = imghdr.what(filename, decoded_file)
+        extension = "jpg" if extension == "jpeg" else extension
+        return extension
 
 
 class RangeField(DictField):
