@@ -2,6 +2,7 @@ import base64
 import binascii
 import imghdr
 import uuid
+
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils import six
@@ -11,6 +12,7 @@ from rest_framework.fields import (
     DateField,
     DateTimeField,
     DictField,
+    FileField,
     FloatField,
     ImageField,
     IntegerField,
@@ -25,7 +27,6 @@ from .compat import (
 
 
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
-
 
 
 class Base64FieldMixin(ImageField):
@@ -96,6 +97,19 @@ class Base64ImageField(Base64FieldMixin, ImageField):
         extension = imghdr.what(filename, decoded_file)
         extension = "jpg" if extension == "jpeg" else extension
         return extension
+
+
+class Base64FileField(Base64FieldMixin, FileField):
+    """
+    A django-rest-framework field for handling file-uploads through raw post data.
+    It uses base64 for en-/decoding the contents of the file.
+    """
+    ALLOWED_TYPES = NotImplemented
+    INVALID_FILE_MESSAGE = _("Please upload a valid file.")
+    INVALID_TYPE_MESSAGE = _("The type of the file couldn't be determined.")
+
+    def get_file_extension(self, filename, decoded_file):
+        raise NotImplemented
 
 
 class RangeField(DictField):

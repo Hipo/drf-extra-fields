@@ -12,6 +12,7 @@ from drf_extra_fields import compat
 from drf_extra_fields.geo_fields import PointField
 from drf_extra_fields.fields import (
     Base64ImageField,
+    Base64FileField,
     DateRangeField,
     DateTimeRangeField,
     FloatRangeField,
@@ -28,6 +29,10 @@ class UploadedBase64Image(object):
         self.created = created or datetime.datetime.now()
 
 
+class UploadedBase64File(UploadedBase64Image):
+    pass
+
+
 class DownloadableBase64Image(object):
     class ImageFieldFile(object):
         def __init__(self, path):
@@ -35,6 +40,15 @@ class DownloadableBase64Image(object):
 
     def __init__(self, image_path):
         self.image = self.ImageFieldFile(path=image_path)
+
+
+class DownloadableBase64File(object):
+    class FieldFile(object):
+        def __init__(self, path):
+            self.path = path
+
+    def __init__(self, file_path):
+        self.file = self.FieldFile(path=file_path)
 
 
 class UploadedBase64ImageSerializer(serializers.Serializer):
@@ -112,6 +126,94 @@ class Base64ImageSerializerTests(TestCase):
 
         try:
             self.assertEqual(serializer.data['image'], encoded_source)
+        finally:
+            os.remove('im.jpg')
+
+
+class PDFBase64FileField(Base64FileField):
+    ALLOWED_TYPES = ('pdf',)
+
+    def get_file_extension(self, filename, decoded_file):
+        return 'pdf'
+
+
+class UploadedBase64FileSerializer(serializers.Serializer):
+    file = PDFBase64FileField(required=False)
+    created = serializers.DateTimeField()
+
+    def update(self, instance, validated_data):
+        instance.file = validated_data['file']
+        return instance
+
+    def create(self, validated_data):
+        return UploadedBase64File(**validated_data)
+
+
+class DownloadableBase64FileSerializer(serializers.Serializer):
+    file = PDFBase64FileField(represent_in_base64=True)
+
+
+class Base64FileSerializerTests(TestCase):
+    def test_create(self):
+        """
+        Test for creating Base64 file in the server side
+        """
+        now = datetime.datetime.now()
+        file = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
+        serializer = UploadedBase64FileSerializer(data={'created': now, 'file': file})
+        uploaded_file = UploadedBase64File(file=file, created=now)
+        serializer.is_valid()
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['created'], uploaded_file.created)
+        self.assertFalse(serializer.validated_data is uploaded_file)
+
+    def test_create_with_base64_prefix(self):
+        """
+        Test for creating Base64 file in the server side
+        """
+        now = datetime.datetime.now()
+        file = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
+        serializer = UploadedBase64FileSerializer(data={'created': now, 'file': file})
+        uploaded_file = UploadedBase64File(file=file, created=now)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['created'], uploaded_file.created)
+        self.assertFalse(serializer.validated_data is uploaded_file)
+
+
+    def test_validation_error_with_non_file(self):
+        """
+        Passing non-base64 should raise a validation error.
+        """
+        now = datetime.datetime.now()
+        errmsg = "Please upload a valid file."
+        serializer = UploadedBase64FileSerializer(data={'created': now,
+                                                         'file': 'abc'})
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors, {'file': [errmsg]})
+
+
+    def test_remove_with_empty_string(self):
+        """
+        Passing empty string as data should cause file to be removed
+        """
+        now = datetime.datetime.now()
+        file = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
+        uploaded_file = UploadedBase64File(file=file, created=now)
+        serializer = UploadedBase64FileSerializer(instance=uploaded_file, data={'created': now, 'file': ''})
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['created'], uploaded_file.created)
+        self.assertIsNone(serializer.validated_data['file'])
+
+    def test_download(self):
+        encoded_source = 'R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs='
+
+        with open('im.jpg', 'wb') as im_file:
+            im_file.write(base64.b64decode(encoded_source))
+        file = DownloadableBase64File(os.path.abspath('im.jpg'))
+        serializer = DownloadableBase64FileSerializer(file)
+
+        try:
+            self.assertEqual(serializer.data['file'], encoded_source)
         finally:
             os.remove('im.jpg')
 
