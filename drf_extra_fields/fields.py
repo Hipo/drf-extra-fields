@@ -29,7 +29,7 @@ from .compat import (
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
 
-class Base64FieldMixin(ImageField):
+class Base64FieldMixin(object):
     ALLOWED_TYPES = NotImplemented
     INVALID_FILE_MESSAGE = NotImplemented
     INVALID_TYPE_MESSAGE = NotImplemented
@@ -76,7 +76,7 @@ class Base64FieldMixin(ImageField):
             except Exception:
                 raise IOError("Error encoding file")
         else:
-            return super(ImageField, self).to_representation(image)
+            return super(Base64FieldMixin, self).to_representation(image)
 
 
 class Base64ImageField(Base64FieldMixin, ImageField):
