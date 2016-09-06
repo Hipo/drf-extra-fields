@@ -68,15 +68,15 @@ class Base64FieldMixin(object):
     def get_file_extension(self, filename, decoded_file):
         raise NotImplemented
 
-    def to_representation(self, image):
+    def to_representation(self, file):
         if self.represent_in_base64:
             try:
-                with open(image.path, 'rb') as f:
+                with open(file.path, 'rb') as f:
                     return base64.b64encode(f.read()).decode()
             except Exception:
                 raise IOError("Error encoding file")
         else:
-            return super(Base64FieldMixin, self).to_representation(image)
+            return super(Base64FieldMixin, self).to_representation(file)
 
 
 class Base64ImageField(Base64FieldMixin, ImageField):
