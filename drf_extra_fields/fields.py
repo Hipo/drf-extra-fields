@@ -104,12 +104,12 @@ class Base64FileField(Base64FieldMixin, FileField):
     A django-rest-framework field for handling file-uploads through raw post data.
     It uses base64 for en-/decoding the contents of the file.
     """
-    ALLOWED_TYPES = NotImplemented
+    ALLOWED_TYPES = NotImplementedError('List allowed file extensions')
     INVALID_FILE_MESSAGE = _("Please upload a valid file.")
     INVALID_TYPE_MESSAGE = _("The type of the file couldn't be determined.")
 
     def get_file_extension(self, filename, decoded_file):
-        raise NotImplemented
+        raise NotImplemented('Implement file validation and return matching extension.')
 
 
 class RangeField(DictField):
