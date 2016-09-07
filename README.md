@@ -36,10 +36,11 @@ Intherited by `ImageField`
  - a base64 image:  `data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7`
  - Base64ImageField accepts the entire string or just the part after base64, `R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7`
  - It takes the optional parameter represent_in_base64(False by default), if set to True it wil allow for base64-encoded downloads of an ImageField.
- 
+ - You can inherit the Base64ImageField class and set allowed extensions (ALLOWED_TYPES list), or customize the validation messages (INVALID_FILE_MESSAGE, INVALID_TYPE_MESSAGE)
+
 
 **Example:**
- 
+
 ```python
 # serializer
 
@@ -53,8 +54,38 @@ class UploadedBase64ImageSerializer(serializers.Serializer):
 file = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
 serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
 ```
-    
-    
+
+
+## Base64FileField
+
+An file representation for Base64FileField
+
+Intherited by `FileField`
+
+
+**Signature:** `Base64FileField()`
+
+ - It takes a base64 file as a string.
+ - Other options like for Base64ImageField
+ - You have to provide your own full implementation of this class. You have to implement file validation in `get_file_extension` method and set `ALLOWED_TYPES` list.
+
+
+**Example:**
+
+```python
+    class PDFBase64File(Base64FileField):
+        ALLOWED_TYPES = ['pdf']
+
+        def get_file_extension(self, filename, decoded_file):
+            try:
+                PyPDF2.PdfFileReader(io.BytesIO(decoded_file))
+            except PyPDF2.utils.PdfReadError as e:
+                logger.warning(e)
+            else:
+                return 'pdf'
+```
+
+
 ## PointField
 
 Point field for GeoDjango
