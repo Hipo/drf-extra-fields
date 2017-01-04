@@ -130,7 +130,7 @@ class RangeSerizalizer(serializers.Serializer):
     ranges = IntegerRangeField()
 
 
-serializer = RangeSerizalizer(data={'ranges': {'upper': 0, 'upper': 1}})
+serializer = RangeSerizalizer(data={'ranges': {'lower': 0, 'upper': 1}})
 
 ```
 
@@ -145,7 +145,7 @@ class RangeSerizalizer(serializers.Serializer):
     ranges = FloatRangeField()
 
 
-serializer = IntegerRangeSerizalizer(data={'ranges': {'upper': 0., 'upper': 1.}})
+serializer = IntegerRangeSerizalizer(data={'ranges': {'lower': 0., 'upper': 1.}})
 
 ```
 
@@ -162,7 +162,7 @@ class RangeSerizalizer(serializers.Serializer):
     ranges = DateRangeField()
 
 
-serializer = RangeSerizalizer(data={'ranges': {'upper': datetime.date(2015, 1, 1), 'upper': datetime.date(2015, 2, 1)}})
+serializer = RangeSerizalizer(data={'ranges': {'lower': datetime.date(2015, 1, 1), 'upper': datetime.date(2015, 2, 1)}})
 
 ```
 
@@ -179,7 +179,7 @@ class RangeSerizalizer(serializers.Serializer):
     ranges = DateTimeRangeField()
 
 
-serializer = RangeSerizalizer(data={'ranges': {'upper': datetime.datetime(2015, 1, 1, 0), 'upper': datetime.datetime(2015, 2, 1, 0)}})
+serializer = RangeSerizalizer(data={'ranges': {'lower': datetime.datetime(2015, 1, 1, 0), 'upper': datetime.datetime(2015, 2, 1, 0)}})
 
 ```
 
