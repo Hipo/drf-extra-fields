@@ -7,14 +7,50 @@ import collections
 from django.utils import six
 
 from rest_framework.utils import html
+from rest_framework.utils import serializer_helpers
 from rest_framework import serializers
 
 
-class SerializerChildValueWrapper(collections.Mapping):
+def clone_serializer(serializer, parent=None, **kwargs):
     """
-    Wrap a value mapping with the child accessible.
+    Reconstitute a new serializer from an existing one.
     """
-    child = None
+    clone = type(serializer)(**kwargs)
+
+    # Copy over the DRF bits the clone will need
+    if parent is not None:
+        clone.bind(parent.field_name or type(parent).__name__, parent)
+    if hasattr(serializer, 'child'):
+        clone.child = serializer.child
+
+    # Set up any non-DRF, clone-specific references
+    clone.original = serializer
+    if hasattr(serializer, 'clone_meta'):
+        clone.clone_meta = serializer.clone_meta
+
+    return clone
+
+
+class CloneReturnDict(serializer_helpers.ReturnDict):
+    """
+    Wrap a data mapping with the cloned serializer accessible.
+    """
+
+    def __init__(self, data, clone, **kwargs):
+        """
+        Capture clone and original mapping references.
+        """
+        self.clone = clone
+        self.data = data
+        kwargs.setdefault('serializer', getattr(data, 'serializer', None))
+        super(CloneReturnDict, self).__init__(data, **kwargs)
+
+    def copy(self):
+        """
+        Pass along captured references.
+        """
+        return CloneReturnDict(
+            self.data, clone=self.clone, serializer=self.serializer)
 
 
 class SerializerCompositeField(serializers.Field):
@@ -22,39 +58,12 @@ class SerializerCompositeField(serializers.Field):
     A composite field that support calling `save()` on the child.
     """
 
-    def make_child(self, **kwargs):
+    def clone_child(self, child, **kwargs):
         """
         Reconstitute a new child from the existing one.
         """
-        child = type(self.child)(context=self.context, **kwargs)
-        child.bind(self.field_name or type(self).__name__, self)
-        if hasattr(self.child, 'child'):
-            child.child = self.child.child
-        self.child = child
-        return child
-
-    def wrap_value(self, child, value=None):
-        """
-        Wrap the value mapping and set the child.
-        """
-        if value is None:
-            value = child.validated_data
-        assert isinstance(value, collections.Mapping), (
-            'Child validation must return a dict-like object')
-
-        class ChildValueWrapper(
-                type(value), SerializerChildValueWrapper):
-            """
-            Wrap a value mapping with the child accessible.
-            """
-            pass
-
-        kwargs = {}
-        if hasattr(value, 'serializer'):
-            kwargs['serializer'] = value.serializer
-        wrapped = ChildValueWrapper(value, **kwargs)
-        wrapped.child = child
-        return wrapped
+        kwargs.setdefault('context', self.context)
+        return clone_serializer(child, self, **kwargs)
 
 
 class SerializerListField(serializers.ListField, SerializerCompositeField):
@@ -78,9 +87,9 @@ class SerializerListField(serializers.ListField, SerializerCompositeField):
 
         value = []
         for child_data in data:
-            child = self.make_child(data=child_data)
-            child.is_valid(raise_exception=True)
-            value.append(self.wrap_value(child))
+            clone = self.clone_child(self.child, data=child_data)
+            clone.is_valid(raise_exception=True)
+            value.append(CloneReturnDict(clone.validated_data, clone))
         return value
 
     def to_representation(self, value):
@@ -92,11 +101,11 @@ class SerializerListField(serializers.ListField, SerializerCompositeField):
             if child_value is None:
                 data.append(None)
             else:
-                if isinstance(value, SerializerChildValueWrapper):
+                if isinstance(value, CloneReturnDict):
                     child_data = child_value.child.data
                 else:
-                    child = self.make_child(instance=child_value)
-                    child_data = self.wrap_value(child, child.data)
+                    clone = self.clone_child(self.child, instance=child_value)
+                    child_data = CloneReturnDict(clone.data, clone)
                 data.append(child_data)
         return data
 
@@ -106,11 +115,11 @@ class SerializerDictField(serializers.DictField, SerializerCompositeField):
     A dict field that support calling `save()` on the child.
     """
 
-    def make_child(self, key, **kwargs):
+    def clone_child(self, key, child, **kwargs):
         """
         Dictionary specific child lookup.
         """
-        return super(SerializerDictField, self).make_child(**kwargs)
+        return super(SerializerDictField, self).clone_child(child, **kwargs)
 
     def to_internal_value(self, data):
         """
@@ -123,9 +132,10 @@ class SerializerDictField(serializers.DictField, SerializerCompositeField):
 
         value = {}
         for key, child_data in data.items():
-            child = self.make_child(key, data=child_data)
-            child.is_valid(raise_exception=True)
-            value[six.text_type(key)] = self.wrap_value(child)
+            clone = self.clone_child(key, self.child, data=child_data)
+            clone.is_valid(raise_exception=True)
+            value[six.text_type(key)] = CloneReturnDict(
+                clone.validated_data, clone)
         return value
 
     def to_representation(self, value):
@@ -138,10 +148,11 @@ class SerializerDictField(serializers.DictField, SerializerCompositeField):
             if child_value is None:
                 data[key] = None
             else:
-                if isinstance(value, SerializerChildValueWrapper):
+                if isinstance(value, CloneReturnDict):
                     child_data = child_value.child.data
                 else:
-                    child = self.make_child(key, instance=child_value)
-                    child_data = self.wrap_value(child, child.data)
+                    clone = self.clone_child(
+                        key, self.child, instance=child_value)
+                    child_data = CloneReturnDict(clone.data, clone)
                 data[key] = child_data
         return data

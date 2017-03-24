@@ -24,7 +24,7 @@ class SerializerParameterValidator(object):
         return value
 
 
-class SerializerParameterField(serializers.Field):
+class SerializerParameterField(composite.SerializerCompositeField):
     """
     Map serialized parameter to the specific serializer and back.
     """
@@ -60,23 +60,41 @@ class SerializerParameterField(serializers.Field):
         self.skip = skip
         self.validators.append(SerializerParameterValidator())
 
-    def get_generic_serializer(self):
+    def bind_parameter_field(self, serializer):
         """
-        Get the generic serializer for this parameter fields.
+        Bind the serializer to the parameter field.
+        """
+        if not hasattr(serializer, 'clone_meta'):
+            serializer.clone_meta = {}
+        serializer.clone_meta['parameter_field'] = self
+        self.parameter_serializer = serializer
 
-        Override based on where the parameter comes from and where it applies.
+    def bind(self, field_name, parent):
         """
-        # Common case: parameter is a field in the generic serializer
-        return self.parent
+        Tell the generic serializer to get the specific serializers from us.
+        """
+        super(SerializerParameterField, self).bind(field_name, parent)
+        self.bind_parameter_field(parent)
 
-    def set_specific(self, specific):
+    def clone_specific_internal(self, data):
         """
-        Make the specific serializer available to the generic serializer.
+        Lookup specific serializer by the current key.
         """
-        parent = self.get_generic_serializer()
-        parent.child = specific
-        parent.parameter_field = self
-        return parent
+        specific = SerializerParameterField.to_internal_value(
+            self, self.current_parameter)
+        return composite.clone_serializer(
+            specific, self.parameter_serializer.parent,
+            context=self.parameter_serializer.context, data=data)
+
+    def clone_specific_representation(self, value):
+        """
+        Lookup specific serializer by the current key.
+        """
+        specific = SerializerParameterField.to_internal_value(
+            self, self.current_parameter)
+        return composite.clone_serializer(
+            specific, self.parameter_serializer.parent,
+            context=self.parameter_serializer.context, instance=value)
 
     def to_internal_value(self, data):
         """
@@ -85,29 +103,30 @@ class SerializerParameterField(serializers.Field):
         if data not in self.specific_serializers:
             self.fail('parameter', value=data)
 
-        specific = self.specific_serializers[data]
-        self.set_specific(specific)
-        return specific
+        self.current_parameter = data
+        return self.specific_serializers[data]
 
     def get_attribute(self, instance):
         """
         Get the specific serializer corresponding to the value.
         """
-        if isinstance(instance, composite.SerializerChildValueWrapper):
-            return instance.child
+        if isinstance(instance, composite.CloneReturnDict):
+            return instance.clone
 
         if type(instance) not in self.specific_serializers_by_type:
             return super(
                 SerializerParameterField, self).get_attribute(instance)
+
         specific = self.specific_serializers_by_type[type(instance)]
-        self.set_specific(specific)
+        self.current_parameter = self.parameters[type(specific)]
         return specific
 
     def to_representation(self, value):
         """
         The parameter corresponding to the specific serializer.
         """
-        return self.parameters[type(value)]
+        self.current_parameter = self.parameters[type(value)]
+        return self.current_parameter
 
 
 class SerializerParameterDictField(
@@ -131,19 +150,29 @@ class SerializerParameterDictField(
                 '`ParameterizedGenericSerializer`')
         super(SerializerParameterDictField, self).__init__(*args, **kwargs)
 
-    def get_generic_serializer(self):
+    def bind(self, field_name, parent):
         """
-        For a DictField, the ParameterizedGenericSerializer is the child.
+        Tell the generic serializer to get the specific serializers from us.
         """
-        return self.child
+        super(SerializerParameterDictField, self).bind(field_name, parent)
+        self.bind_parameter_field(self.child)
 
-    def make_child(self, key, **kwargs):
+    def get_attribute(self, instance):
         """
-        Dictionary specific child lookup.
+        A DictField already knows the current parameter so use that.
+        """
+        if getattr(self, 'current_parameter', None):
+            return self.specific_serializers[self.current_parameter]
+        return super(SerializerParameterDictField, self).get_attribute(
+            instance)
+
+    def clone_child(self, key, child, **kwargs):
+        """
+        Record the current parameter before cloning.
         """
         SerializerParameterField.to_internal_value(self, key)
-        return super(SerializerParameterDictField, self).make_child(
-            key, **kwargs)
+        return super(SerializerParameterDictField, self).clone_child(
+            key, child, **kwargs)
 
 
 class ParameterizedGenericSerializer(
@@ -166,11 +195,10 @@ class ParameterizedGenericSerializer(
             if key not in self.fields)
 
         # Reconstitute and validate the specific serializer
-        child = self.make_child(data=value)
-        child.is_valid(raise_exception=True)
-
-        # Make the specific serializer accessible downstream
-        value = self.wrap_value(child)
+        specific = self.clone_meta['parameter_field'].clone_specific_internal(
+            data=value)
+        specific.is_valid(raise_exception=True)
+        value = composite.CloneReturnDict(specific.validated_data, specific)
 
         return value
 
@@ -178,20 +206,24 @@ class ParameterizedGenericSerializer(
         """
         Include generic items that aren't in the specific schema.
         """
-        data = super(
-            ParameterizedGenericSerializer, self).to_representation(value)
-
-        if isinstance(value, composite.SerializerChildValueWrapper):
-            child = value.child
+        if isinstance(value, composite.CloneReturnDict):
+            specific = value.clone
         else:
-            self.child = self.parameter_field.get_attribute(value)
-            child = self.make_child(instance=value)
+            # Make sure all fields are bound
+            self.fields
+            # Make sure the parameter field sets the specific serializer
+            self.clone_meta['parameter_field'].get_attribute(value)
+            specific = self.clone_meta[
+                'parameter_field'].clone_specific_representation(
+                    value=value)
 
-            # Override the child's representation with our representation
-        # Merge back in child items that aren't overridden by our schema
+        data = super(ParameterizedGenericSerializer, self).to_representation(
+            composite.CloneReturnDict(specific.data, specific))
+
+        # Merge back in specific items that aren't overridden by our schema
         source_attrs = {field.source for field in self.fields.values()}
         data.update(
-            (key, value) for key, value in child.data.items()
+            (key, value) for key, value in specific.data.items()
             if key not in source_attrs)
 
         return data
@@ -200,17 +232,17 @@ class ParameterizedGenericSerializer(
         """
         Delegate to the specific serializer.
         """
-        self.instance = self.child.save(**kwargs)
+        self.instance = self.validated_data.clone.save(**kwargs)
         return self.instance
 
     def create(self, validated_data):
         """
         Delegate to the specific serializer.
         """
-        return self.child.create(validated_data)
+        return validated_data.clone.create(validated_data)
 
     def update(self, instance, validated_data):
         """
         Delegate to the specific serializer.
         """
-        return self.child.update(instance, validated_data)
+        return validated_data.clone.update(instance, validated_data)
