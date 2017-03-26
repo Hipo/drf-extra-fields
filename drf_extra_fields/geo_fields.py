@@ -62,7 +62,7 @@ class PointField(serializers.Field):
 
         if isinstance(value, GEOSGeometry):
             value = {
-                "latitude": smart_str(value.y),
-                "longitude": smart_str(value.x)
+                "latitude": float(smart_str(value.y)),
+                "longitude": float(smart_str(value.x))
             }
         return value
