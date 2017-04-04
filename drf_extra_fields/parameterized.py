@@ -157,15 +157,6 @@ class SerializerParameterDictField(
         super(SerializerParameterDictField, self).bind(field_name, parent)
         self.bind_parameter_field(self.child)
 
-    def get_attribute(self, instance):
-        """
-        A DictField already knows the current parameter so use that.
-        """
-        if getattr(self, 'current_parameter', None):
-            return self.specific_serializers[self.current_parameter]
-        return super(SerializerParameterDictField, self).get_attribute(
-            instance)
-
     def clone_child(self, key, child, **kwargs):
         """
         Record the current parameter before cloning.
