@@ -1,4 +1,9 @@
+import six
+
 from rest_framework import serializers
+from rest_framework import renderers
+from rest_framework import parsers
+
 
 from . import composite
 
@@ -190,11 +195,13 @@ class ParameterizedGenericSerializer(
             (key, value) for key, value in data.items()
             if key not in self.fields)
 
-        # Reconstitute and validate the specific serializer
-        specific = self.clone_meta['parameter_field'].clone_specific_internal(
-            data=value)
-        specific.is_valid(raise_exception=True)
-        value = composite.CloneReturnDict(specific.validated_data, specific)
+        specific = self.clone_meta[
+            'parameter_field'].clone_specific_internal(data=value)
+        if not self.context.get('skip_parameterized', False):
+            # Reconstitute and validate the specific serializer
+            specific.is_valid(raise_exception=True)
+            value = composite.CloneReturnDict(
+                specific.validated_data, specific)
 
         return value
 
@@ -212,9 +219,11 @@ class ParameterizedGenericSerializer(
             specific = self.clone_meta[
                 'parameter_field'].clone_specific_representation(
                     value=value)
+        if not self.context.get('skip_parameterized', False):
+            value = composite.CloneReturnDict(specific.data, specific)
 
         data = super(ParameterizedGenericSerializer, self).to_representation(
-            composite.CloneReturnDict(specific.data, specific))
+            value)
 
         # Merge back in specific items that aren't overridden by our schema
         source_attrs = {field.source for field in self.fields.values()}
@@ -242,3 +251,59 @@ class ParameterizedGenericSerializer(
         Delegate to the specific serializer.
         """
         return validated_data.clone.update(instance, validated_data)
+
+
+class ParameterizedRenderer(renderers.JSONRenderer):
+    """
+    Parameterized format renderer
+    """
+
+    # Subclasses must override
+    serializer_class = None
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        """
+        Transliate the DRF internal format into the parameterized format.
+        """
+
+        # Use the serializer to parse only the generic fields, passing the
+        # rest onto the serializer for the actual endpoint
+        if renderer_context is None:
+            context = {}
+        else:
+            context = renderer_context.copy()
+        context['skip_parameterized'] = True
+        serializer = self.serializer_class(instance=data, context=context)
+        data = serializer.data
+
+        return super(ParameterizedRenderer, self).render(
+            data, accepted_media_type=accepted_media_type,
+            renderer_context=renderer_context)
+
+
+class ParameterizedParser(parsers.JSONParser):
+    """
+    Parameterized format parser
+    """
+
+    # Subclasses must override
+    serializer_class = None
+
+    def parse(self, stream, media_type=None, parser_context=None):
+        """
+        Translate the parameterized format into the DRF internal format.
+        """
+        data = super(ParameterizedParser, self).parse(
+            stream, media_type=media_type, parser_context=parser_context)
+
+        # Use the serializer to parse only the generic parameterized fields,
+        # passing the rest onto the serializer for the actual endpoint
+        serializer = self.serializer_class(
+            data=data, context=dict(skip_parameterized=True))
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as exc:
+            raise parsers.ParseError(
+                'Parse error - %s' % six.text_type(exc))
+
+        return serializer.validated_data
