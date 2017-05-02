@@ -113,11 +113,16 @@ class SerializerParameterField(composite.SerializerCompositeField):
         if isinstance(instance, composite.CloneReturnDict):
             return instance.clone
 
-        if type(instance) not in self.specific_serializers_by_type:
-            return super(
-                SerializerParameterField, self).get_attribute(instance)
+        model = type(instance)
+        if model not in self.specific_serializers_by_type:
+            view = self.context.get('view')
+            if hasattr(view, 'get_queryset'):
+                model = view.get_queryset().model
+            else:
+                return super(
+                    SerializerParameterField, self).get_attribute(instance)
 
-        specific = self.specific_serializers_by_type[type(instance)]
+        specific = self.specific_serializers_by_type[model]
         self.current_parameter = self.parameters[type(specific)]
         return specific
 
