@@ -57,7 +57,7 @@ class Base64FieldMixin(object):
             # Generate file name:
             file_name = str(uuid.uuid4())[:12]  # 12 characters are more than enough.
             # Get the file name extension:
-            file_extension = self.get_file_extension(file_name, decoded_file)
+            file_extension = self.get_file_extension(file_name, decoded_file, header)
             if file_extension not in self.ALLOWED_TYPES:
                 raise ValidationError(self.INVALID_TYPE_MESSAGE)
             complete_file_name = file_name + "." + file_extension
@@ -65,7 +65,7 @@ class Base64FieldMixin(object):
             return super(Base64FieldMixin, self).to_internal_value(data)
         raise ValidationError(_('This is not an base64 string'))
 
-    def get_file_extension(self, filename, decoded_file):
+    def get_file_extension(self, filename, decoded_file, header=None):
         raise NotImplemented
 
     def to_representation(self, file):
@@ -93,7 +93,7 @@ class Base64ImageField(Base64FieldMixin, ImageField):
     INVALID_FILE_MESSAGE = _("Please upload a valid image.")
     INVALID_TYPE_MESSAGE = _("The type of the image couldn't be determined.")
 
-    def get_file_extension(self, filename, decoded_file):
+    def get_file_extension(self, filename, decoded_file, header=None):
         extension = imghdr.what(filename, decoded_file)
         extension = "jpg" if extension == "jpeg" else extension
         return extension
@@ -108,7 +108,7 @@ class Base64FileField(Base64FieldMixin, FileField):
     INVALID_FILE_MESSAGE = _("Please upload a valid file.")
     INVALID_TYPE_MESSAGE = _("The type of the file couldn't be determined.")
 
-    def get_file_extension(self, filename, decoded_file):
+    def get_file_extension(self, filename, decoded_file, header=None):
         raise NotImplemented('Implement file validation and return matching extension.')
 
 
