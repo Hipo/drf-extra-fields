@@ -200,10 +200,9 @@ class ParameterizedGenericSerializer(
         if not self.context.get('skip_parameterized', False):
             # Reconstitute and validate the specific serializer
             specific.is_valid(raise_exception=True)
-            value = composite.CloneReturnDict(
-                specific.validated_data, specific)
+            value = specific.validated_data
 
-        return value
+        return composite.CloneReturnDict(value, specific)
 
     def to_representation(self, value):
         """
@@ -228,10 +227,10 @@ class ParameterizedGenericSerializer(
         # Merge back in specific items that aren't overridden by our schema
         source_attrs = {field.source for field in self.fields.values()}
         data.update(
-            (key, value) for key, value in specific.data.items()
+            (key, value) for key, value in value.items()
             if key not in source_attrs)
 
-        return data
+        return composite.CloneReturnDict(data, specific)
 
     def save(self, **kwargs):
         """
