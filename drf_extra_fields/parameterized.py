@@ -273,7 +273,12 @@ class ParameterizedRenderer(renderers.JSONRenderer):
         else:
             context = renderer_context.copy()
         context['skip_parameterized'] = True
-        serializer = self.serializer_class(instance=data, context=context)
+
+        serializer_kwargs = dict(instance=data, context=context)
+        if getattr(renderer_context.get('view'), 'action', 'get') == 'list':
+            serializer_kwargs['many'] = True
+
+        serializer = self.serializer_class(**serializer_kwargs)
         data = serializer.data
 
         return super(ParameterizedRenderer, self).render(
