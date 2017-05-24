@@ -62,6 +62,8 @@ class SerializerParameterField(composite.SerializerCompositeField):
             for specific in self.specific_serializers.values()
             if hasattr(specific, 'Meta') and
             hasattr(specific.Meta, 'model')}
+        self.specific_serializers_by_type.update(
+            specific_serializers_by_type)
 
         self.skip = skip
         self.validators.append(SerializerParameterValidator())
@@ -153,12 +155,9 @@ class SerializerParameterDictField(
         kwargs.setdefault('skip', False)
 
         child = kwargs.get('child')
-        if child is None:
-            kwargs['child'] = ParameterizedGenericSerializer()
-        else:
-            assert isinstance(child, ParameterizedGenericSerializer), (
-                'The `child` must be a subclass of '
-                '`ParameterizedGenericSerializer`')
+        assert isinstance(child, ParameterizedGenericSerializer), (
+            'The `child` must be a subclass of '
+            '`ParameterizedGenericSerializer`')
         super(SerializerParameterDictField, self).__init__(*args, **kwargs)
 
     def bind(self, field_name, parent):
