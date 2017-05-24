@@ -15,13 +15,15 @@ def clone_serializer(serializer, parent=None, **kwargs):
     """
     Reconstitute a new serializer from an existing one.
     """
-    clone = type(serializer)(**kwargs)
+    kwargs = dict(serializer._kwargs, **kwargs)
+    if 'child' in kwargs:
+        kwargs['child'] = clone_serializer(serializer.child)
+
+    clone = type(serializer)(*serializer._args, **kwargs)
 
     # Copy over the DRF bits the clone will need
     if parent is not None:
         clone.bind(parent.field_name or type(parent).__name__, parent)
-    if hasattr(serializer, 'child'):
-        clone.child = serializer.child
 
     # Set up any non-DRF, clone-specific references
     clone.original = serializer
@@ -93,7 +95,10 @@ class SerializerListField(serializers.ListField, SerializerCompositeField):
         for child_data in data:
             clone = self.clone_child(self.child, data=child_data)
             clone.is_valid(raise_exception=True)
-            value.append(CloneReturnDict(clone.validated_data, clone))
+            child_value = clone.validated_data
+            if child_value is not None:
+                child_value = CloneReturnDict(child_value, clone)
+            value.append(child_value)
         return value
 
     def to_representation(self, value):
@@ -105,8 +110,8 @@ class SerializerListField(serializers.ListField, SerializerCompositeField):
             if child_value is None:
                 data.append(None)
             else:
-                if isinstance(value, CloneReturnDict):
-                    child_data = child_value.child.data
+                if isinstance(child_value, CloneReturnDict):
+                    child_data = child_value.clone.data
                 else:
                     clone = self.clone_child(self.child, instance=child_value)
                     child_data = CloneReturnDict(clone.data, clone)
@@ -140,8 +145,10 @@ class SerializerDictField(serializers.DictField, SerializerCompositeField):
         for key, child_data in data.items():
             clone = self.clone_child(key, self.child, data=child_data)
             clone.is_valid(raise_exception=True)
-            value[six.text_type(key)] = CloneReturnDict(
-                clone.validated_data, clone)
+            child_value = clone.validated_data
+            if child_value is not None:
+                child_value = CloneReturnDict(child_value, clone)
+            value[six.text_type(key)] = child_value
         return value
 
     def to_representation(self, value):
@@ -154,8 +161,8 @@ class SerializerDictField(serializers.DictField, SerializerCompositeField):
             if child_value is None:
                 data[key] = None
             else:
-                if isinstance(value, CloneReturnDict):
-                    child_data = child_value.child.data
+                if isinstance(child_value, CloneReturnDict):
+                    child_data = child_value.clone.data
                 else:
                     clone = self.clone_child(
                         key, self.child, instance=child_value)
