@@ -298,7 +298,7 @@ class ParameterizedParser(parsers.JSONParser):
         # Use the serializer to parse only the generic parameterized fields,
         # passing the rest onto the serializer for the actual endpoint
         serializer = self.serializer_class(
-            data=data, context=dict(skip_parameterized=True))
+            data=data, context=dict(parser_context, skip_parameterized=True))
         try:
             serializer.is_valid(raise_exception=True)
         except Exception as exc:
