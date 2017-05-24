@@ -55,7 +55,9 @@ class CloneReturnDict(serializer_helpers.ReturnDict):
 
 class SerializerCompositeField(serializers.Field):
     """
-    A composite field that support calling `save()` on the child.
+    A composite field that supports full use of the child serializer:
+
+    e.g. `save()`.
     """
 
     def clone_child(self, child, **kwargs):
@@ -68,7 +70,9 @@ class SerializerCompositeField(serializers.Field):
 
 class SerializerListField(serializers.ListField, SerializerCompositeField):
     """
-    A list field that support calling `save()` on the child.
+    A list field that supports full use of the child serializer:
+
+    e.g. `save()`.
     """
 
     def to_internal_value(self, data):
@@ -112,7 +116,9 @@ class SerializerListField(serializers.ListField, SerializerCompositeField):
 
 class SerializerDictField(serializers.DictField, SerializerCompositeField):
     """
-    A dict field that support calling `save()` on the child.
+    A dict field that supports full use of the child serializer:
+
+    e.g. `save()`.
     """
 
     def clone_child(self, key, child, **kwargs):
