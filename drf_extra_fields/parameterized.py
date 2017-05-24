@@ -1,5 +1,6 @@
 import six
 
+from rest_framework import exceptions
 from rest_framework import serializers
 from rest_framework import renderers
 from rest_framework import parsers
@@ -301,6 +302,8 @@ class ParameterizedParser(parsers.JSONParser):
             data=data, context=dict(parser_context, skip_parameterized=True))
         try:
             serializer.is_valid(raise_exception=True)
+        except exceptions.ValidationError as exc:
+            raise
         except Exception as exc:
             raise parsers.ParseError(
                 'Parse error - %s' % six.text_type(exc))
