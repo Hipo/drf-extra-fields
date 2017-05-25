@@ -5,20 +5,7 @@ from rest_framework import serializers
 from rest_framework import test
 
 from drf_extra_fields import composite
-
-
-class ExampleChildSerializer(serializers.Serializer):
-    """
-    A simple serializer for testing composite fields as a child.
-    """
-
-    name = serializers.CharField()
-
-    def create(self, validated_data):
-        """
-        Delegate to the children.
-        """
-        return validated_data
+from drf_extra_fields.runtests import serializers as parameterized
 
 
 class ExampleListSerializer(serializers.Serializer):
@@ -27,7 +14,8 @@ class ExampleListSerializer(serializers.Serializer):
     """
 
     children = composite.SerializerListField(
-        child=ExampleChildSerializer(allow_null=True), allow_empty=False)
+        child=parameterized.ExampleChildSerializer(allow_null=True),
+        allow_empty=False)
 
     def create(self, validated_data):
         """
@@ -44,7 +32,7 @@ class ExampleDictSerializer(serializers.Serializer):
     """
 
     children = composite.SerializerDictField(
-        child=ExampleChildSerializer(allow_null=True))
+        child=parameterized.ExampleChildSerializer(allow_null=True))
 
     def create(self, validated_data):
         """
@@ -178,7 +166,8 @@ class TestCompositeSerializerFields(test.APISimpleTestCase):
         Test that a list serializer work.
         """
         parent = serializers.ListSerializer(
-            data=self.list_serializer_data, child=ExampleChildSerializer())
+            data=self.list_serializer_data,
+            child=parameterized.ExampleChildSerializer())
         parent.is_valid(raise_exception=True)
         save_result = parent.save()
         self.assertEqual(
@@ -190,7 +179,8 @@ class TestCompositeSerializerFields(test.APISimpleTestCase):
         Test that cloning a serializer preserves what is needed.
         """
         parent = serializers.ListSerializer(
-            data=self.list_serializer_data, child=ExampleChildSerializer())
+            data=self.list_serializer_data,
+            child=parameterized.ExampleChildSerializer())
         parent.clone_meta = {"foo": "bar"}
         clone = composite.clone_serializer(parent)
         self.assertIs(

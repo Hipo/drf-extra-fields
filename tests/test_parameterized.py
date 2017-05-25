@@ -4,42 +4,13 @@ from django.contrib.auth import models as auth_models
 
 from rest_framework import exceptions
 from rest_framework import serializers
-from rest_framework import viewsets
 from rest_framework import test
 
 from drf_extra_fields import parameterized
+from drf_extra_fields.runtests import serializers as test_serializers
+from drf_extra_fields.runtests import viewsets as test_viewsets
 
 from . import test_composite
-
-
-class ExampleUserSerializer(serializers.ModelSerializer):
-    """
-    A simple model serializer for testing.
-    """
-
-    class Meta:
-        model = auth_models.User
-        fields = ('username', 'password')
-
-
-class ExampleUserViewset(viewsets.ModelViewSet):
-    """
-    A simple model viewset for testing.
-    """
-
-    queryset = auth_models.User.objects
-
-
-class ExampleTypeFieldSerializer(
-        parameterized.ParameterizedGenericSerializer):
-    """
-    A simple serializer for testing a type field parameter.
-    """
-
-    type = parameterized.SerializerParameterField(
-        specific_serializers={
-            "foo-type": test_composite.ExampleChildSerializer(),
-            "user": ExampleUserSerializer()})
 
 
 class ExampleDictFieldSerializer(serializers.Serializer):
@@ -49,8 +20,8 @@ class ExampleDictFieldSerializer(serializers.Serializer):
 
     types = parameterized.SerializerParameterDictField(
         child=parameterized.ParameterizedGenericSerializer(),
-        specific_serializers=ExampleTypeFieldSerializer().fields[
-            'type'].specific_serializers)
+        specific_serializers=test_serializers.ExampleTypeFieldSerializer(
+        ).fields['type'].specific_serializers)
 
     def create(self, validated_data):
         """
@@ -76,7 +47,8 @@ class TestParameterizedSerializerFields(test.APITestCase):
         """
         Test delegating to a specific serializer from a field.
         """
-        parent = ExampleTypeFieldSerializer(data=self.type_field_data)
+        parent = test_serializers.ExampleTypeFieldSerializer(
+            data=self.type_field_data)
         parent.is_valid(raise_exception=True)
         save_result = parent.save()
         self.assertEqual(
@@ -90,7 +62,8 @@ class TestParameterizedSerializerFields(test.APITestCase):
         """
         Test parameterized serializer delegating to specific on create.
         """
-        parent = ExampleTypeFieldSerializer(data=self.type_field_data)
+        parent = test_serializers.ExampleTypeFieldSerializer(
+            data=self.type_field_data)
         parent.is_valid(raise_exception=True)
         create_result = parent.create(validated_data=parent.validated_data)
         self.assertEqual(
@@ -101,7 +74,8 @@ class TestParameterizedSerializerFields(test.APITestCase):
         """
         Test parameterized serializer delegating to specific on update.
         """
-        parent = ExampleTypeFieldSerializer(data=self.type_field_data)
+        parent = test_serializers.ExampleTypeFieldSerializer(
+            data=self.type_field_data)
         parent.is_valid(raise_exception=True)
         update_result = parent.update(
             instance=auth_models.User.objects.create(),
@@ -117,7 +91,7 @@ class TestParameterizedSerializerFields(test.APITestCase):
         foo_data = dict(
             test_composite.TestCompositeSerializerFields.child_data,
             type="foo-type")
-        parent = ExampleTypeFieldSerializer(data=foo_data)
+        parent = test_serializers.ExampleTypeFieldSerializer(data=foo_data)
         parent.is_valid(raise_exception=True)
         self.assertEqual(
             parent.data, foo_data,
@@ -127,9 +101,9 @@ class TestParameterizedSerializerFields(test.APITestCase):
         """
         Test parameterized serializer instance to representation.
         """
-        parent = ExampleTypeFieldSerializer(
+        parent = test_serializers.ExampleTypeFieldSerializer(
             instance=self.type_field_data,
-            context=dict(view=ExampleUserViewset()))
+            context=dict(view=test_viewsets.ExampleUserViewset()))
         self.assertEqual(
             parent.data, self.type_field_data,
             'Wrong type field serializer representation')
@@ -139,7 +113,8 @@ class TestParameterizedSerializerFields(test.APITestCase):
         Test invalid parameter validation.
         """
         invalid_parameter_data = dict(self.type_field_data, type="bar-type")
-        parent = ExampleTypeFieldSerializer(data=invalid_parameter_data)
+        parent = test_serializers.ExampleTypeFieldSerializer(
+            data=invalid_parameter_data)
         with self.assertRaises(exceptions.ValidationError) as cm:
             parent.is_valid(raise_exception=True)
         self.assertIn(

@@ -154,6 +154,28 @@ PASSWORD_HASHERS = (
 
 AUTH_USER_MODEL = 'auth.User'
 
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+        (
+            'drf_extra_fields.runtests.parameterized'
+            '.ExampleParameterizedRenderer'),
+    ),
+    'DEFAULT_PARSER_CLASSES': (
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+        (
+            'drf_extra_fields.runtests.parameterized'
+            '.ExampleParameterizedParser'),
+    ),
+}
+REST_FRAMEWORK['TEST_REQUEST_RENDERER_CLASSES'] = REST_FRAMEWORK[
+    'DEFAULT_RENDERER_CLASSES']
+
+
 import django
 
 if django.VERSION < (1, 3):
