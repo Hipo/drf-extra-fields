@@ -28,4 +28,6 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
     ],
     install_requires=['django<1.11', 'djangorestframework>=3.0'],
+    test_suite='setuptest.setuptest.SetupTestSuite',
+    tests_require=['django-setuptest'],
 )

@@ -9,3 +9,6 @@ dist/
 .tox/
 /.cache
 /.coverage
+/.eggs
+/coverage.xml
+/pep8.txt
