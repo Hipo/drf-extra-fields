@@ -11,7 +11,7 @@ from . import composite
 
 class SerializerParameterValidator(object):
     """
-    Omit the field the specifies the serializer unless configured otherwise.
+    Omit the parameter field by default.
     """
 
     def set_context(self, serializer_field):
@@ -211,7 +211,7 @@ class ParameterizedGenericSerializer(
         if isinstance(value, composite.CloneReturnDict):
             specific = value.clone
         else:
-            # Make sure all fields are bound
+            # Ensure all fields are bound so that the parameter field is found
             self.fields
             # Make sure the parameter field sets the specific serializer
             self.clone_meta['parameter_field'].get_attribute(value)
