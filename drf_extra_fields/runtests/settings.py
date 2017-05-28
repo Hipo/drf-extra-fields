@@ -1,5 +1,10 @@
 # Django settings for testproject project.
 
+try:
+    import django_nose
+except ImportError:  # pragma: no cover
+    django_nose = None
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 DEBUG_PROPAGATE_EXCEPTIONS = True
@@ -79,7 +84,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
 
-ROOT_URLCONF = 'urls'
+ROOT_URLCONF = 'drf_extra_fields.runtests.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -159,17 +164,13 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
-        (
-            'drf_extra_fields.runtests.parameterized'
-            '.ExampleParameterizedRenderer'),
+        'drf_extra_fields.runtests.formats.ExampleParameterizedRenderer',
     ),
     'DEFAULT_PARSER_CLASSES': (
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
-        (
-            'drf_extra_fields.runtests.parameterized'
-            '.ExampleParameterizedParser'),
+        'drf_extra_fields.runtests.formats.ExampleParameterizedParser',
     ),
 }
 REST_FRAMEWORK['TEST_REQUEST_RENDERER_CLASSES'] = REST_FRAMEWORK[

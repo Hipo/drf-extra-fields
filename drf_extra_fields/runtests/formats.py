@@ -10,7 +10,7 @@ class ExampleParameterizedRenderer(parameterized.ParameterizedRenderer):
     media_type = 'application/vnd.drf_extra_fields+json'
     format = 'drf-extra-fields-parameterized'
 
-    serializer_class = serializers.ExampleUserSerializer
+    serializer_class = serializers.ExampleTypeFieldSerializer
 
 
 class ExampleParameterizedParser(parameterized.ParameterizedParser):

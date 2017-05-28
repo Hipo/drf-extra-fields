@@ -127,8 +127,9 @@ class SerializerParameterField(composite.SerializerCompositeField):
             if hasattr(view, 'get_queryset'):
                 model = view.get_queryset().model
             else:
-                return super(
+                self.current_parameter = super(
                     SerializerParameterField, self).get_attribute(instance)
+                return self.specific_serializers[self.current_parameter]
 
         specific = self.specific_serializers_by_type[model]
         self.current_parameter = self.parameters[type(specific)]
@@ -166,6 +167,8 @@ class SerializerParameterDictField(
         """
         super(SerializerParameterDictField, self).bind(field_name, parent)
         self.bind_parameter_field(self.child)
+
+    get_attribute = composite.SerializerDictField.get_attribute
 
     def clone_child(self, key, child, **kwargs):
         """
@@ -213,8 +216,11 @@ class ParameterizedGenericSerializer(
         else:
             # Ensure all fields are bound so that the parameter field is found
             self.fields
-            # Make sure the parameter field sets the specific serializer
-            self.clone_meta['parameter_field'].get_attribute(value)
+            if getattr(
+                    self.clone_meta['parameter_field'],
+                    'current_parameter', None) is None:
+                # Make sure the parameter field sets the specific serializer
+                self.clone_meta['parameter_field'].get_attribute(value)
             specific = self.clone_meta[
                 'parameter_field'].clone_specific_representation(
                     value=value)
@@ -274,7 +280,7 @@ class ParameterizedRenderer(renderers.JSONRenderer):
         context['skip_parameterized'] = True
 
         serializer_kwargs = dict(instance=data, context=context)
-        if getattr(renderer_context.get('view'), 'action', 'get') == 'list':
+        if getattr(context.get('view'), 'action', 'get') == 'list':
             serializer_kwargs['many'] = True
 
         serializer = self.serializer_class(**serializer_kwargs)
@@ -302,9 +308,9 @@ class ParameterizedParser(parsers.JSONParser):
 
         # Use the serializer to parse only the generic parameterized fields,
         # passing the rest onto the serializer for the actual endpoint
-        serializer = self.serializer_class(
-            data=data, context=dict(parser_context, skip_parameterized=True))
         try:
+            serializer = self.serializer_class(data=data, context=dict(
+                parser_context, skip_parameterized=True))
             serializer.is_valid(raise_exception=True)
         except exceptions.ValidationError as exc:
             raise

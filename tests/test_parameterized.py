@@ -1,4 +1,6 @@
 import copy
+import json
+import pprint
 
 from django.contrib.auth import models as auth_models
 
@@ -9,6 +11,7 @@ from rest_framework import test
 from drf_extra_fields import parameterized
 from drf_extra_fields.runtests import serializers as test_serializers
 from drf_extra_fields.runtests import viewsets as test_viewsets
+from drf_extra_fields.runtests import formats
 
 from . import test_composite
 
@@ -37,11 +40,9 @@ class TestParameterizedSerializerFields(test.APITestCase):
     Test that a parameterized field uses the correct serializer.
     """
 
-    type_field_data = {
-        "type": "user", "username": "foo_username", "password": "secret"}
-    dict_field_data = {"types": {type_field_data["type"]: {
-        key: value for key, value in type_field_data.items()
-        if key != "type"}}}
+    user_field_data = {"username": "foo_username", "password": "secret"}
+    type_field_data = dict(user_field_data, type="user")
+    dict_field_data = {"types": {type_field_data["type"]: user_field_data}}
 
     def test_parameterized_serializer(self):
         """
@@ -137,3 +138,98 @@ class TestParameterizedSerializerFields(test.APITestCase):
         self.assertEqual(
             parent.data, self.dict_field_data,
             'Wrong dict field serializer representation')
+
+    def test_parameterized_format(self):
+        """
+        Test using parameterized serialiers in renderers/parsers.
+        """
+        create_response = self.client.post(
+            '/users/?format=drf-extra-fields-parameterized',
+            json.dumps(self.type_field_data),
+            content_type=formats.ExampleParameterizedRenderer.media_type)
+        self.assertEqual(
+            create_response.status_code, 201,
+            'Create request did not succeed:\n{0}'.format(
+                pprint.pformat(create_response.data)))
+        create_json = json.loads(create_response.content.decode())
+        self.assertEqual(
+            create_json["username"], self.type_field_data["username"],
+            'Wrong parameterized format create response results')
+
+    def test_parameterized_format_wo_context(self):
+        """
+        Test using parameterized renderers/parsers without context.
+
+        Unfortunately, this is specific to the DRF test framework.
+        """
+        create_response = self.client.post(
+            '/users/',
+            self.type_field_data,
+            format='drf-extra-fields-parameterized')
+        self.assertEqual(
+            create_response.status_code, 201,
+            'Create request did not succeed:\n{0}'.format(
+                pprint.pformat(create_response.data)))
+        create_json = json.loads(create_response.content.decode())
+        self.assertEqual(
+            create_json["username"], self.type_field_data["username"],
+            'Wrong parameterized format create response results')
+
+    def test_parameterized_format_list(self):
+        """
+        Test using parameterized renderers/parsers on list views.
+        """
+        auth_models.User.objects.create(**self.user_field_data)
+        list_response = self.client.get(
+            '/users/?format=drf-extra-fields-parameterized')
+        self.assertEqual(
+            list_response.status_code, 200,
+            'List request did not succeed:\n{0}'.format(
+                pprint.pformat(list_response.data)))
+        list_json = json.loads(list_response.content.decode())
+        self.assertEqual(
+            list_json[0], self.type_field_data,
+            'Wrong parameterized format list response results')
+
+    def test_parameterized_parser_validation(self):
+        """
+        Test the parameterized parser validation.
+        """
+        invalid_response = self.client.post(
+            '/users/?format=drf-extra-fields-parameterized',
+            json.dumps(self.user_field_data),
+            content_type=formats.ExampleParameterizedRenderer.media_type)
+        self.assertEqual(
+            invalid_response.status_code, 400,
+            'Invalid request did return validation error:\n{0}'.format(
+                pprint.pformat(invalid_response.data)))
+        self.assertIn(
+            'type', invalid_response.data,
+            'Invalid request did not return error details.')
+        self.assertIn(
+            'this field is required',
+            invalid_response.data['type'][0].lower(),
+            'Wrong invalid request error details.')
+
+    def test_parameterized_parser_exception(self):
+        """
+        Test the parameterized parser exception handling.
+        """
+        exception_field_data = dict(
+            self.user_field_data,
+            test_unhandled_exception='Foo parser exception')
+        exception_response = self.client.post(
+            '/users/?format=drf-extra-fields-parameterized',
+            json.dumps(exception_field_data),
+            content_type=formats.ExampleParameterizedRenderer.media_type)
+        self.assertEqual(
+            exception_response.status_code, 400,
+            'Exception request did return validation error:\n{0}'.format(
+                pprint.pformat(exception_response.data)))
+        self.assertIn(
+            'detail', exception_response.data,
+            'Exception request did not return error details.')
+        self.assertIn(
+            exception_field_data['test_unhandled_exception'].lower(),
+            exception_response.data['detail'].lower(),
+            'Wrong exception request error details.')

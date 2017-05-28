@@ -40,4 +40,10 @@ class ExampleTypeFieldSerializer(
             "foo-type": ExampleChildSerializer(),
             "user": ExampleUserSerializer()})
 
-
+    def to_internal_value(self, data):
+        """
+        Add a hook for raising an unhandled exception.
+        """
+        if 'test_unhandled_exception' in data:
+            raise Exception(data['test_unhandled_exception'])
+        return super(ExampleTypeFieldSerializer, self).to_internal_value(data)
