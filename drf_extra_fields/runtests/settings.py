@@ -181,6 +181,12 @@ import django
 if django.VERSION < (1, 3):
     INSTALLED_APPS += ('staticfiles',)
 
+
+if django_nose is not None:  # pragma: no cover
+    INSTALLED_APPS += ('django_nose', )
+    TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+
+
 # If we're running on the Jenkins server we want to archive the coverage reports as XML.
 import os
 if os.environ.get('HUDSON_URL', None):
