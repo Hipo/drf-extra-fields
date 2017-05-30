@@ -1,5 +1,9 @@
 import six
 
+from django.conf import settings
+from django import urls
+from django.utils import functional
+
 from rest_framework import exceptions
 from rest_framework import serializers
 from rest_framework import renderers
@@ -7,6 +11,43 @@ from rest_framework import parsers
 
 
 from . import composite
+
+
+def lookup_serializer_parameters(field, pattern):
+    """
+    Lookup up the parameters and their specific serializers from views.
+    """
+    specific_serializers = {}
+    specific_serializers_by_type = {}
+
+    # Lookup any available viewset that can provide a serializer
+    class_ = getattr(getattr(pattern, 'callback', None), 'cls', None)
+    if hasattr(class_, 'get_serializer'):
+        viewset = class_(request=None, format_kwarg=None)
+        serializer = viewset.get_serializer(context=field.context)
+        model = getattr(getattr(serializer, 'Meta', None), 'model', None)
+        if hasattr(class_, 'get_queryset'):
+            model = viewset.get_queryset().model
+        parameter = getattr(
+            getattr(serializer, 'Meta'), 'parameter',
+            model._meta.verbose_name.replace(' ', '-'))
+        specific_serializers[parameter] = serializer
+        specific_serializers_by_type[model] = serializer
+
+    if hasattr(pattern, 'url_patterns'):
+        for recursed_pattern in pattern.url_patterns:
+            recursed = lookup_serializer_parameters(field, recursed_pattern)
+            recursed['specific_serializers'].update(
+                specific_serializers)
+            specific_serializers = recursed[
+                'specific_serializers']
+            recursed['specific_serializers_by_type'].update(
+                specific_serializers_by_type)
+            specific_serializers_by_type = recursed[
+                'specific_serializers_by_type']
+    return dict(
+        specific_serializers=specific_serializers,
+        specific_serializers_by_type=specific_serializers_by_type)
 
 
 class SerializerParameterValidator(object):
@@ -42,28 +83,36 @@ class SerializerParameterField(composite.SerializerCompositeField):
 
     def __init__(
             self,
+            urlconf=settings.ROOT_URLCONF,
             specific_serializers={}, specific_serializers_by_type={},
             skip=True, **kwargs):
-        """
-        Map parameters to serializers/fields per `specific_serializers`.
+        """Map parameters to serializers/fields per `specific_serializers`.
+
+        `specific_serializers` maps parameter keys (e.g. string "types") to
+        serializer instance values while `specific_serializers_by_type` maps
+        instance types/classes (e.g. Django models) to specific serializer
+        instances.
+
+        If `urlconf` is given or is left as it's default,
+        `settings.ROOT_URLCONF`, it will be used to map singular string types
+        derived from the model's `verbose_name` of any viewset's
+        `get_queryset()` found in the default url patterns to those viewset's
+        serializers via `get_serializer()`.
+
+        If both are given, items in `specific_serializers*` override items
+        derived from `urlconf`.
         """
         super(SerializerParameterField, self).__init__(**kwargs)
 
-        assert specific_serializers, (
-            'Must give `specific_serializers` kwarg '
-            'mapping parameters to serializers/fields')
-        self.specific_serializers = specific_serializers
-        self.parameters = {
-            type(specific): parameter
-            for parameter, specific
-            in self.specific_serializers.items()}
-        self.specific_serializers_by_type = {
-            specific.Meta.model: specific
-            for specific in self.specific_serializers.values()
-            if hasattr(specific, 'Meta') and
-            hasattr(specific.Meta, 'model')}
-        self.specific_serializers_by_type.update(
-            specific_serializers_by_type)
+        assert (
+            urlconf or
+            specific_serializers or specific_serializers_by_type
+        ), (
+            'Must give at lease one of `urlconf`, `specific_serializers` or'
+            '`specific_serializers_by_type`')
+        self.urlconf = urlconf
+        self._specific_serializers = specific_serializers
+        self._specific_serializers_by_type = specific_serializers_by_type
 
         self.skip = skip
         self.validators.append(SerializerParameterValidator())
@@ -83,6 +132,48 @@ class SerializerParameterField(composite.SerializerCompositeField):
         """
         super(SerializerParameterField, self).bind(field_name, parent)
         self.bind_parameter_field(parent)
+
+    def merge_serializer_parameters(self):
+        """
+        Lookup and merge the parameters and specific serializers.
+        """
+        serializers = lookup_serializer_parameters(
+            self, urls.get_resolver(self.urlconf))
+        serializers['specific_serializers'].update(
+            self._specific_serializers)
+        serializers['specific_serializers_by_type'].update(
+            self._specific_serializers_by_type)
+        serializers['parameters'] = {
+            type(serializer): parameter for parameter, serializer in
+            serializers['specific_serializers'].items()}
+        return serializers
+
+    @functional.cached_property
+    def specific_serializers(self):
+        """
+        Populate specific serializer lookup on first reference.
+        """
+        serializers = self.merge_serializer_parameters()
+        vars(self).update(**serializers)
+        return serializers['specific_serializers']
+
+    @functional.cached_property
+    def specific_serializers_by_type(self):
+        """
+        Populate specific serializer lookup on first reference.
+        """
+        serializers = self.merge_serializer_parameters()
+        vars(self).update(**serializers)
+        return serializers['specific_serializers_by_type']
+
+    @functional.cached_property
+    def parameters(self):
+        """
+        Populate specific serializer lookup on first reference.
+        """
+        serializers = self.merge_serializer_parameters()
+        vars(self).update(**serializers)
+        return serializers['parameters']
 
     def clone_specific_internal(self, data):
         """
@@ -148,6 +239,7 @@ class SerializerParameterDictField(
     """
     Map dictionary keys to the specific serializers and back.
     """
+    # TODO specific serializer validation errors in parameter dict field
 
     def __init__(self, *args, **kwargs):
         """

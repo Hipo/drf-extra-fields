@@ -24,7 +24,7 @@ class ExampleDictFieldSerializer(serializers.Serializer):
     types = parameterized.SerializerParameterDictField(
         child=parameterized.ParameterizedGenericSerializer(),
         specific_serializers=test_serializers.ExampleTypeFieldSerializer(
-        ).fields['type'].specific_serializers)
+        ).fields['type']._specific_serializers)
 
     def create(self, validated_data):
         """
@@ -122,6 +122,23 @@ class TestParameterizedSerializerFields(test.APITestCase):
             'no specific serializer available',
             cm.exception.detail["type"][0].lower(),
             'Wrong invalid parameter validation error')
+
+    def test_parameterized_field_parameters(self):
+        """
+        Test referencing reverse parameter lookup.
+        """
+        parent = test_serializers.ExampleTypeFieldSerializer(
+            instance=self.type_field_data,
+            context=dict(view=test_viewsets.ExampleUserViewset()))
+        self.assertIn(
+            test_serializers.ExampleUserSerializer,
+            parent.fields['type'].parameters,
+            'Missing specific serializer in reverse parameter lookup')
+        self.assertEqual(
+            parent.fields['type'].parameters[
+                test_serializers.ExampleUserSerializer],
+            self.type_field_data['type'],
+            'Wrong specific serializer reverse parameter lookup')
 
     def test_dict_parameterized_serializer(self):
         """
