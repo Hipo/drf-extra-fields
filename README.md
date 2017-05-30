@@ -241,6 +241,103 @@ class PostSerializer(serializers.ModelSerializer):
 }
 ```
 
+## composite.SerializerListField, composite.SerializerDictField
+
+The DRF composite list and dictionary fields both take a child serialzer
+instance but only delegate to the child's `to_internal_value(data)` or
+`to_representation(instance)` to deserialize/serialize.  These 2 fields extend
+the base DRF composite fields by instantiating the child serializer with each
+individual item and attaching it as a `data.clone` attribute.  This allows
+re-using a serializer's `save()`, `create()`, and/or `update()` methods both
+as a standalone serializer and as a child of a composite field or just for
+better factoring of create/update logic into the related serializer's methods:
+
+```
+from rest_framework import serializers
+
+from drf_extra_fields import composite
+
+
+class ExampleListSerializer(serializers.Serializer):
+    """
+    A simple serializer for testing the list composite field.
+    """
+
+    children = composite.SerializerListField(
+        child=parameterized.ExampleChildSerializer(allow_null=True),
+        allow_empty=False)
+
+    def create(self, validated_data):
+        """
+        Delegate to the children.
+        """
+        return {"children": [
+            child_data.clone.create(child_data)
+            for child_data in validated_data["children"]]}
+```
+
+
+## parameterized....
+
+The fields and serializers in the `parameterized` module support using a
+different serializer based on a parameter in the JSON.  This can be useful
+where a different schema should be used based on some content in the JSON,
+such as a `type` field.  In this way, the same endpoint can be used to
+retrieve or accept different JSON schemata based on the content.  These fields
+also make use of the `composite` module, making it possible to re-use the
+specific serializer's `save()`, `create()`, and/or `update()` methods once
+looked up per the parameter.
+
+The parameter field can also automatically derive string type parameters from
+the model's `verbose_name` of any viewset's `get_queryset()` found in URL
+patterns and map those to those viewset's serializers via `get_serializer()`.
+This can be used, for example, to create a generic endpoint that accepts JSON
+with a `type` key and uses that to lookup the appropriate serializer from
+the specific endpoint and delegate to it:
+
+```
+from django.contrib.auth import models as auth_models
+
+from rest_framework import serializers
+
+from drf_extra_fields import parameterized
+
+
+class ExampleChildSerializer(serializers.Serializer):
+    """
+    A simple serializer for testing composite fields as a child.
+    """
+
+    name = serializers.CharField()
+
+    def create(self, validated_data):
+        """
+        Delegate to the children.
+        """
+        return validated_data
+
+
+class ExampleUserSerializer(serializers.ModelSerializer):
+    """
+    A simple model serializer for testing.
+    """
+
+    class Meta:
+        model = auth_models.User
+        fields = ('username', 'password')
+
+
+class ExampleTypeFieldSerializer(
+        parameterized.ParameterizedGenericSerializer):
+    """
+    A simple serializer for testing a type field parameter.
+    """
+
+    type = parameterized.SerializerParameterField(
+        specific_serializers={
+            "foo-type": ExampleChildSerializer()})
+```
+
 
 CONTRIBUTION
 =================

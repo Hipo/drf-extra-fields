@@ -96,7 +96,7 @@ class SerializerParameterField(composite.SerializerCompositeField):
         If `urlconf` is given or is left as it's default,
         `settings.ROOT_URLCONF`, it will be used to map singular string types
         derived from the model's `verbose_name` of any viewset's
-        `get_queryset()` found in the default url patterns to those viewset's
+        `get_queryset()` found in the default URL patterns to those viewset's
         serializers via `get_serializer()`.
 
         If both are given, items in `specific_serializers*` override items
