@@ -7,6 +7,6 @@ from . import viewsets
 router = routers.DefaultRouter()
 router.register('users', viewsets.ExampleUserViewset)
 router.register(
-    'no-queryset', viewsets.ExampleNoQuerysetViewset, base_name='no-queryset')
+    'types', viewsets.ExampleTypeFieldViewset, base_name='types')
 
 urlpatterns = [url(r'^', include(router.urls))]

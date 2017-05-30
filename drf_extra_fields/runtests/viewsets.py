@@ -14,9 +14,9 @@ class ExampleUserViewset(viewsets.ModelViewSet):
     queryset = auth_models.User.objects
 
 
-class ExampleNoQuerysetViewset(viewsets.ModelViewSet):
+class ExampleTypeFieldViewset(viewsets.ModelViewSet):
     """
-    A viewset without a queryset for testing.
+    A generic viewset with a type field.
     """
 
-    serializer_class = serializers.ExampleChildSerializer
+    serializer_class = serializers.ExampleTypeFieldSerializer

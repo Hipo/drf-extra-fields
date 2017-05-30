@@ -114,13 +114,18 @@ class TestParameterizedSerializerFields(test.APITestCase):
         Test invalid parameter validation.
         """
         invalid_parameter_data = dict(self.type_field_data, type="bar-type")
-        parent = test_serializers.ExampleTypeFieldSerializer(
-            data=invalid_parameter_data)
-        with self.assertRaises(exceptions.ValidationError) as cm:
-            parent.is_valid(raise_exception=True)
+        create_response = self.client.post(
+            '/types/', invalid_parameter_data, format='json')
+        self.assertEqual(
+            create_response.status_code, 400,
+            'Invalid request did return validation error:\n{0}'.format(
+                pprint.pformat(create_response.data)))
+        self.assertIn(
+            'type', create_response.data,
+            'Missing invalid parameter validation error')
         self.assertIn(
             'no specific serializer available',
-            cm.exception.detail["type"][0].lower(),
+            create_response.data["type"][0].lower(),
             'Wrong invalid parameter validation error')
 
     def test_parameterized_field_parameters(self):
