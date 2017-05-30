@@ -1,5 +1,9 @@
 # Django settings for testproject project.
 
+import os
+
+import django
+
 try:
     import django_nose
 except ImportError:  # pragma: no cover
@@ -19,12 +23,19 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'sqlite.db',                     # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+        # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or
+        # 'oracle'.
+        'ENGINE': 'django.db.backends.sqlite3',
+        # Or path to database file if using sqlite3.
+        'NAME': 'sqlite.db',
+        # Not used with sqlite3.
+        'USER': '',
+        # Not used with sqlite3.
+        'PASSWORD': '',
+        # Set to empty string for localhost. Not used with sqlite3.
+        'HOST': '',
+        # Set to empty string for default. Not used with sqlite3.
+        'PORT': '',
     }
 }
 
@@ -73,7 +84,7 @@ SECRET_KEY = 'u@x-aj9(hoh#rb-^ymf#g2jx_hp0vj7u5#b@ag1n^seu9e!%cy'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
+    # 'django.template.loaders.eggs.Loader',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -87,7 +98,8 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'drf_extra_fields.runtests.urls'
 
 TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
+    # Put strings here, like "/home/html/django_templates" or
+    # "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
 )
@@ -112,8 +124,8 @@ INSTALLED_APPS = (
 
 # OAuth is optional and won't work if there is no oauth_provider & oauth2
 try:
-    import oauth_provider
-    import oauth2
+    import oauth_provider  # noqa
+    import oauth2  # noqa
 except ImportError:
     pass
 else:
@@ -122,7 +134,7 @@ else:
     )
 
 try:
-    import provider
+    import provider  # noqa
 except ImportError:
     pass
 else:
@@ -133,13 +145,13 @@ else:
 
 # guardian is optional
 try:
-    import guardian
+    import guardian  # noqa
 except ImportError:
     pass
 else:
     ANONYMOUS_USER_ID = -1
     AUTHENTICATION_BACKENDS = (
-        'django.contrib.auth.backends.ModelBackend', # default
+        'django.contrib.auth.backends.ModelBackend',  # default
         'guardian.backends.ObjectPermissionBackend',
     )
     INSTALLED_APPS += (
@@ -177,8 +189,6 @@ REST_FRAMEWORK['TEST_REQUEST_RENDERER_CLASSES'] = REST_FRAMEWORK[
     'DEFAULT_RENDERER_CLASSES']
 
 
-import django
-
 if django.VERSION < (1, 3):
     INSTALLED_APPS += ('staticfiles',)
 
@@ -188,8 +198,8 @@ if django_nose is not None:  # pragma: no cover
     TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 
-# If we're running on the Jenkins server we want to archive the coverage reports as XML.
-import os
+# If we're running on the Jenkins server we want to archive the coverage
+# reports as XML.
 if os.environ.get('HUDSON_URL', None):
     TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
     TEST_OUTPUT_VERBOSE = True
