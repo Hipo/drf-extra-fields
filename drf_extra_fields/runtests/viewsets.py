@@ -12,3 +12,11 @@ class ExampleUserViewset(viewsets.ModelViewSet):
 
     serializer_class = serializers.ExampleUserSerializer
     queryset = auth_models.User.objects
+
+
+class ExampleNoQuerysetViewset(viewsets.ModelViewSet):
+    """
+    A viewset without a queryset for testing.
+    """
+
+    serializer_class = serializers.ExampleChildSerializer

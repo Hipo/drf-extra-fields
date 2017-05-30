@@ -27,12 +27,21 @@ def lookup_serializer_parameters(field, pattern):
         serializer = viewset.get_serializer(context=field.context)
         model = getattr(getattr(serializer, 'Meta', None), 'model', None)
         if hasattr(class_, 'get_queryset'):
-            model = viewset.get_queryset().model
+            try:
+                queryset = viewset.get_queryset()
+            except:
+                queryset = None
+            if queryset is not None:
+                model = queryset.model
+
         parameter = getattr(
-            getattr(serializer, 'Meta'), 'parameter',
-            model._meta.verbose_name.replace(' ', '-'))
-        specific_serializers[parameter] = serializer
-        specific_serializers_by_type[model] = serializer
+            getattr(serializer, 'Meta', None), 'parameter', None)
+        if parameter is None and model is not None:
+            parameter = model._meta.verbose_name.replace(' ', '-')
+        if parameter is not None:
+            specific_serializers[parameter] = serializer
+        if model is not None:
+            specific_serializers_by_type[model] = serializer
 
     if hasattr(pattern, 'url_patterns'):
         for recursed_pattern in pattern.url_patterns:
