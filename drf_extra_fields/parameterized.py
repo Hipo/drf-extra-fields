@@ -39,9 +39,9 @@ def lookup_serializer_parameters(field, pattern):
         if parameter is None and model is not None:
             parameter = model._meta.verbose_name.replace(' ', '-')
         if parameter is not None:
-            specific_serializers[parameter] = serializer
+            specific_serializers.setdefault(parameter, serializer)
         if model is not None:
-            specific_serializers_by_type[model] = serializer
+            specific_serializers_by_type.setdefault(model, serializer)
 
     if hasattr(pattern, 'url_patterns'):
         for recursed_pattern in pattern.url_patterns:
