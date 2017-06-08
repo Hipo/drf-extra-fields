@@ -144,6 +144,23 @@ class TestParameterizedSerializerFields(test.APITestCase):
             self.type_field_data['type'],
             'Wrong specific serializer reverse parameter lookup')
 
+    def test_parameterized_field_wo_queryset(self):
+        """
+        Test parameterized field handling of a view without a queryset.
+        """
+        foo_data = dict(
+            test_composite.TestCompositeSerializerFields.child_data,
+            type="foo-type")
+        parent = test_serializers.ExampleTypeFieldSerializer(
+            instance=foo_data, context=dict(
+                view=test_viewsets.ExampleTypeFieldViewset()))
+        self.assertIn(
+            'type', parent.data,
+            'Missing invalid parameter validation error')
+        self.assertEqual(
+            parent.data["type"], foo_data["type"],
+            'Wrong invalid parameter validation error')
+
     def test_dict_parameterized_serializer(self):
         """
         Test delegating to a specific serializer from a dict key.

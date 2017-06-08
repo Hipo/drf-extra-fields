@@ -29,9 +29,9 @@ def lookup_serializer_parameters(field, pattern):
         if hasattr(class_, 'get_queryset'):
             try:
                 queryset = viewset.get_queryset()
-            except:
-                queryset = None
-            if queryset is not None:
+            except AssertionError:
+                pass
+            else:
                 model = queryset.model
 
         parameter = getattr(
@@ -225,8 +225,13 @@ class SerializerParameterField(composite.SerializerCompositeField):
         if model not in self.specific_serializers_by_type:
             view = self.context.get('view')
             if hasattr(view, 'get_queryset'):
-                model = view.get_queryset().model
-            else:
+                try:
+                    queryset = view.get_queryset()
+                except AssertionError:
+                    pass
+                else:
+                    model = queryset.model
+            if model not in self.specific_serializers_by_type:
                 self.current_parameter = super(
                     SerializerParameterField, self).get_attribute(instance)
                 return self.specific_serializers[self.current_parameter]
