@@ -1,8 +1,7 @@
-import six
-
 from django.conf import settings
 from django import urls
 from django.utils import functional
+from django.utils import six
 
 from rest_framework import exceptions
 from rest_framework import serializers
