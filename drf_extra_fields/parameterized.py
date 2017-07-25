@@ -3,6 +3,7 @@ from django import urls
 from django.utils import functional
 from django.utils import six
 
+from rest_framework import status
 from rest_framework import exceptions
 from rest_framework import serializers
 from rest_framework import renderers
@@ -290,6 +291,18 @@ class ParameterizedGenericSerializer(
     Process generic schema, then delegate the rest to the specific serializer.
     """
 
+    # If the serializer's to_representation method should also process error
+    # responses, set this to True in your subclass
+    handle_errors = False
+
+    def should_skip_error(self):
+        """
+        """
+        return (
+            'response' in self.context and
+            not status.is_success(self.context['response'].status_code) and
+            not self.handle_errors)
+
     def to_internal_value(self, data):
         """
         Merge generic values into the rest and pass onto the specific.
@@ -331,6 +344,9 @@ class ParameterizedGenericSerializer(
                     value=value)
         if not self.context.get('skip_parameterized', False):
             value = composite.CloneReturnDict(specific.data, specific)
+
+        if self.should_skip_error():
+            return value
 
         data = super(ParameterizedGenericSerializer, self).to_representation(
             value)
