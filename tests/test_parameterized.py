@@ -219,6 +219,12 @@ class TestParameterizedSerializerFields(test.APITestCase):
             parent.data, self.dict_field_data,
             'Wrong dict field serializer representation')
 
+    def test_serializer_skip_parameterized(self):
+        """
+        A parameterized serializer can skip specific fields individually.
+        """
+        parameterized.ParameterizedGenericSerializer(skip_parameterized=True)
+
     def test_parameterized_format(self):
         """
         Test using parameterized serialiers in renderers/parsers.

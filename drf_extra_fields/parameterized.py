@@ -317,7 +317,7 @@ class ParameterizedGenericSerializer(
 
     def __init__(
             self, instance=None, data=serializers.empty,
-            parameter_field_name=None, **kwargs):
+            skip_parameterized=None, parameter_field_name=None, **kwargs):
         """
         Process generic schema, then delegate the rest to the specific.
 
@@ -326,6 +326,9 @@ class ParameterizedGenericSerializer(
         """
         super(ParameterizedGenericSerializer, self).__init__(
             instance=instance, data=data, **kwargs)
+        if skip_parameterized is not None:
+            # Allow class to provide a default
+            self.skip_parameterized = skip_parameterized
         self.parameter_field_name = parameter_field_name
 
     def should_skip_error(self):
@@ -361,7 +364,9 @@ class ParameterizedGenericSerializer(
 
         specific = self.clone_meta[
             'parameter_field'].clone_specific_internal(data=value)
-        if not self.context.get('skip_parameterized', False):
+        if not (
+                getattr(self, 'skip_parameterized', False) or
+                self.context.get('skip_parameterized', False)):
             # Reconstitute and validate the specific serializer
             specific.is_valid(raise_exception=True)
             value = specific.validated_data
@@ -385,7 +390,9 @@ class ParameterizedGenericSerializer(
             specific = self.clone_meta[
                 'parameter_field'].clone_specific_representation(
                     value=value)
-        if not self.context.get('skip_parameterized', False):
+        if not (
+                getattr(self, 'skip_parameterized', False) or
+                self.context.get('skip_parameterized', False)):
             value = composite.CloneReturnDict(specific.data, specific)
 
         if self.should_skip_error():
