@@ -37,6 +37,28 @@ class ExampleDictFieldSerializer(serializers.Serializer):
             for type_, child_data in validated_data["types"].items()}}
 
 
+class ExampleSiblingFieldSerializer(serializers.Serializer):
+    """
+    A simple serializer for testing a dict field parameter.
+    """
+
+    type = parameterized.SerializerParameterField(
+        specific_serializers=test_serializers.ExampleTypeFieldSerializer(
+        ).fields['type']._specific_serializers)
+    attributes = parameterized.ParameterizedGenericSerializer(
+        parameter_field_name='type')
+
+    def create(self, validated_data):
+        """
+        Delegate to the specific serializer.
+        """
+        validated_data["type"] = self.fields['type'].parameters[
+            type(validated_data['attributes'].clone)]
+        validated_data["attributes"] = validated_data[
+            "attributes"].clone.create(validated_data["attributes"])
+        return validated_data
+
+
 class TestParameterizedSerializerFields(test.APITestCase):
     """
     Test that a parameterized field uses the correct serializer.
@@ -44,6 +66,7 @@ class TestParameterizedSerializerFields(test.APITestCase):
 
     user_field_data = {"username": "foo_username", "password": "secret"}
     type_field_data = dict(user_field_data, type="users")
+    sibling_field_data = {"type": "users", "attributes": user_field_data}
     dict_field_data = {"types": {"user": user_field_data}}
 
     def test_parameterized_serializer(self):
@@ -163,6 +186,22 @@ class TestParameterizedSerializerFields(test.APITestCase):
         self.assertEqual(
             parent.data["type"], foo_data["type"],
             'Wrong invalid parameter validation error')
+
+    def test_sibling_parameterized_serializer(self):
+        """
+        Test delegating to a specific serializer from a sibling field.
+        """
+        parent = ExampleSiblingFieldSerializer(data=self.sibling_field_data)
+        parent.is_valid(raise_exception=True)
+        save_result = parent.save()
+        sibling_field_value = copy.deepcopy(self.sibling_field_data)
+        sibling_field_value["attributes"] = auth_models.User.objects.get()
+        self.assertEqual(
+            save_result, sibling_field_value,
+            'Wrong sibling field serializer save results')
+        self.assertEqual(
+            parent.data, self.sibling_field_data,
+            'Wrong sibling field serializer representation')
 
     def test_dict_parameterized_serializer(self):
         """

@@ -315,6 +315,19 @@ class ParameterizedGenericSerializer(
     # responses, set this to True in your subclass
     handle_errors = False
 
+    def __init__(
+            self, instance=None, data=serializers.empty,
+            parameter_field_name=None, **kwargs):
+        """
+        Process generic schema, then delegate the rest to the specific.
+
+        If `parameter_field_name` is given, it must be the name of a
+        SerializerParameterField in the same serializer as this serializer.
+        """
+        super(ParameterizedGenericSerializer, self).__init__(
+            instance=instance, data=data, **kwargs)
+        self.parameter_field_name = parameter_field_name
+
     def should_skip_error(self):
         """
         """
@@ -322,6 +335,16 @@ class ParameterizedGenericSerializer(
             'response' in self.context and
             not status.is_success(self.context['response'].status_code) and
             not self.handle_errors)
+
+    def bind(self, field_name, parent):
+        """
+        If a sibling parameter field is specified, bind as needed.
+        """
+        super(ParameterizedGenericSerializer, self).bind(field_name, parent)
+        if self.parameter_field_name is not None:
+            parameter_field = parent.fields[
+                self.parameter_field_name]
+            parameter_field.bind_parameter_field(self)
 
     def to_internal_value(self, data):
         """
