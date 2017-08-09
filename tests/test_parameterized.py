@@ -2,6 +2,8 @@ import copy
 import json
 import pprint
 
+import inflection
+
 from django.contrib.auth import models as auth_models
 
 from rest_framework import serializers
@@ -21,6 +23,7 @@ class ExampleDictFieldSerializer(serializers.Serializer):
     """
 
     types = parameterized.SerializerParameterDictField(
+        inflectors=[inflection.singularize, inflection.parameterize],
         child=parameterized.ParameterizedGenericSerializer(),
         specific_serializers=test_serializers.ExampleTypeFieldSerializer(
         ).fields['type']._specific_serializers)
@@ -40,8 +43,8 @@ class TestParameterizedSerializerFields(test.APITestCase):
     """
 
     user_field_data = {"username": "foo_username", "password": "secret"}
-    type_field_data = dict(user_field_data, type="user")
-    dict_field_data = {"types": {type_field_data["type"]: user_field_data}}
+    type_field_data = dict(user_field_data, type="users")
+    dict_field_data = {"types": {"user": user_field_data}}
 
     def test_parameterized_serializer(self):
         """

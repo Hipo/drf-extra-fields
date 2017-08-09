@@ -1,3 +1,10 @@
+try:
+    import inflection
+except ImportError:  # pragma: no cover
+    inflectors = []
+else:
+    inflectors = [inflection.pluralize, inflection.parameterize]
+
 from django.conf import settings
 from django import urls
 from django.utils import functional
@@ -13,7 +20,7 @@ from rest_framework import parsers
 from . import composite
 
 
-def lookup_serializer_parameters(field, pattern):
+def lookup_serializer_parameters(field, pattern, inflectors=inflectors):
     """
     Lookup up the parameters and their specific serializers from views.
     """
@@ -39,13 +46,16 @@ def lookup_serializer_parameters(field, pattern):
         if parameter is None and model is not None:
             parameter = model._meta.verbose_name.replace(' ', '-')
         if parameter is not None:
+            for inflector in inflectors:
+                parameter = inflector(parameter)
             specific_serializers.setdefault(parameter, serializer)
         if model is not None:
             specific_serializers_by_type.setdefault(model, serializer)
 
     if hasattr(pattern, 'url_patterns'):
         for recursed_pattern in pattern.url_patterns:
-            recursed = lookup_serializer_parameters(field, recursed_pattern)
+            recursed = lookup_serializer_parameters(
+                field, recursed_pattern, inflectors=inflectors)
             recursed['specific_serializers'].update(
                 specific_serializers)
             specific_serializers = recursed[
@@ -92,7 +102,7 @@ class SerializerParameterField(composite.SerializerCompositeField):
 
     def __init__(
             self,
-            urlconf=settings.ROOT_URLCONF,
+            urlconf=settings.ROOT_URLCONF, inflectors=inflectors,
             specific_serializers={}, specific_serializers_by_type={},
             skip=True, **kwargs):
         """Map parameters to serializers/fields per `specific_serializers`.
@@ -120,6 +130,7 @@ class SerializerParameterField(composite.SerializerCompositeField):
             'Must give at lease one of `urlconf`, `specific_serializers` or'
             '`specific_serializers_by_type`')
         self.urlconf = urlconf
+        self.inflectors = inflectors
         self._specific_serializers = specific_serializers
         self._specific_serializers_by_type = specific_serializers_by_type
 
@@ -147,7 +158,7 @@ class SerializerParameterField(composite.SerializerCompositeField):
         Lookup and merge the parameters and specific serializers.
         """
         serializers = lookup_serializer_parameters(
-            self, urls.get_resolver(self.urlconf))
+            self, urls.get_resolver(self.urlconf), inflectors=self.inflectors)
         serializers['specific_serializers'].update(
             self._specific_serializers)
         serializers['specific_serializers_by_type'].update(
