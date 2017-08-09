@@ -5,7 +5,6 @@ import os
 import django
 from django.test import TestCase, override_settings
 from django.utils import timezone
-from django.db import models
 from rest_framework import serializers
 
 from drf_extra_fields import compat
@@ -75,10 +74,12 @@ class Base64ImageSerializerTests(TestCase):
         """
         now = datetime.datetime.now()
         file = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
-        serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
+        serializer = UploadedBase64ImageSerializer(
+            data={'created': now, 'file': file})
         uploaded_image = UploadedBase64Image(file=file, created=now)
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer.validated_data['created'], uploaded_image.created)
+        self.assertEqual(
+            serializer.validated_data['created'], uploaded_image.created)
         self.assertFalse(serializer.validated_data is uploaded_image)
 
     def test_create_with_base64_prefix(self):
@@ -86,11 +87,15 @@ class Base64ImageSerializerTests(TestCase):
         Test for creating Base64 image in the server side
         """
         now = datetime.datetime.now()
-        file = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
-        serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
+        file = (
+            'data:image/gif;base64,'
+            'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==')
+        serializer = UploadedBase64ImageSerializer(
+            data={'created': now, 'file': file})
         uploaded_image = UploadedBase64Image(file=file, created=now)
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer.validated_data['created'], uploaded_image.created)
+        self.assertEqual(
+            serializer.validated_data['created'], uploaded_image.created)
         self.assertFalse(serializer.validated_data is uploaded_image)
 
     def test_validation_error_with_non_file(self):
@@ -111,9 +116,11 @@ class Base64ImageSerializerTests(TestCase):
         now = datetime.datetime.now()
         file = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
         uploaded_image = UploadedBase64Image(file=file, created=now)
-        serializer = UploadedBase64ImageSerializer(instance=uploaded_image, data={'created': now, 'file': ''})
+        serializer = UploadedBase64ImageSerializer(
+            instance=uploaded_image, data={'created': now, 'file': ''})
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer.validated_data['created'], uploaded_image.created)
+        self.assertEqual(
+            serializer.validated_data['created'], uploaded_image.created)
         self.assertIsNone(serializer.validated_data['file'])
 
     def test_download(self):
@@ -160,11 +167,13 @@ class Base64FileSerializerTests(TestCase):
         """
         now = datetime.datetime.now()
         file = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
-        serializer = UploadedBase64FileSerializer(data={'created': now, 'file': file})
+        serializer = UploadedBase64FileSerializer(
+            data={'created': now, 'file': file})
         uploaded_file = UploadedBase64File(file=file, created=now)
         serializer.is_valid()
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer.validated_data['created'], uploaded_file.created)
+        self.assertEqual(
+            serializer.validated_data['created'], uploaded_file.created)
         self.assertFalse(serializer.validated_data is uploaded_file)
 
     def test_create_with_base64_prefix(self):
@@ -172,13 +181,16 @@ class Base64FileSerializerTests(TestCase):
         Test for creating Base64 file in the server side
         """
         now = datetime.datetime.now()
-        file = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
-        serializer = UploadedBase64FileSerializer(data={'created': now, 'file': file})
+        file = (
+            'data:image/gif;base64,'
+            'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==')
+        serializer = UploadedBase64FileSerializer(
+            data={'created': now, 'file': file})
         uploaded_file = UploadedBase64File(file=file, created=now)
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer.validated_data['created'], uploaded_file.created)
+        self.assertEqual(
+            serializer.validated_data['created'], uploaded_file.created)
         self.assertFalse(serializer.validated_data is uploaded_file)
-
 
     def test_validation_error_with_non_file(self):
         """
@@ -187,10 +199,9 @@ class Base64FileSerializerTests(TestCase):
         now = datetime.datetime.now()
         errmsg = "Please upload a valid file."
         serializer = UploadedBase64FileSerializer(data={'created': now,
-                                                         'file': 'abc'})
+                                                        'file': 'abc'})
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors, {'file': [errmsg]})
-
 
     def test_remove_with_empty_string(self):
         """
@@ -199,9 +210,11 @@ class Base64FileSerializerTests(TestCase):
         now = datetime.datetime.now()
         file = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
         uploaded_file = UploadedBase64File(file=file, created=now)
-        serializer = UploadedBase64FileSerializer(instance=uploaded_file, data={'created': now, 'file': ''})
+        serializer = UploadedBase64FileSerializer(
+            instance=uploaded_file, data={'created': now, 'file': ''})
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer.validated_data['created'], uploaded_file.created)
+        self.assertEqual(
+            serializer.validated_data['created'], uploaded_file.created)
         self.assertIsNone(serializer.validated_data['file'])
 
     def test_download(self):
@@ -250,12 +263,13 @@ class PointSerializerTest(TestCase):
         serializer = PointSerializer(data={'created': now, 'point': point})
         saved_point = SavePoint(point=point, created=now)
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer.validated_data['created'], saved_point.created)
+        self.assertEqual(
+            serializer.validated_data['created'], saved_point.created)
         self.assertFalse(serializer.validated_data is saved_point)
 
     def test_validation_error_with_non_file(self):
         """
-        Passing non-dict contains latitude and longitude should raise a validation error.
+        Non-dict latitude and longitude should raise a validation error.
         """
         now = datetime.datetime.now()
         serializer = PointSerializer(data={'created': now, 'point': '123'})
@@ -273,7 +287,8 @@ class PointSerializerTest(TestCase):
         saved_point = SavePoint(point=point, created=now)
         serializer = PointSerializer(data={'created': now, 'point': ''})
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer.validated_data['created'], saved_point.created)
+        self.assertEqual(
+            serializer.validated_data['created'], saved_point.created)
         self.assertIsNone(serializer.validated_data['point'])
 
     def test_empty_latitude(self):
@@ -296,6 +311,7 @@ class PointSerializerTest(TestCase):
 
 # Backported from django_rest_framework/tests/test_fields.py
 
+
 def get_items(mapping_or_list_of_two_tuples):
     # Tests accept either lists of two tuples, or dictionaries.
     if isinstance(mapping_or_list_of_two_tuples, dict):
@@ -309,6 +325,7 @@ class FieldValues:
     """
     Base class for testing valid and invalid input values.
     """
+
     def test_valid_inputs(self):
         """
         Ensure that valid values return the expected validated data.
@@ -327,7 +344,8 @@ class FieldValues:
 
     def test_outputs(self):
         for output_value, expected_output in get_items(self.outputs):
-            assert self.field.to_representation(output_value) == expected_output
+            assert self.field.to_representation(
+                output_value) == expected_output
 
 # end of backport
 
@@ -355,14 +373,16 @@ class TestIntegerRangeField(FieldValues):
         ]
         invalid_inputs = [
             ({'lower': 'a'}, ['A valid integer is required.']),
-            ('not a dict', ['Expected a dictionary of items but got type "str".']),
+            ('not a dict', [
+             'Expected a dictionary of items but got type "str".']),
             ({'foo': 'bar'}, ['Extra content not allowed "foo".']),
         ]
         outputs = [
             (compat.NumericRange(**{'lower': '1', 'upper': '2'}),
              {'lower': 1, 'upper': 2, 'bounds': '[)'}),
             (compat.NumericRange(**{'empty': True}), {'empty': True}),
-            (compat.NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+            (compat.NumericRange(), {
+             'bounds': '[)', 'lower': None, 'upper': None}),
         ]
     field = IntegerRangeField()
 
@@ -371,7 +391,8 @@ class TestIntegerRangeField(FieldValues):
             IntegerRangeField(child=serializers.IntegerField(source='other'))
 
         assert str(exc_info.value) == (
-            "The `source` argument is not meaningful when applied to a `child=` field. "
+            "The `source` argument is not meaningful "
+            "when applied to a `child=` field. "
             "Remove `source=` from the field declaration."
         )
 
@@ -386,7 +407,8 @@ class TestFloatRangeField(FieldValues):
     if compat.NumericRange is not None:
         valid_inputs = [
             ({'lower': '1', 'upper': 2., 'bounds': '[)'},
-             compat.NumericRange(**{'lower': 1., 'upper': 2., 'bounds': '[)'})),
+             compat.NumericRange(
+                 **{'lower': 1., 'upper': 2., 'bounds': '[)'})),
             ({'lower': 1., 'upper': 2.},
              compat.NumericRange(**{'lower': 1, 'upper': 2})),
             ({'lower': 1},
@@ -399,13 +421,15 @@ class TestFloatRangeField(FieldValues):
         ]
         invalid_inputs = [
             ({'lower': 'a'}, ['A valid number is required.']),
-            ('not a dict', ['Expected a dictionary of items but got type "str".']),
+            ('not a dict', [
+             'Expected a dictionary of items but got type "str".']),
         ]
         outputs = [
             (compat.NumericRange(**{'lower': '1.1', 'upper': '2'}),
              {'lower': 1.1, 'upper': 2, 'bounds': '[)'}),
             (compat.NumericRange(**{'empty': True}), {'empty': True}),
-            (compat.NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+            (compat.NumericRange(), {
+             'bounds': '[)', 'lower': None, 'upper': None}),
         ]
     field = FloatRangeField()
 
@@ -414,7 +438,8 @@ class TestFloatRangeField(FieldValues):
             FloatRangeField(child=serializers.IntegerField(source='other'))
 
         assert str(exc_info.value) == (
-            "The `source` argument is not meaningful when applied to a `child=` field. "
+            "The `source` argument is not meaningful "
+            "when applied to a `child=` field. "
             "Remove `source=` from the field declaration."
         )
 
@@ -455,10 +480,12 @@ class TestDateTimeRangeField(TestCase, FieldValues):
             ({}, compat.DateTimeTZRange()),
         ]
         invalid_inputs = [
-            ({'lower': 'a'}, ['Datetime has wrong format. Use one of these'
-                              ' formats instead: '
-                              'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].']),
-            ('not a dict', ['Expected a dictionary of items but got type "str".']),
+            ({'lower': 'a'}, [
+                'Datetime has wrong format. Use one of these'
+                ' formats instead: '
+                'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].']),
+            ('not a dict', [
+             'Expected a dictionary of items but got type "str".']),
         ]
         outputs = [
             (compat.DateTimeTZRange(
@@ -481,7 +508,8 @@ class TestDateTimeRangeField(TestCase, FieldValues):
             DateTimeRangeField(child=serializers.IntegerField(source='other'))
 
         assert str(exc_info.value) == (
-            "The `source` argument is not meaningful when applied to a `child=` field. "
+            "The `source` argument is not meaningful "
+            "when applied to a `child=` field. "
             "Remove `source=` from the field declaration."
         )
 
@@ -520,7 +548,8 @@ class TestDateRangeField(FieldValues):
             ({'lower': 'a'}, ['Date has wrong format. Use one of these'
                               ' formats instead: '
                               'YYYY[-MM[-DD]].']),
-            ('not a dict', ['Expected a dictionary of items but got type "str".']),
+            ('not a dict', [
+             'Expected a dictionary of items but got type "str".']),
         ]
         outputs = [
             (compat.DateRange(
@@ -531,7 +560,8 @@ class TestDateRangeField(FieldValues):
                  'bounds': '[)'}),
             (compat.DateRange(**{'empty': True}),
              {'empty': True}),
-            (compat.DateRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+            (compat.DateRange(), {'bounds': '[)',
+                                  'lower': None, 'upper': None}),
         ]
     field = DateRangeField()
 
@@ -540,6 +570,7 @@ class TestDateRangeField(FieldValues):
             DateRangeField(child=serializers.IntegerField(source='other'))
 
         assert str(exc_info.value) == (
-            "The `source` argument is not meaningful when applied to a `child=` field. "
+            "The `source` argument is not meaningful "
+            "when applied to a `child=` field. "
             "Remove `source=` from the field declaration."
         )

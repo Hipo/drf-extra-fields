@@ -1,5 +1,3 @@
-import pytest
-
 from rest_framework import serializers
 from rest_framework.test import APISimpleTestCase
 from .utils import (
@@ -34,5 +32,6 @@ class TestPresentablePrimaryKeyRelatedField(APISimpleTestCase):
 
     def test_representation(self):
         representation = self.field.to_representation(self.instance)
-        expected_representation = self.PresentationSerializer(self.instance).data
+        expected_representation = self.PresentationSerializer(
+            self.instance).data
         assert representation == expected_representation
