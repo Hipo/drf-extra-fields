@@ -1,3 +1,5 @@
+import re
+
 try:
     import inflection
 except ImportError:  # pragma: no cover
@@ -19,8 +21,11 @@ from rest_framework import parsers
 
 from . import composite
 
+url_parameter_re = re.compile(r'\^([^/?]+)/\$')
 
-def lookup_serializer_parameters(field, pattern, inflectors=inflectors):
+
+def lookup_serializer_parameters(
+        field, pattern, url_re=url_parameter_re, inflectors=inflectors):
     """
     Lookup up the parameters and their specific serializers from views.
     """
@@ -43,8 +48,12 @@ def lookup_serializer_parameters(field, pattern, inflectors=inflectors):
 
         parameter = getattr(
             getattr(serializer, 'Meta', None), 'parameter', None)
-        if parameter is None and model is not None:
-            parameter = model._meta.verbose_name.replace(' ', '-')
+        if parameter is None:
+            url_match = url_re.match(pattern.regex.pattern)
+            if url_match is not None:
+                parameter = url_match.group(1)
+            elif model is not None:
+                parameter = model._meta.verbose_name.replace(' ', '-')
         if parameter is not None:
             for inflector in inflectors:
                 parameter = inflector(parameter)
