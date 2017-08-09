@@ -433,18 +433,22 @@ class TestDateTimeRangeField(TestCase, FieldValues):
               'upper': '2001-02-02T13:00:00Z',
               'bounds': '[)'},
              compat.DateTimeTZRange(
-                 **{'lower': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=timezone.UTC()),
-                    'upper': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=timezone.UTC()),
+                 **{'lower': datetime.datetime(
+                     2001, 1, 1, 13, 00, tzinfo=timezone.utc),
+                    'upper': datetime.datetime(
+                     2001, 2, 2, 13, 00, tzinfo=timezone.utc),
                     'bounds': '[)'})),
             ({'upper': '2001-02-02T13:00:00Z',
               'bounds': '[)'},
              compat.DateTimeTZRange(
-                 **{'upper': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=timezone.UTC()),
+                 **{'upper': datetime.datetime(
+                     2001, 2, 2, 13, 00, tzinfo=timezone.utc),
                     'bounds': '[)'})),
             ({'lower': '2001-01-01T13:00:00Z',
               'bounds': '[)'},
              compat.DateTimeTZRange(
-                 **{'lower': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=timezone.UTC()),
+                 **{'lower': datetime.datetime(
+                     2001, 1, 1, 13, 00, tzinfo=timezone.utc),
                     'bounds': '[)'})),
             ({'empty': True},
              compat.DateTimeTZRange(**{'empty': True})),
@@ -458,8 +462,10 @@ class TestDateTimeRangeField(TestCase, FieldValues):
         ]
         outputs = [
             (compat.DateTimeTZRange(
-                **{'lower': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=timezone.UTC()),
-                   'upper': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=timezone.UTC())}),
+                **{'lower': datetime.datetime(
+                    2001, 1, 1, 13, 00, tzinfo=timezone.utc),
+                   'upper': datetime.datetime(
+                    2001, 2, 2, 13, 00, tzinfo=timezone.utc)}),
                 {'lower': '2001-01-01T13:00:00Z',
                  'upper': '2001-02-02T13:00:00Z',
                  'bounds': '[)'}),
