@@ -333,6 +333,7 @@ class ParameterizedGenericSerializer(
 
     def should_skip_error(self):
         """
+        Is the current response an error response and should we process it?
         """
         return (
             'response' in self.context and
