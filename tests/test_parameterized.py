@@ -221,7 +221,7 @@ class TestParameterizedSerializerFields(test.APITestCase):
 
     def test_serializer_skip_parameterized(self):
         """
-        A parameterized serializer can skip specific fields individually.
+        An parameterized serializer can optionally skip specific fields.
         """
         parameterized.ParameterizedGenericSerializer(skip_parameterized=True)
 
