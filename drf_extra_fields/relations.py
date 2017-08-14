@@ -1,5 +1,6 @@
 from django.core import exceptions
 
+from rest_framework import serializers
 from rest_framework import relations
 
 
@@ -75,3 +76,34 @@ class PrimaryKeySourceRelatedField(relations.PrimaryKeyRelatedField):
             return self.pk_field.to_representation(
                 self.pk_field.get_attribute(value))
         return value.pk
+
+
+uuid_field = serializers.UUIDField(source='uuid')
+
+
+class UUIDRelatedField(PrimaryKeySourceRelatedField):
+    """
+    A primary key and relationship field that uses UUIDs.
+    """
+
+    def __init__(self, **kwargs):
+        """
+        Use the UUID field by default.
+        """
+        kwargs.setdefault('pk_field', uuid_field)
+        super(UUIDRelatedField, self).__init__(**kwargs)
+
+
+class UUIDModelSerializer(serializers.ModelSerializer):
+    """
+    A serializer that uses UUIDs throughout, meant to be subclassed.
+    """
+
+    serializer_related_field = UUIDRelatedField
+
+    class Meta:
+        exclude = ('uuid', )
+        # Ensure related serializers also use the UUID field
+        extra_kwargs = dict(id=dict(pk_field=uuid_field))
+
+    id = serializers.UUIDField(source='uuid', required=False)

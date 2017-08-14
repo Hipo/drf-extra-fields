@@ -241,6 +241,17 @@ class PostSerializer(serializers.ModelSerializer):
 }
 ```
 
+## `relations.PrimaryKeySourceRelatedField` and `relations.UUIDModelSerializer`
+
+The former provides generic support for relations that use something other
+than a DB integer PK for relationships such that you can specify some other
+field to use.  The latter is a serializer base class (IOW, meant to be
+subclassed in your serializers) that uses the former field to provide
+model-based serializers that use UUIDs instead of DB PK values throughout, for
+both the primary resource and related resources.  These can be useful for
+creating APIs that use UUIDs throughout while still using integer PKs in the
+DB on the back-end.
+
 ## composite.SerializerListField, composite.SerializerDictField
 
 The DRF composite list and dictionary fields both take a child serialzer
