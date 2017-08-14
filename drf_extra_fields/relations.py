@@ -1,7 +1,9 @@
-from rest_framework.relations import PrimaryKeyRelatedField
+from django.core import exceptions
+
+from rest_framework import relations
 
 
-class PresentablePrimaryKeyRelatedField(PrimaryKeyRelatedField):
+class PresentablePrimaryKeyRelatedField(relations.PrimaryKeyRelatedField):
     """
     Override PrimaryKeyRelatedField to represent serializer data.
 
@@ -33,3 +35,43 @@ class PresentablePrimaryKeyRelatedField(PrimaryKeyRelatedField):
 
     def to_representation(self, data):
         return self.presentation_serializer(data, context=self.context).data
+
+
+class PrimaryKeySourceRelatedField(relations.PrimaryKeyRelatedField):
+    """
+    A field for arbitrary primary key model fields.
+    """
+
+    def use_pk_only_optimization(self):
+        if (getattr(self.pk_field, 'source', None) or 'pk') == 'pk':
+            return True
+        return False
+
+    def bind(self, field_name, parent):
+        """
+        Also bind the `pk_field`.
+        """
+        super(PrimaryKeySourceRelatedField, self).bind(field_name, parent)
+
+        if self.pk_field is not None:
+            self.pk_field.bind('pk', self)
+
+    def to_internal_value(self, data):
+        if self.pk_field is not None:
+            kwargs = {
+                self.pk_field.source or 'pk':
+                self.pk_field.to_internal_value(data)}
+        else:
+            kwargs = {'pk': data}
+        try:
+            return self.get_queryset().get(**kwargs)
+        except exceptions.ObjectDoesNotExist:
+            self.fail('does_not_exist', pk_value=kwargs)
+        except (TypeError, ValueError):
+            self.fail('incorrect_type', data_type=type(data).__name__)
+
+    def to_representation(self, value):
+        if getattr(self, 'pk_field', None) is not None:
+            return self.pk_field.to_representation(
+                self.pk_field.get_attribute(value))
+        return value.pk
