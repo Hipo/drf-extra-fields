@@ -38,6 +38,14 @@ class TestPresentablePrimaryKeyRelatedField(APISimpleTestCase):
             self.instance).data
         assert representation == expected_representation
 
+    def test_pk_only_optimization(self):
+        """
+        The presentation PK field uses the pk optimization correctly.
+        """
+        self.assertFalse(
+            self.field.use_pk_only_optimization(),
+            'Used PK optimization when source was given')
+
 
 class TestPrimaryKeySourceRelatedField(APISimpleTestCase):
 
