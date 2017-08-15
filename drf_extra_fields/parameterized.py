@@ -311,25 +311,51 @@ class ParameterizedGenericSerializer(
     Process generic schema, then delegate the rest to the specific serializer.
     """
 
-    # If the serializer's to_representation method should also process error
-    # responses, set this to True in your subclass
+    # Class-based defaults for instantiation kwargs
     handle_errors = False
+    skip_parameterized = False
 
     def __init__(
             self, instance=None, data=serializers.empty,
-            skip_parameterized=None, parameter_field_name=None, **kwargs):
+            parameter_field_name=None, handle_errors=None,
+            skip_parameterized=None, **kwargs):
         """
         Process generic schema, then delegate the rest to the specific.
 
+        `SerializerParameterField` expects to be a field in the same
+        JavaScript object as the parameterized fields:
+        `{"type": "users", "id": 1, "username": "foo_username", ...}
+        while `SerializerParameterDictField` expects to get the parameter from
+        a JavaScript object key/property-name:
+        `{"users": {"id": 1, "username": "foo_username", ...}, ...}`.
         If `parameter_field_name` is given, it must be the name of a
-        SerializerParameterField in the same serializer as this serializer.
+        SerializerParameterField in the same parent serializer as this
+        serializer.  This can be useful when the parameter is taken from a
+        field next to the serializer, such as the JSON API format:
+        `{"type": "users", "attributes": {"username": "foo_username", ...}}`.
+
+        In most cases, error response payloads do not have the same schema as
+        success responses.  As such, by default parameterized serializers skip
+        all handling of error response bodies.  Give `handle_errors=True` to
+        force processing error response payloads with the parameterized
+        serializer.
+
+        By default, the looked up parameterized serializer is used to process
+        the data during `to_internal_value()` and `to_representation()`,
+        unless `skip_parameterized=True` in which case it is skipped.  This
+        can be useful if the input data has already been processed by a
+        parameterized serializer, such as when used in a renderer/parser.
+
         """
         super(ParameterizedGenericSerializer, self).__init__(
             instance=instance, data=data, **kwargs)
+        if handle_errors is not None:
+            # Allow class to provide a default
+            self.handle_errors = handle_errors
+        self.parameter_field_name = parameter_field_name
         if skip_parameterized is not None:
             # Allow class to provide a default
             self.skip_parameterized = skip_parameterized
-        self.parameter_field_name = parameter_field_name
 
     def should_skip_error(self):
         """
@@ -366,7 +392,7 @@ class ParameterizedGenericSerializer(
         specific = self.clone_meta[
             'parameter_field'].clone_specific_internal(data=value)
         if not (
-                getattr(self, 'skip_parameterized', False) or
+                self.skip_parameterized or
                 self.context.get('skip_parameterized', False)):
             # Reconstitute and validate the specific serializer
             specific.is_valid(raise_exception=True)
@@ -395,19 +421,17 @@ class ParameterizedGenericSerializer(
                 'parameter_field'].clone_specific_representation(
                     value=instance)
         if not (
-                getattr(self, 'skip_parameterized', False) or
+                self.skip_parameterized or
                 self.context.get('skip_parameterized', False)):
-            specific_data = composite.CloneReturnDict(specific.data, specific)
-        else:
-            specific_data = instance
+            instance = composite.CloneReturnDict(specific.data, specific)
 
         data = super(ParameterizedGenericSerializer, self).to_representation(
-            specific_data)
+            instance)
 
         # Merge back in specific items that aren't overridden by our schema
         source_attrs = {field.source for field in self.fields.values()}
         data.update(
-            (key, value) for key, value in specific_data.items()
+            (key, value) for key, value in instance.items()
             if key not in source_attrs)
 
         return composite.CloneReturnDict(data, specific)
