@@ -374,12 +374,15 @@ class ParameterizedGenericSerializer(
 
         return composite.CloneReturnDict(value, specific)
 
-    def to_representation(self, value):
+    def to_representation(self, instance):
         """
         Include generic items that aren't in the specific schema.
         """
-        if isinstance(value, composite.CloneReturnDict):
-            specific = value.clone
+        if self.should_skip_error():
+            return instance
+
+        if isinstance(instance, composite.CloneReturnDict):
+            specific = instance.clone
         else:
             # Ensure all fields are bound so that the parameter field is found
             self.fields
@@ -387,25 +390,24 @@ class ParameterizedGenericSerializer(
                     self.clone_meta['parameter_field'],
                     'current_parameter', None) is None:
                 # Make sure the parameter field sets the specific serializer
-                self.clone_meta['parameter_field'].get_attribute(value)
+                self.clone_meta['parameter_field'].get_attribute(instance)
             specific = self.clone_meta[
                 'parameter_field'].clone_specific_representation(
-                    value=value)
+                    value=instance)
         if not (
                 getattr(self, 'skip_parameterized', False) or
                 self.context.get('skip_parameterized', False)):
-            value = composite.CloneReturnDict(specific.data, specific)
-
-        if self.should_skip_error():
-            return value
+            specific_data = composite.CloneReturnDict(specific.data, specific)
+        else:
+            specific_data = instance
 
         data = super(ParameterizedGenericSerializer, self).to_representation(
-            value)
+            specific_data)
 
         # Merge back in specific items that aren't overridden by our schema
         source_attrs = {field.source for field in self.fields.values()}
         data.update(
-            (key, value) for key, value in value.items()
+            (key, value) for key, value in specific_data.items()
             if key not in source_attrs)
 
         return composite.CloneReturnDict(data, specific)
