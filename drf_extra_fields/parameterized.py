@@ -314,17 +314,18 @@ class ParameterizedGenericSerializer(
     # Class-based defaults for instantiation kwargs
     handle_errors = False
     skip_parameterized = False
+    exclude_parameterized = False
 
     def __init__(
             self, instance=None, data=serializers.empty,
             parameter_field_name=None, handle_errors=None,
-            skip_parameterized=None, **kwargs):
+            skip_parameterized=None, exclude_parameterized=None, **kwargs):
         """
         Process generic schema, then delegate the rest to the specific.
 
         `SerializerParameterField` expects to be a field in the same
         JavaScript object as the parameterized fields:
-        `{"type": "users", "id": 1, "username": "foo_username", ...}
+        `{"type": "users", "id": 1, "username": "foo_username", ...}`
         while `SerializerParameterDictField` expects to get the parameter from
         a JavaScript object key/property-name:
         `{"users": {"id": 1, "username": "foo_username", ...}, ...}`.
@@ -346,6 +347,12 @@ class ParameterizedGenericSerializer(
         can be useful if the input data has already been processed by a
         parameterized serializer, such as when used in a renderer/parser.
 
+        Alternatively, only the paramaterized serializer fields which are
+        consumed by the generic serializer's fields can be used if
+        `exclude_parameterized=True`.  This can be useful where you need the
+        parameterized serializer to lookup the parameter but don't actually
+        want to include it's schema, such as when just looking up a `type`:
+        `{"type": "users", "id": 1}`
         """
         super(ParameterizedGenericSerializer, self).__init__(
             instance=instance, data=data, **kwargs)
@@ -356,6 +363,9 @@ class ParameterizedGenericSerializer(
         if skip_parameterized is not None:
             # Allow class to provide a default
             self.skip_parameterized = skip_parameterized
+        if exclude_parameterized is not None:
+            # Allow class to provide a default
+            self.exclude_parameterized = exclude_parameterized
 
     def should_skip_error(self):
         """
@@ -394,6 +404,13 @@ class ParameterizedGenericSerializer(
         if not (
                 self.skip_parameterized or
                 self.context.get('skip_parameterized', False)):
+            if self.exclude_parameterized:
+                # Collect the keys the generic schema looks for from the
+                # internal value or instance
+                source_attrs = {field.source for field in self.fields.values()}
+                for field_name, field in list(specific.fields.items()):
+                    if field_name not in source_attrs:
+                        del specific.fields[field_name]
             # Reconstitute and validate the specific serializer
             specific.is_valid(raise_exception=True)
             value = specific.validated_data
@@ -406,6 +423,10 @@ class ParameterizedGenericSerializer(
         """
         if self.should_skip_error():
             return instance
+
+        # Collect the keys the generic schema looks for from the internal
+        # value or instance
+        source_attrs = {field.source for field in self.fields.values()}
 
         if isinstance(instance, composite.CloneReturnDict):
             specific = instance.clone
@@ -423,13 +444,16 @@ class ParameterizedGenericSerializer(
         if not (
                 self.skip_parameterized or
                 self.context.get('skip_parameterized', False)):
+            if self.exclude_parameterized:
+                for field_name, field in list(specific.fields.items()):
+                    if field_name not in source_attrs:
+                        del specific.fields[field_name]
             instance = composite.CloneReturnDict(specific.data, specific)
 
         data = super(ParameterizedGenericSerializer, self).to_representation(
             instance)
 
         # Merge back in specific items that aren't overridden by our schema
-        source_attrs = {field.source for field in self.fields.values()}
         data.update(
             (key, value) for key, value in instance.items()
             if key not in source_attrs)

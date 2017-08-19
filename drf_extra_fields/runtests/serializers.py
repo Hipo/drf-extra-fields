@@ -1,8 +1,9 @@
-from django.contrib.auth import models as auth_models
-
 from rest_framework import serializers
 
+from drf_extra_fields import relations
 from drf_extra_fields import parameterized
+
+from . import models
 
 
 class ExampleChildSerializer(serializers.Serializer):
@@ -19,14 +20,14 @@ class ExampleChildSerializer(serializers.Serializer):
         return validated_data
 
 
-class ExampleUserSerializer(serializers.ModelSerializer):
+class ExamplePersonSerializer(relations.UUIDModelSerializer):
     """
     A simple model serializer for testing.
     """
 
     class Meta:
-        model = auth_models.User
-        fields = ('username', 'password')
+        model = models.Person
+        fields = ('id', 'name', 'articles', )
 
 
 class ExampleTypeFieldSerializer(

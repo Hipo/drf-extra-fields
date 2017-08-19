@@ -2,15 +2,18 @@ import uuid
 
 from rest_framework import exceptions
 from rest_framework import serializers
-from rest_framework.test import APISimpleTestCase
+from rest_framework import test
 from .utils import (
     MockObject, MockQueryset
 )
 
 from drf_extra_fields import relations
 
+from drf_extra_fields.runtests import models
+from drf_extra_fields.runtests import serializers as test_serializers
 
-class TestPresentablePrimaryKeyRelatedField(APISimpleTestCase):
+
+class TestPresentablePrimaryKeyRelatedField(test.APISimpleTestCase):
 
     class PresentationSerializer(serializers.Serializer):
         def to_representation(self, instance):
@@ -47,7 +50,7 @@ class TestPresentablePrimaryKeyRelatedField(APISimpleTestCase):
             'Used PK optimization when source was given')
 
 
-class TestPrimaryKeySourceRelatedField(APISimpleTestCase):
+class TestPrimaryKeySourceRelatedField(test.APITestCase):
 
     def setUp(self):
         """
@@ -123,3 +126,24 @@ class TestPrimaryKeySourceRelatedField(APISimpleTestCase):
         self.assertTrue(
             self.field_wo_source.use_pk_only_optimization(),
             'Did not use PK optimization when no source was given')
+
+    def test_uuid_model_serializer(self):
+        """
+        The UUID model serializer uses UUIDs for relations.
+        """
+        person = models.Person.objects.create()
+        models.Article.objects.create(author=person)
+        serializer = test_serializers.ExamplePersonSerializer(instance=person)
+        self.assertIn(
+            'id', serializer.data, 'Missing ID field')
+        self.assertEqual(
+            serializer.data['id'], str(person.uuid),
+            'Wrong ID field UUID value')
+        self.assertIn(
+            'articles', serializer.data, 'Missing related field')
+        self.assertIsInstance(
+            serializer.data['articles'], list, 'Wrong related value type')
+        self.assertEqual(
+            serializer.data['articles'][0],
+            str(person.articles.all()[0].uuid),
+            'Wrong related field UUID value')

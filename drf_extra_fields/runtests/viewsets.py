@@ -1,17 +1,16 @@
-from django.contrib.auth import models as auth_models
-
 from rest_framework import viewsets
 
+from . import models
 from . import serializers
 
 
-class ExampleUserViewset(viewsets.ModelViewSet):
+class ExamplePersonViewset(viewsets.ModelViewSet):
     """
     A simple model viewset for testing.
     """
 
-    serializer_class = serializers.ExampleUserSerializer
-    queryset = auth_models.User.objects
+    serializer_class = serializers.ExamplePersonSerializer
+    queryset = models.Person.objects
 
 
 class ExampleTypeFieldViewset(viewsets.ModelViewSet):

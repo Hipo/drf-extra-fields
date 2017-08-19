@@ -5,7 +5,7 @@ from rest_framework import routers
 from . import viewsets
 
 router = routers.DefaultRouter()
-router.register('users', viewsets.ExampleUserViewset)
+router.register('people', viewsets.ExamplePersonViewset)
 router.register(
     'types', viewsets.ExampleTypeFieldViewset, base_name='types')
 

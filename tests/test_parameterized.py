@@ -4,12 +4,11 @@ import pprint
 
 import inflection
 
-from django.contrib.auth import models as auth_models
-
 from rest_framework import serializers
 from rest_framework import test
 
 from drf_extra_fields import parameterized
+from drf_extra_fields.runtests import models
 from drf_extra_fields.runtests import serializers as test_serializers
 from drf_extra_fields.runtests import viewsets as test_viewsets
 from drf_extra_fields.runtests import formats
@@ -64,10 +63,10 @@ class TestParameterizedSerializerFields(test.APITestCase):
     Test that a parameterized field uses the correct serializer.
     """
 
-    user_field_data = {"username": "foo_username", "password": "secret"}
-    type_field_data = dict(user_field_data, type="users")
-    sibling_field_data = {"type": "users", "attributes": user_field_data}
-    dict_field_data = {"types": {"user": user_field_data}}
+    person_field_data = {"name": "Foo Name", "articles": []}
+    type_field_data = dict(person_field_data, type="people")
+    sibling_field_data = {"type": "people", "attributes": person_field_data}
+    dict_field_data = {"types": {"person": person_field_data}}
 
     def test_parameterized_serializer(self):
         """
@@ -78,10 +77,12 @@ class TestParameterizedSerializerFields(test.APITestCase):
         parent.is_valid(raise_exception=True)
         save_result = parent.save()
         self.assertEqual(
-            save_result, auth_models.User.objects.get(),
+            save_result, models.Person.objects.get(),
             'Wrong type field serializer save results')
+        type_field_data = dict(
+            self.type_field_data, id=str(save_result.uuid))
         self.assertEqual(
-            parent.data, self.type_field_data,
+            parent.data, type_field_data,
             'Wrong type field serializer representation')
 
     def test_parameterized_serializer_create(self):
@@ -93,7 +94,7 @@ class TestParameterizedSerializerFields(test.APITestCase):
         parent.is_valid(raise_exception=True)
         create_result = parent.create(validated_data=parent.validated_data)
         self.assertEqual(
-            create_result, auth_models.User.objects.get(),
+            create_result, models.Person.objects.get(),
             'Wrong type field serializer create results')
 
     def test_parameterized_serializer_update(self):
@@ -104,10 +105,10 @@ class TestParameterizedSerializerFields(test.APITestCase):
             data=self.type_field_data)
         parent.is_valid(raise_exception=True)
         update_result = parent.update(
-            instance=auth_models.User.objects.create(),
+            instance=models.Person.objects.create(),
             validated_data=parent.validated_data)
         self.assertEqual(
-            update_result, auth_models.User.objects.get(),
+            update_result, models.Person.objects.get(),
             'Wrong type field serializer update results')
 
     def test_parameterized_serializer_wo_model(self):
@@ -129,7 +130,7 @@ class TestParameterizedSerializerFields(test.APITestCase):
         """
         parent = test_serializers.ExampleTypeFieldSerializer(
             instance=self.type_field_data,
-            context=dict(view=test_viewsets.ExampleUserViewset()))
+            context=dict(view=test_viewsets.ExamplePersonViewset()))
         self.assertEqual(
             parent.data, self.type_field_data,
             'Wrong type field serializer representation')
@@ -159,14 +160,14 @@ class TestParameterizedSerializerFields(test.APITestCase):
         """
         parent = test_serializers.ExampleTypeFieldSerializer(
             instance=self.type_field_data,
-            context=dict(view=test_viewsets.ExampleUserViewset()))
+            context=dict(view=test_viewsets.ExamplePersonViewset()))
         self.assertIn(
-            test_serializers.ExampleUserSerializer,
+            test_serializers.ExamplePersonSerializer,
             parent.fields['type'].parameters,
             'Missing specific serializer in reverse parameter lookup')
         self.assertEqual(
             parent.fields['type'].parameters[
-                test_serializers.ExampleUserSerializer],
+                test_serializers.ExamplePersonSerializer],
             self.type_field_data['type'],
             'Wrong specific serializer reverse parameter lookup')
 
@@ -195,7 +196,7 @@ class TestParameterizedSerializerFields(test.APITestCase):
         parent.is_valid(raise_exception=True)
         save_result = parent.save()
         sibling_field_value = copy.deepcopy(self.sibling_field_data)
-        sibling_field_value["attributes"] = auth_models.User.objects.get()
+        sibling_field_value["attributes"] = models.Person.objects.get()
         self.assertEqual(
             save_result, sibling_field_value,
             'Wrong sibling field serializer save results')
@@ -211,26 +212,36 @@ class TestParameterizedSerializerFields(test.APITestCase):
         parent.is_valid(raise_exception=True)
         save_result = parent.save()
         dict_field_value = copy.deepcopy(self.dict_field_data)
-        dict_field_value["types"]["user"] = auth_models.User.objects.get()
+        dict_field_value["types"]["person"] = models.Person.objects.get()
         self.assertEqual(
             save_result, dict_field_value,
             'Wrong dict field serializer save results')
+        dict_field_data = self.dict_field_data.copy()
+        dict_field_data["types"]["person"]["id"] = str(
+            dict_field_value["types"]["person"].uuid)
         self.assertEqual(
-            parent.data, self.dict_field_data,
+            parent.data, dict_field_data,
             'Wrong dict field serializer representation')
 
     def test_serializer_skip_parameterized(self):
         """
         An parameterized serializer can optionally skip specific fields.
         """
-        parameterized.ParameterizedGenericSerializer(skip_parameterized=True)
+        data_serializer = test_serializers.ExampleTypeFieldSerializer(
+            data=self.type_field_data, handle_errors=True,
+            skip_parameterized=False, exclude_parameterized=True)
+        data_serializer.is_valid(raise_exception=True)
+        instance_serializer = test_serializers.ExampleTypeFieldSerializer(
+            instance=data_serializer.data, handle_errors=True,
+            skip_parameterized=False, exclude_parameterized=True)
+        instance_serializer.data
 
     def test_parameterized_format(self):
         """
         Test using parameterized serialiers in renderers/parsers.
         """
         create_response = self.client.post(
-            '/users/?format=drf-extra-fields-parameterized',
+            '/people/?format=drf-extra-fields-parameterized',
             json.dumps(self.type_field_data),
             content_type=formats.ExampleParameterizedRenderer.media_type)
         self.assertEqual(
@@ -239,7 +250,7 @@ class TestParameterizedSerializerFields(test.APITestCase):
                 pprint.pformat(create_response.data)))
         create_json = json.loads(create_response.content.decode())
         self.assertEqual(
-            create_json["username"], self.type_field_data["username"],
+            create_json["name"], self.type_field_data["name"],
             'Wrong parameterized format create response results')
 
     def test_parameterized_format_wo_context(self):
@@ -249,7 +260,7 @@ class TestParameterizedSerializerFields(test.APITestCase):
         Unfortunately, this is specific to the DRF test framework.
         """
         create_response = self.client.post(
-            '/users/',
+            '/people/',
             self.type_field_data,
             format='drf-extra-fields-parameterized')
         self.assertEqual(
@@ -258,23 +269,25 @@ class TestParameterizedSerializerFields(test.APITestCase):
                 pprint.pformat(create_response.data)))
         create_json = json.loads(create_response.content.decode())
         self.assertEqual(
-            create_json["username"], self.type_field_data["username"],
+            create_json["name"], self.type_field_data["name"],
             'Wrong parameterized format create response results')
 
     def test_parameterized_format_list(self):
         """
         Test using parameterized renderers/parsers on list views.
         """
-        auth_models.User.objects.create(**self.user_field_data)
+        person = models.Person.objects.create(
+            name=self.person_field_data['name'])
         list_response = self.client.get(
-            '/users/?format=drf-extra-fields-parameterized')
+            '/people/?format=drf-extra-fields-parameterized')
         self.assertEqual(
             list_response.status_code, 200,
             'List request did not succeed:\n{0}'.format(
                 pprint.pformat(list_response.data)))
         list_json = json.loads(list_response.content.decode())
+        type_field_data = dict(self.type_field_data, id=str(person.uuid))
         self.assertEqual(
-            list_json[0], self.type_field_data,
+            list_json[0], type_field_data,
             'Wrong parameterized format list response results')
 
     def test_parameterized_parser_validation(self):
@@ -282,8 +295,8 @@ class TestParameterizedSerializerFields(test.APITestCase):
         Test the parameterized parser validation.
         """
         invalid_response = self.client.post(
-            '/users/?format=drf-extra-fields-parameterized',
-            json.dumps(self.user_field_data),
+            '/people/?format=drf-extra-fields-parameterized',
+            json.dumps(self.person_field_data),
             content_type=formats.ExampleParameterizedRenderer.media_type)
         self.assertEqual(
             invalid_response.status_code, 400,
@@ -302,10 +315,10 @@ class TestParameterizedSerializerFields(test.APITestCase):
         Test the parameterized parser exception handling.
         """
         exception_field_data = dict(
-            self.user_field_data,
+            self.person_field_data,
             test_unhandled_exception='Foo parser exception')
         exception_response = self.client.post(
-            '/users/?format=drf-extra-fields-parameterized',
+            '/people/?format=drf-extra-fields-parameterized',
             json.dumps(exception_field_data),
             content_type=formats.ExampleParameterizedRenderer.media_type)
         self.assertEqual(
