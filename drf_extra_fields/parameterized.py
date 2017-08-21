@@ -313,7 +313,6 @@ class ParameterizedGenericSerializer(
 
     # Class-based defaults for instantiation kwargs
     handle_errors = False
-    skip_parameterized = False
     exclude_parameterized = False
 
     def __init__(
@@ -401,9 +400,8 @@ class ParameterizedGenericSerializer(
 
         specific = self.clone_meta[
             'parameter_field'].clone_specific_internal(data=value)
-        if not (
-                self.skip_parameterized or
-                self.context.get('skip_parameterized', False)):
+        if not getattr(self, 'skip_parameterized', self.context.get(
+                'skip_parameterized', False)):
             if self.exclude_parameterized:
                 # Collect the keys the generic schema looks for from the
                 # internal value or instance
@@ -441,9 +439,8 @@ class ParameterizedGenericSerializer(
             specific = self.clone_meta[
                 'parameter_field'].clone_specific_representation(
                     value=instance)
-        if not (
-                self.skip_parameterized or
-                self.context.get('skip_parameterized', False)):
+        if not getattr(self, 'skip_parameterized', self.context.get(
+                'skip_parameterized', False)):
             if self.exclude_parameterized:
                 for field_name, field in list(specific.fields.items()):
                     if field_name not in source_attrs:
