@@ -27,7 +27,9 @@ class ExamplePersonSerializer(relations.UUIDModelSerializer):
 
     class Meta:
         model = models.Person
-        fields = ('id', 'name', 'articles', )
+        fields = ('id', 'name', 'articles')
+        extra_kwargs = dict(
+            related_to=dict(lookup_field='uuid'))
 
 
 class ExampleTypeFieldSerializer(

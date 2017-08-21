@@ -12,6 +12,10 @@ class ExamplePersonViewset(viewsets.ModelViewSet):
     serializer_class = serializers.ExamplePersonSerializer
     queryset = models.Person.objects
 
+    lookup_field = serializers.ExamplePersonSerializer.Meta.extra_kwargs[
+        'related_to']['lookup_field']
+    lookup_value_regex = '[0-9a-f-]{36}'
+
 
 class ExampleTypeFieldViewset(viewsets.ModelViewSet):
     """
