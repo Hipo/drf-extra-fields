@@ -26,7 +26,6 @@ class HyperlinkedGenericRelationsField(relations.HyperlinkedRelatedField):
         self.lookup_url_kwarg = kwargs.pop(
             'lookup_url_kwarg', self.lookup_field)
         self.format = kwargs.pop('format', None)
-        self.model_field = kwargs.pop('model_field')
         self.reverse = reverse.reverse
 
         super(serializers.HyperlinkedRelatedField, self).__init__(**kwargs)
@@ -130,9 +129,8 @@ class HyperlinkedGenericRelationsSerializer(serializers.ModelSerializer):
             kwargs = field_mapping.get_field_kwargs(
                 field_name, model_class._meta.get_field(
                     model_field.fk_field))
-            for kwarg in ('min_value', 'max_value'):
+            for kwarg in ('min_value', 'max_value', 'model_field'):
                 kwargs.pop(kwarg, None)
-            kwargs['model_field'] = model_field
             return self.serializer_generic_related_field, kwargs
         return super(HyperlinkedGenericRelationsSerializer, self).build_field(
             field_name, info, model_class, nested_depth)
