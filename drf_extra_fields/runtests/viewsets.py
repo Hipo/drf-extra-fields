@@ -1,10 +1,10 @@
-from rest_framework import viewsets
+from drf_extra_fields import viewsets
 
 from . import models
 from . import serializers
 
 
-class ExamplePersonViewset(viewsets.ModelViewSet):
+class ExamplePersonViewset(viewsets.UUIDModelViewSet):
     """
     A simple model viewset for testing.
     """
@@ -17,7 +17,7 @@ class ExamplePersonViewset(viewsets.ModelViewSet):
     lookup_value_regex = '[0-9a-f-]{36}'
 
 
-class ExampleTypeFieldViewset(viewsets.ModelViewSet):
+class ExampleTypeFieldViewset(viewsets.UUIDModelViewSet):
     """
     A generic viewset with a type field.
     """
