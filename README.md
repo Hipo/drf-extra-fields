@@ -258,10 +258,11 @@ The DRF composite list and dictionary fields both take a child serialzer
 instance but only delegate to the child's `to_internal_value(data)` or
 `to_representation(instance)` to deserialize/serialize.  These 2 fields extend
 the base DRF composite fields by instantiating the child serializer with each
-individual item and attaching it as a `data.clone` attribute.  This allows
-re-using a serializer's `save()`, `create()`, and/or `update()` methods both
-as a standalone serializer and as a child of a composite field or just for
-better factoring of create/update logic into the related serializer's methods:
+individual item and attaching it as a `data.serializer` attribute.  This
+allows re-using a serializer's `save()`, `create()`, and/or `update()` methods
+both as a standalone serializer and as a child of a composite field or just
+for better factoring of create/update logic into the related serializer's
+methods:
 
 ```
 from rest_framework import serializers
@@ -283,7 +284,7 @@ class ExampleListSerializer(serializers.Serializer):
         Delegate to the children.
         """
         return {"children": [
-            child_data.clone.create(child_data)
+            child_data.serializer.create(child_data)
             for child_data in validated_data["children"]]}
 ```
 

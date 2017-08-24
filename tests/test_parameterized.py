@@ -32,7 +32,7 @@ class ExampleDictFieldSerializer(serializers.Serializer):
         Delegate to the specific serializer.
         """
         return {"types": {
-            type_: child_data.data.clone.create(child_data)
+            type_: child_data.serializer.create(child_data)
             for type_, child_data in validated_data["types"].items()}}
 
 
@@ -52,9 +52,9 @@ class ExampleSiblingFieldSerializer(serializers.Serializer):
         Delegate to the specific serializer.
         """
         validated_data["type"] = self.fields['type'].parameters[
-            type(validated_data['attributes'].clone)]
+            type(validated_data['attributes'].serializer)]
         validated_data["attributes"] = validated_data[
-            "attributes"].clone.create(validated_data["attributes"])
+            "attributes"].serializer.create(validated_data["attributes"])
         return validated_data
 
 
@@ -231,10 +231,15 @@ class TestParameterizedSerializerFields(test.APITestCase):
             data=self.type_field_data, handle_errors=True,
             skip_parameterized=False, exclude_parameterized=True)
         data_serializer.is_valid(raise_exception=True)
+        self.assertNotIn(
+            'name', data_serializer.data,
+            'Parameterized field in internal value')
         instance_serializer = test_serializers.ExampleTypeFieldSerializer(
-            instance=data_serializer.data, handle_errors=True,
+            instance=self.type_field_data, handle_errors=True,
             skip_parameterized=False, exclude_parameterized=True)
-        instance_serializer.data
+        self.assertNotIn(
+            'name', instance_serializer.data,
+            'Parameterized field in representation')
 
     def test_parameterized_format(self):
         """

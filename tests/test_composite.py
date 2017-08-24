@@ -3,6 +3,7 @@ from django.utils import datastructures
 from rest_framework import exceptions
 from rest_framework import serializers
 from rest_framework import test
+from rest_framework.utils import serializer_helpers
 
 from drf_extra_fields import composite
 from drf_extra_fields.runtests import serializers as parameterized
@@ -22,7 +23,7 @@ class ExampleListSerializer(serializers.Serializer):
         Delegate to the children.
         """
         return {"children": [
-            child_data.clone.create(child_data)
+            child_data.serializer.create(child_data)
             for child_data in validated_data["children"]]}
 
 
@@ -39,7 +40,7 @@ class ExampleDictSerializer(serializers.Serializer):
         Delegate to the children.
         """
         return {"children": {
-            key: child_data.clone.create(child_data)
+            key: child_data.serializer.create(child_data)
             for key, child_data in validated_data["children"].items()}}
 
 
@@ -201,18 +202,12 @@ class TestCompositeSerializerFields(test.APISimpleTestCase):
         parent.is_valid(raise_exception=True)
         wrapped = parent.validated_data["children"][0]
         self.assertIsInstance(
-            wrapped, composite.CloneReturnDict,
+            wrapped, serializer_helpers.ReturnDict,
             'Child data missing clone wrapper')
         wrapped_copy = wrapped.copy()
         self.assertIsInstance(
-            wrapped_copy, composite.CloneReturnDict,
+            wrapped_copy, serializer_helpers.ReturnDict,
             'Child data clone wrapper copy wrong type')
-        self.assertIs(
-            wrapped_copy.data, wrapped.data,
-            'Child data clone wrapper copy wrong data')
-        self.assertIs(
-            wrapped_copy.clone, wrapped.clone,
-            'Child clone clone wrapper copy wrong clone')
         self.assertIs(
             wrapped_copy.serializer, wrapped.serializer,
             'Child serializer clone wrapper copy wrong serializer')

@@ -17,6 +17,7 @@ from rest_framework import exceptions
 from rest_framework import serializers
 from rest_framework import renderers
 from rest_framework import parsers
+from rest_framework.utils import serializer_helpers
 
 
 from . import composite
@@ -238,8 +239,8 @@ class SerializerParameterField(composite.SerializerCompositeField):
         """
         Get the specific serializer corresponding to the value.
         """
-        if isinstance(instance, composite.CloneReturnDict):
-            return instance.clone
+        if isinstance(instance, serializer_helpers.ReturnDict):
+            return instance.serializer
 
         model = type(instance)
         if model not in self.specific_serializers_by_type:
@@ -417,7 +418,7 @@ class ParameterizedGenericSerializer(
             specific.is_valid(raise_exception=True)
             value = specific.validated_data
 
-        return composite.CloneReturnDict(value, specific)
+        return serializer_helpers.ReturnDict(value, serializer=specific)
 
     def to_representation(self, instance):
         """
@@ -426,8 +427,8 @@ class ParameterizedGenericSerializer(
         if self.should_skip_error():
             return instance
 
-        if isinstance(instance, composite.CloneReturnDict):
-            specific = instance.clone
+        if isinstance(instance, serializer_helpers.ReturnDict):
+            specific = instance.serializer
         else:
             # Ensure all fields are bound so that the parameter field is found
             self.fields
@@ -445,7 +446,8 @@ class ParameterizedGenericSerializer(
                 for field_name, field in list(specific.fields.items()):
                     if field_name not in self.field_source_attrs:
                         del specific.fields[field_name]
-            instance = composite.CloneReturnDict(specific.data, specific)
+            instance = serializer_helpers.ReturnDict(
+                specific.data, serializer=specific)
 
         data = super(ParameterizedGenericSerializer, self).to_representation(
             instance)
@@ -455,26 +457,26 @@ class ParameterizedGenericSerializer(
             (key, value) for key, value in instance.items()
             if key not in self.field_source_attrs)
 
-        return composite.CloneReturnDict(data, specific)
+        return serializer_helpers.ReturnDict(data, serializer=specific)
 
     def save(self, **kwargs):
         """
         Delegate to the specific serializer.
         """
-        self.instance = self.validated_data.clone.save(**kwargs)
+        self.instance = self.validated_data.serializer.save(**kwargs)
         return self.instance
 
     def create(self, validated_data):
         """
         Delegate to the specific serializer.
         """
-        return validated_data.clone.create(validated_data)
+        return validated_data.serializer.create(validated_data)
 
     def update(self, instance, validated_data):
         """
         Delegate to the specific serializer.
         """
-        return validated_data.clone.update(instance, validated_data)
+        return validated_data.serializer.update(instance, validated_data)
 
 
 class ParameterizedRenderer(renderers.JSONRenderer):

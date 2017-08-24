@@ -33,28 +33,6 @@ def clone_serializer(serializer, parent=None, **kwargs):
     return clone
 
 
-class CloneReturnDict(serializer_helpers.ReturnDict):
-    """
-    Wrap a data mapping with the cloned serializer accessible.
-    """
-
-    def __init__(self, data, clone, **kwargs):
-        """
-        Capture clone and original mapping references.
-        """
-        self.clone = clone
-        self.data = data
-        kwargs.setdefault('serializer', getattr(data, 'serializer', None))
-        super(CloneReturnDict, self).__init__(data, **kwargs)
-
-    def copy(self):
-        """
-        Pass along captured references.
-        """
-        return CloneReturnDict(
-            self.data, clone=self.clone, serializer=self.serializer)
-
-
 class SerializerCompositeField(serializers.Field):
     """
     A composite field that supports full use of the child serializer:
@@ -91,13 +69,15 @@ class SerializerListField(serializers.ListField, SerializerCompositeField):
         if not self.allow_empty and len(data) == 0:
             self.fail('empty')
 
-        value = []
+        value = serializer_helpers.ReturnList([], serializer=self)
         for child_data in data:
             clone = self.clone_child(self.child, data=child_data)
             clone.is_valid(raise_exception=True)
             child_value = clone.validated_data
-            if child_value is not None:
-                child_value = CloneReturnDict(child_value, clone)
+            if not (child_value is None or isinstance(
+                    child_value, serializer_helpers.ReturnDict)):
+                child_value = serializer_helpers.ReturnDict(
+                    child_value, serializer=clone)
             value.append(child_value)
         return value
 
@@ -105,16 +85,17 @@ class SerializerListField(serializers.ListField, SerializerCompositeField):
         """
         Use the reconstituted child to serialize the value.
         """
-        data = []
+        data = serializer_helpers.ReturnList([], serializer=self)
         for child_value in value:
             if child_value is None:
                 data.append(None)
             else:
-                if isinstance(child_value, CloneReturnDict):
-                    child_data = child_value.clone.data
+                if isinstance(child_value, serializer_helpers.ReturnDict):
+                    child_data = child_value.serializer.data
                 else:
                     clone = self.clone_child(self.child, instance=child_value)
-                    child_data = CloneReturnDict(clone.data, clone)
+                    child_data = serializer_helpers.ReturnDict(
+                        clone.data, serializer=clone)
                 data.append(child_data)
         return data
 
@@ -146,8 +127,10 @@ class SerializerDictField(serializers.DictField, SerializerCompositeField):
             clone = self.clone_child(key, self.child, data=child_data)
             clone.is_valid(raise_exception=True)
             child_value = clone.validated_data
-            if child_value is not None:
-                child_value = CloneReturnDict(child_value, clone)
+            if not (child_value is None or isinstance(
+                    child_value, serializer_helpers.ReturnDict)):
+                child_value = serializer_helpers.ReturnDict(
+                    child_value, serializer=clone)
             value[six.text_type(key)] = child_value
         return value
 
@@ -161,11 +144,12 @@ class SerializerDictField(serializers.DictField, SerializerCompositeField):
             if child_value is None:
                 data[key] = None
             else:
-                if isinstance(child_value, CloneReturnDict):
-                    child_data = child_value.clone.data
+                if isinstance(child_value, serializer_helpers.ReturnDict):
+                    child_data = child_value.serializer.data
                 else:
                     clone = self.clone_child(
                         key, self.child, instance=child_value)
-                    child_data = CloneReturnDict(clone.data, clone)
+                    child_data = serializer_helpers.ReturnDict(
+                        clone.data, serializer=clone)
                 data[key] = child_data
         return data
