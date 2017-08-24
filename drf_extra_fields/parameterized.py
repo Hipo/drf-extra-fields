@@ -385,6 +385,13 @@ class ParameterizedGenericSerializer(
                 self.parameter_field_name]
             parameter_field.bind_parameter_field(self)
 
+    @functional.cached_property
+    def field_source_attrs(self):
+        """
+        Collect the keys the generic schema looks for.
+        """
+        return {field.source for field in self.fields.values()}
+
     def to_internal_value(self, data):
         """
         Merge generic values into the rest and pass onto the specific.
@@ -403,11 +410,8 @@ class ParameterizedGenericSerializer(
         if not getattr(self, 'skip_parameterized', self.context.get(
                 'skip_parameterized', False)):
             if self.exclude_parameterized:
-                # Collect the keys the generic schema looks for from the
-                # internal value or instance
-                source_attrs = {field.source for field in self.fields.values()}
                 for field_name, field in list(specific.fields.items()):
-                    if field_name not in source_attrs:
+                    if field_name not in self.field_source_attrs:
                         del specific.fields[field_name]
             # Reconstitute and validate the specific serializer
             specific.is_valid(raise_exception=True)
@@ -421,10 +425,6 @@ class ParameterizedGenericSerializer(
         """
         if self.should_skip_error():
             return instance
-
-        # Collect the keys the generic schema looks for from the internal
-        # value or instance
-        source_attrs = {field.source for field in self.fields.values()}
 
         if isinstance(instance, composite.CloneReturnDict):
             specific = instance.clone
@@ -443,7 +443,7 @@ class ParameterizedGenericSerializer(
                 'skip_parameterized', False)):
             if self.exclude_parameterized:
                 for field_name, field in list(specific.fields.items()):
-                    if field_name not in source_attrs:
+                    if field_name not in self.field_source_attrs:
                         del specific.fields[field_name]
             instance = composite.CloneReturnDict(specific.data, specific)
 
@@ -453,7 +453,7 @@ class ParameterizedGenericSerializer(
         # Merge back in specific items that aren't overridden by our schema
         data.update(
             (key, value) for key, value in instance.items()
-            if key not in source_attrs)
+            if key not in self.field_source_attrs)
 
         return composite.CloneReturnDict(data, specific)
 
