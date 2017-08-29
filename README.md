@@ -252,7 +252,7 @@ primary resource and related resources.  These can be useful for creating APIs
 that use UUIDs throughout while still using integer PKs in the DB on the
 back-end.
 
-## composite.SerializerListField, composite.SerializerDictField
+## `composite.SerializerListField`, `composite.SerializerDictField`
 
 The DRF composite list and dictionary fields both take a child serialzer
 instance but only delegate to the child's `to_internal_value(data)` or

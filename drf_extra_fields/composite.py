@@ -2,11 +2,10 @@
 Composite fields that support calling `save()` on the child.
 """
 
-import collections
+import copy
 
-from django.utils import six
+from django.utils import functional
 
-from rest_framework.utils import html
 from rest_framework.utils import serializer_helpers
 from rest_framework import serializers
 
@@ -33,12 +32,22 @@ def clone_serializer(serializer, parent=None, **kwargs):
     return clone
 
 
-class SerializerCompositeField(serializers.Field):
+class Cloner(object):
     """
-    A composite field that supports full use of the child serializer:
+    Common support for cloning a child field.
+    """
 
-    e.g. `save()`.
-    """
+    child = None
+
+    def __init__(self, *args, **kwargs):
+        """
+        Capture the child to clone at runtime.
+        """
+        self.child = kwargs.pop('child', copy.deepcopy(self.child))
+        super(Cloner, self).__init__(*args, **kwargs)
+        if self.child is not None:
+            # Support runtime child lookup
+            self.child.bind(field_name='', parent=self)
 
     def clone_child(self, child, **kwargs):
         """
@@ -48,108 +57,150 @@ class SerializerCompositeField(serializers.Field):
         return clone_serializer(child, self, **kwargs)
 
 
-class SerializerListField(serializers.ListField, SerializerCompositeField):
+class CloningField(Cloner, serializers.Field):
     """
-    A list field that supports full use of the child serializer:
-
-    e.g. `save()`.
+    Clone the child field and delegate to it.
     """
 
-    def to_internal_value(self, data):
+    def run_validation(self, data=serializers.empty):
         """
-        Reconstitute the child serializer and run validation.
+        Clone the child, delegate to it, and wrap with a clone reference.
         """
-        if html.is_html_input(data):
-            data = html.parse_html_list(data)
-        if (
-                isinstance(data, type('')) or
-                isinstance(data, collections.Mapping) or
-                not hasattr(data, '__iter__')):
-            self.fail('not_a_list', input_type=type(data).__name__)
-        if not self.allow_empty and len(data) == 0:
-            self.fail('empty')
-
-        value = serializer_helpers.ReturnList([], serializer=self)
-        for child_data in data:
-            clone = self.clone_child(self.child, data=child_data)
-            clone.is_valid(raise_exception=True)
-            child_value = clone.validated_data
-            if not (child_value is None or isinstance(
-                    child_value, serializer_helpers.ReturnDict)):
-                child_value = serializer_helpers.ReturnDict(
-                    child_value, serializer=clone)
-            value.append(child_value)
+        clone = self.clone_child(self.child, data=data)
+        clone.is_valid(raise_exception=True)
+        value = clone.validated_data
+        if not (value is None or isinstance(
+                value, serializer_helpers.ReturnDict)):
+            value = serializer_helpers.ReturnDict(value, serializer=clone)
         return value
 
     def to_representation(self, value):
         """
-        Use the reconstituted child to serialize the value.
+        Clone the child, delegate to it, and wrap with a clone reference.
         """
-        data = serializer_helpers.ReturnList([], serializer=self)
-        for child_value in value:
-            if child_value is None:
-                data.append(None)
-            else:
-                if isinstance(child_value, serializer_helpers.ReturnDict):
-                    child_data = child_value.serializer.data
-                else:
-                    clone = self.clone_child(self.child, instance=child_value)
-                    child_data = serializer_helpers.ReturnDict(
-                        clone.data, serializer=clone)
-                data.append(child_data)
+        if isinstance(value, serializer_helpers.ReturnDict):
+            data = value.serializer.data
+        else:
+            clone = self.clone_child(self.child, instance=value)
+            data = serializer_helpers.ReturnDict(clone.data, serializer=clone)
         return data
 
 
-class SerializerDictField(serializers.DictField, SerializerCompositeField):
+class SerializerCompositeField(object):
+    """
+    A composite field that supports full use of the child:
+
+    e.g. `save()`.
+    """
+
+    child = None
+
+    def __init__(self, *args, **kwargs):
+        """
+        Use an intermediate field to wrap the child at runtime.
+        """
+        kwargs['child'] = CloningField(
+            child=kwargs.pop('child', copy.deepcopy(self.child)))
+        super(SerializerCompositeField, self).__init__(*args, **kwargs)
+
+
+class SerializerListField(SerializerCompositeField, serializers.ListField):
+    """
+    A list field that supports full use of the child:
+
+    e.g. `save()`.
+    """
+
+
+class SerializerDictField(SerializerCompositeField, serializers.DictField):
     """
     A dict field that supports full use of the child serializer:
 
     e.g. `save()`.
     """
 
-    def clone_child(self, key, child, **kwargs):
+
+class CompositeSerializer(Cloner, serializers.Serializer):
+    """
+    Process our schema, then delegate the rest to the child serializer.
+    """
+
+    def get_serializer(self, *args, **kwargs):
         """
-        Dictionary specific child lookup.
+        Return a clone of the child if present, or from the view.
         """
-        return super(SerializerDictField, self).clone_child(child, **kwargs)
+        if self.child is not None:
+            return self.clone_child(self.child, *args, **kwargs)
+
+        view = self.context.get('view')
+        if hasattr(view, 'get_serializer'):
+            return view.get_serializer(*args, **kwargs)
+
+        raise ValueError(
+            'Must give either a child serializer or be used in the context '
+            'of a view from which to get the serializer')
+
+    @functional.cached_property
+    def field_source_attrs(self):
+        """
+        Collect the keys the generic schema looks for.
+        """
+        return {field.source for field in self.fields.values()}
 
     def to_internal_value(self, data):
         """
-        Reconstitute the child serializer and run validation.
+        Merge our values into the rest and pass onto the child.
         """
-        if html.is_html_input(data):
-            data = html.parse_html_dict(data)
-        if not isinstance(data, dict):
-            self.fail('not_a_dict', input_type=type(data).__name__)
+        # Deserialize our schema
+        value = super(CompositeSerializer, self).to_internal_value(data)
 
-        value = {}
-        for key, child_data in data.items():
-            clone = self.clone_child(key, self.child, data=child_data)
-            clone.is_valid(raise_exception=True)
-            child_value = clone.validated_data
-            if not (child_value is None or isinstance(
-                    child_value, serializer_helpers.ReturnDict)):
-                child_value = serializer_helpers.ReturnDict(
-                    child_value, serializer=clone)
-            value[six.text_type(key)] = child_value
-        return value
+        # Include all keys not already processed by our schema.
+        value.update(
+            (key, value) for key, value in data.items()
+            if key not in self.fields)
 
-    def to_representation(self, value):
+        # Reconstitute and validate the child serializer
+        child = self.get_serializer(data=value)
+        child.is_valid(raise_exception=True)
+        value = child.validated_data
+
+        return serializer_helpers.ReturnDict(value, serializer=child)
+
+    def to_representation(self, instance):
         """
-        Use the reconstituted child to serialize the value.
+        Include our fields that aren't in the child schema.
         """
-        data = {}
-        for key, child_value in value.items():
-            key = six.text_type(key)
-            if child_value is None:
-                data[key] = None
-            else:
-                if isinstance(child_value, serializer_helpers.ReturnDict):
-                    child_data = child_value.serializer.data
-                else:
-                    clone = self.clone_child(
-                        key, self.child, instance=child_value)
-                    child_data = serializer_helpers.ReturnDict(
-                        clone.data, serializer=clone)
-                data[key] = child_data
-        return data
+        if isinstance(instance, serializer_helpers.ReturnDict):
+            child = instance.serializer
+        else:
+            child = self.get_serializer(instance=instance)
+
+        instance = serializer_helpers.ReturnDict(child.data, serializer=child)
+
+        data = super(CompositeSerializer, self).to_representation(instance)
+
+        # Merge back in child fields that aren't overridden by our schema
+        data.update(
+            (key, value) for key, value in instance.items()
+            if key not in self.field_source_attrs)
+
+        return serializer_helpers.ReturnDict(data, serializer=child)
+
+    def save(self, **kwargs):
+        """
+        Delegate to the child serializer.
+        """
+        self.instance = self.validated_data.serializer.save(**kwargs)
+        return self.instance
+
+    def create(self, validated_data):
+        """
+        Delegate to the child serializer.
+        """
+        return validated_data.serializer.create(validated_data)
+
+    def update(self, instance, validated_data):
+        """
+        Delegate to the child serializer.
+        """
+        return validated_data.serializer.update(instance, validated_data)

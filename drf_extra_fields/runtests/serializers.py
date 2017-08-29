@@ -19,6 +19,12 @@ class ExampleChildSerializer(serializers.Serializer):
         """
         return validated_data
 
+    def update(self, instance, validated_data):
+        """
+        Delegate to the children.
+        """
+        return validated_data
+
 
 class ExamplePersonSerializer(relations.UUIDModelSerializer):
     """

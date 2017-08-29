@@ -1,12 +1,15 @@
 from django.utils import datastructures
 
 from rest_framework import exceptions
+from rest_framework import request
 from rest_framework import serializers
 from rest_framework import test
 from rest_framework.utils import serializer_helpers
 
 from drf_extra_fields import composite
+from drf_extra_fields.runtests import models
 from drf_extra_fields.runtests import serializers as parameterized
+from drf_extra_fields.runtests import viewsets as test_viewsets
 
 
 class ExampleListSerializer(serializers.Serializer):
@@ -44,7 +47,13 @@ class ExampleDictSerializer(serializers.Serializer):
             for key, child_data in validated_data["children"].items()}}
 
 
-class TestCompositeSerializerFields(test.APISimpleTestCase):
+class ExampleCompositeSerializer(composite.CompositeSerializer):
+    """
+    A simple composite serializer.
+    """
+
+
+class TestCompositeSerializerFields(test.APITestCase):
     """
     Test that composite field serializers can be used as normal.
     """
@@ -211,3 +220,58 @@ class TestCompositeSerializerFields(test.APISimpleTestCase):
         self.assertIs(
             wrapped_copy.serializer, wrapped.serializer,
             'Child serializer clone wrapper copy wrong serializer')
+
+    def test_composite_serializer_child(self):
+        """
+        Test the composite serializer with a specific child.
+        """
+        data = {"name": "Foo name"}
+        parent = ExampleCompositeSerializer(
+            child=parameterized.ExampleChildSerializer(), data=data)
+        parent.is_valid(raise_exception=True)
+        self.assertEqual(
+            parent.save(), data,
+            'Wrong composite serializer saved instance type')
+        self.assertEqual(
+            parent.create(parent.validated_data), data,
+            'Wrong composite serializer saved instance type')
+        self.assertEqual(
+            parent.update(parent.instance, parent.validated_data), data,
+            'Wrong composite serializer saved instance type')
+
+    def test_composite_serializer_view(self):
+        """
+        Test the composite serializer getting the child from the view.
+        """
+        view = test_viewsets.ExamplePersonViewset()
+        factory = test.APIRequestFactory()
+        view.request = request.Request(factory.get('/'))
+        view.format_kwarg = None
+        data = {"name": "Foo name", "articles": []}
+        parent = composite.CompositeSerializer(
+            context=dict(view=view), data=data)
+        parent.is_valid(raise_exception=True)
+        self.assertEqual(
+            parent.data, data, 'Wrong representation value')
+
+    def test_composite_serializer_missing(self):
+        """
+        Test the composite serializer wthout a child.
+        """
+        parent = composite.CompositeSerializer(data={})
+        with self.assertRaises(Exception) as cm:
+            parent.is_valid(raise_exception=True)
+        self.assertIn(
+            'must give either', str(cm.exception).lower(),
+            'Wrong composite serializer missing child error')
+
+    def test_composite_serializer_instance(self):
+        """
+        Test the composite serializer with an instance.
+        """
+        data = {"name": "Foo name"}
+        parent = ExampleCompositeSerializer(
+            child=parameterized.ExampleChildSerializer(),
+            instance=models.Person.objects.create(**data))
+        self.assertEqual(
+            parent.data, data, 'Wrong representation value')
