@@ -13,13 +13,35 @@ from drf_extra_fields.runtests import serializers as test_serializers
 
 class AllFieldsSerializer(
         test_serializers.ExamplePersonSerializer,
-        generic.HyperlinkedGenericRelationsSerializer):
+        generic.GenericRelationsModelSerializer):
     """
     A simple model serializer that includes all fields.
     """
 
     class Meta(test_serializers.ExamplePersonSerializer.Meta):
         fields = serializers.ALL_FIELDS
+
+
+class PKAllFieldsSerializer(generic.GenericRelationsModelSerializer):
+    """
+    A simple model serializer that includes all fields with PK auto ID.
+    """
+
+    class Meta(test_serializers.ExamplePersonSerializer.Meta):
+        fields = serializers.ALL_FIELDS
+
+
+class HyperlinkeAllFieldsSerializer(
+        generic.HyperlinkedGenericRelationsModelSerializer):
+    """
+    A simple model serializer that includes all fields with hyperlinked ID.
+    """
+
+    class Meta(test_serializers.ExamplePersonSerializer.Meta):
+        fields = serializers.ALL_FIELDS
+        extra_kwargs = (
+            test_serializers.ExamplePersonSerializer.Meta.extra_kwargs.copy())
+        extra_kwargs['url'] = extra_kwargs['related_to']
 
 
 class TestGenericHyperlinkRelations(test.APITestCase):
@@ -48,6 +70,30 @@ class TestGenericHyperlinkRelations(test.APITestCase):
         Test generic hyperlinked relations representation.
         """
         serializer = AllFieldsSerializer(
+            instance=self.person, context=dict(request=self.request))
+        self.assertIn(
+            'related_to', serializer.data, 'Missing generic relation')
+        self.assertEqual(
+            serializer.data['related_to'], self.url,
+            'Wrong generic relation UUID value')
+
+    def test_to_representation_pk(self):
+        """
+        Test generic hyperlinked relations with auto ID PK field.
+        """
+        serializer = PKAllFieldsSerializer(
+            instance=self.person, context=dict(request=self.request))
+        self.assertIn(
+            'related_to', serializer.data, 'Missing generic relation')
+        self.assertEqual(
+            serializer.data['related_to'], self.url,
+            'Wrong generic relation UUID value')
+
+    def test_to_representation_hyperlink(self):
+        """
+        Test generic hyperlinked relations with hyperlinked primary ID field.
+        """
+        serializer = HyperlinkeAllFieldsSerializer(
             instance=self.person, context=dict(request=self.request))
         self.assertIn(
             'related_to', serializer.data, 'Missing generic relation')

@@ -31,11 +31,11 @@ class ExamplePersonSerializer(relations.UUIDModelSerializer):
     A simple model serializer for testing.
     """
 
-    class Meta:
+    class Meta(relations.UUIDModelSerializer.Meta):
         model = models.Person
+        exclude = None
         fields = ('id', 'name', 'articles')
-        extra_kwargs = dict(
-            related_to=dict(lookup_field='uuid'))
+        extra_kwargs = dict(related_to=dict(lookup_field='uuid'))
 
 
 class ExampleTypeFieldSerializer(

@@ -99,11 +99,10 @@ class UUIDModelSerializer(serializers.ModelSerializer):
     A serializer that uses UUIDs throughout, meant to be subclassed.
     """
 
+    # Ensure related serializers also use the UUID field
     serializer_related_field = UUIDRelatedField
 
     class Meta:
         exclude = ('uuid', )
-        # Ensure related serializers also use the UUID field
-        extra_kwargs = dict(id=dict(pk_field=uuid_field))
 
     id = serializers.UUIDField(source='uuid', required=False)

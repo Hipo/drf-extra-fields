@@ -109,7 +109,7 @@ class HyperlinkedGenericRelationsField(relations.HyperlinkedRelatedField):
             self.view_name = None
 
 
-class HyperlinkedGenericRelationsSerializer(serializers.ModelSerializer):
+class HyperlinkedGenericRelationsSerializer(object):
     """
     Serialize `GenericForeignKey` model fields/relationships as hyperlinks.
 
@@ -151,6 +151,36 @@ class HyperlinkedGenericRelationsSerializer(serializers.ModelSerializer):
         """
         Build `GenericForeignKey` fields.
         """
+        # Get the primary ID field for the serializer
+        id_field_name = self.get_field_names(self._declared_fields, info)[0]
+        id_field = self._declared_fields.get(id_field_name)
+        if id_field is None:
+            # Reconstruct the ID field
+            # Reproduce the ModelSerializer.get_fields() inner loop logic
+            extra_kwargs = self.get_extra_kwargs()
+            extra_field_kwargs = extra_kwargs.get(id_field_name, {})
+            source = extra_field_kwargs.get('source') or id_field_name
+            field_class, field_kwargs = super(
+                HyperlinkedGenericRelationsSerializer, self).build_field(
+                    source, info, model_class, nested_depth)
+            field_kwargs = self.include_extra_kwargs(
+                field_kwargs, extra_field_kwargs)
+            id_field = field_class(**field_kwargs)
+
+        # If not specified, infer the default URL lookup field for
+        # generic relations from the serializer's primary ID/URL field
+        lookup_kwargs = {}
+        if hasattr(id_field, 'lookup_field'):
+            # Another, hyperlink field, default to their lookup field
+            lookup_kwargs.update(
+                lookup_field=id_field.lookup_field,
+                lookup_url_kwarg=id_field.lookup_url_kwarg)
+        else:
+            # Primary key ID field, use it's source as the lookup field
+            source = getattr(id_field, 'source', None)
+            if source is not None:
+                lookup_kwargs.update(lookup_field=source)
+
         for model_field in self.generic_relations:
             if field_name != model_field.name:
                 continue
@@ -159,6 +189,29 @@ class HyperlinkedGenericRelationsSerializer(serializers.ModelSerializer):
                     model_field.fk_field))
             for kwarg in ('min_value', 'max_value', 'model_field'):
                 kwargs.pop(kwarg, None)
+            lookup_field = kwargs.get('lookup_field')
+            if lookup_field is None:
+                kwargs.update(lookup_kwargs)
             return self.serializer_generic_related_field, kwargs
+
         return super(HyperlinkedGenericRelationsSerializer, self).build_field(
             field_name, info, model_class, nested_depth)
+
+
+class GenericRelationsModelSerializer(
+        HyperlinkedGenericRelationsSerializer, serializers.ModelSerializer):
+    """
+    Serialize `GenericForeignKey` model fields/relationships as hyperlinks.
+
+    The primary ID field will still use primary keys by default.
+    """
+
+
+class HyperlinkedGenericRelationsModelSerializer(
+        HyperlinkedGenericRelationsSerializer,
+        serializers.HyperlinkedModelSerializer):
+    """
+    Serialize `GenericForeignKey` model fields/relationships as hyperlinks.
+
+    The primary ID field will also use hyperlinks by default.
+    """
