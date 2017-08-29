@@ -1,4 +1,7 @@
+import re
+
 from django.core import exceptions
+from django.db import models
 from django.utils import functional
 from django.contrib.contenttypes import fields as ct_fields
 from django.utils.six.moves.urllib import parse as urlparse
@@ -14,6 +17,8 @@ class HyperlinkedGenericRelationsField(relations.HyperlinkedRelatedField):
     """
     Determine the content type from the URL or model field.
     """
+
+    detail_view_name_re = re.compile(r'(.+)-detail$')
 
     def __init__(self, **kwargs):
         """
@@ -58,9 +63,12 @@ class HyperlinkedGenericRelationsField(relations.HyperlinkedRelatedField):
         except compat.Resolver404:
             self.fail('no_match')
 
+        queryset = self.get_queryset(match)
+        if self.lookup_url_kwarg not in match.kwargs:
+            return queryset
+
         lookup_value = match.kwargs[self.lookup_url_kwarg]
         lookup_kwargs = {self.lookup_field: lookup_value}
-        queryset = self.get_queryset(match)
         try:
             return queryset.get(**lookup_kwargs)
         except (exceptions.ObjectDoesNotExist, TypeError, ValueError):
@@ -72,8 +80,28 @@ class HyperlinkedGenericRelationsField(relations.HyperlinkedRelatedField):
         """
         Lookup the view to use for URL based on the type.
         """
-        self.view_name = field_mapping.get_detail_view_name(type(value))
+        if isinstance(value, models.Model):
+            model = type(value)
+        else:
+            model = value.model
+
         try:
+            self.view_name = field_mapping.get_detail_view_name(model)
+            if not isinstance(value, models.Model):
+                # Listing view for queryset
+                assert 'request' in self.context, (
+                    "`%s` requires the request in the serializer"
+                    " context. Add `context={'request': request}` when"
+                    " instantiating the serializer." % self.__class__.__name__
+                )
+
+                request = self.context['request']
+                format = self.context.get('format', None)
+                return self.reverse(
+                    self.detail_view_name_re.match(
+                        self.view_name).group(1) + '-list',
+                    request=request, format=format)
+
             return super(
                 HyperlinkedGenericRelationsField, self).to_representation(
                     value)

@@ -73,6 +73,23 @@ class TestGenericHyperlinkRelations(test.APITestCase):
             serializer.data['related_to'], None,
             'Wrong generic relation UUID value')
 
+    def test_to_internal_value_list(self):
+        """
+        Test generic hyperlinked listing deserialization.
+        """
+        new_url = 'http://testserver/people/'
+        serializer = AllFieldsSerializer(
+            data={
+                "name": "Foo Name", "articles": [],
+                "related_to": new_url},
+            context=dict(request=self.request))
+        serializer.is_valid(raise_exception=True)
+        self.assertIn(
+            'related_to', serializer.data, 'Missing generic relation')
+        self.assertEqual(
+            serializer.data['related_to'], new_url,
+            'Wrong generic relation UUID value')
+
     def test_incorrect_type(self):
         """
         Test generic hyperlinked related field with wrong type.
