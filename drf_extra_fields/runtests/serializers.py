@@ -46,7 +46,8 @@ class ExampleTypeFieldSerializer(
 
     type = parameterized.SerializerParameterField(
         specific_serializers={
-            "foo-type": ExampleChildSerializer()})
+            "foo-type": ExampleChildSerializer(allow_null=True)},
+        source='*')
 
     def to_internal_value(self, data):
         """

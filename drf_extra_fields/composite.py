@@ -32,22 +32,28 @@ def clone_serializer(serializer, parent=None, **kwargs):
     return clone
 
 
-class Cloner(object):
+class ParentField(serializers.Field):
     """
-    Common support for cloning a child field.
+    Common support for fields/serializers with a child field.
     """
 
     child = None
 
     def __init__(self, *args, **kwargs):
         """
-        Capture the child to clone at runtime.
+        Capture and bind the child field/serializer.
         """
         self.child = kwargs.pop('child', copy.deepcopy(self.child))
-        super(Cloner, self).__init__(*args, **kwargs)
+        super(ParentField, self).__init__(*args, **kwargs)
         if self.child is not None:
             # Support runtime child lookup
             self.child.bind(field_name='', parent=self)
+
+
+class Cloner(object):
+    """
+    Common support for cloning a child field.
+    """
 
     def clone_child(self, child, **kwargs):
         """
@@ -57,7 +63,7 @@ class Cloner(object):
         return clone_serializer(child, self, **kwargs)
 
 
-class CloningField(Cloner, serializers.Field):
+class CloningField(ParentField, serializers.Field, Cloner):
     """
     Clone the child field and delegate to it.
     """
@@ -120,7 +126,7 @@ class SerializerDictField(SerializerCompositeField, serializers.DictField):
     """
 
 
-class CompositeSerializer(Cloner, serializers.Serializer):
+class CompositeSerializer(serializers.Serializer, ParentField, Cloner):
     """
     Process our schema, then delegate the rest to the child serializer.
     """

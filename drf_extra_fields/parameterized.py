@@ -10,15 +10,11 @@ else:
 from django.conf import settings
 from django import urls
 from django.utils import functional
-from django.utils import six
 
-from rest_framework import status
-from rest_framework import exceptions
 from rest_framework import serializers
-from rest_framework import renderers
-from rest_framework import parsers
+from django.utils import six
 from rest_framework.utils import serializer_helpers
-
+from rest_framework.utils import html
 
 from . import composite
 
@@ -100,7 +96,7 @@ class SerializerParameterValidator(object):
         return value
 
 
-class SerializerParameterField(composite.SerializerCompositeField):
+class SerializerParameterFieldBase(serializers.Field, composite.Cloner):
     """
     Map serialized parameter to the specific serializer and back.
     """
@@ -131,7 +127,7 @@ class SerializerParameterField(composite.SerializerCompositeField):
         If both are given, items in `specific_serializers*` override items
         derived from `urlconf`.
         """
-        super(SerializerParameterField, self).__init__(**kwargs)
+        super(SerializerParameterFieldBase, self).__init__(**kwargs)
 
         assert (
             urlconf or
@@ -160,7 +156,7 @@ class SerializerParameterField(composite.SerializerCompositeField):
         """
         Tell the generic serializer to get the specific serializers from us.
         """
-        super(SerializerParameterField, self).bind(field_name, parent)
+        super(SerializerParameterFieldBase, self).bind(field_name, parent)
         self.bind_parameter_field(parent)
 
     def merge_serializer_parameters(self):
@@ -205,26 +201,6 @@ class SerializerParameterField(composite.SerializerCompositeField):
         vars(self).update(**serializers)
         return serializers['parameters']
 
-    def clone_specific_internal(self, data):
-        """
-        Lookup specific serializer by the current key.
-        """
-        specific = SerializerParameterField.to_internal_value(
-            self, self.current_parameter)
-        return composite.clone_serializer(
-            specific, self.parameter_serializer.parent,
-            context=self.parameter_serializer.context, data=data)
-
-    def clone_specific_representation(self, value):
-        """
-        Lookup specific serializer by the current key.
-        """
-        specific = SerializerParameterField.to_internal_value(
-            self, self.current_parameter)
-        return composite.clone_serializer(
-            specific, self.parameter_serializer.parent,
-            context=self.parameter_serializer.context, instance=value)
-
     def to_internal_value(self, data):
         """
         The specific serializer corresponding to the parameter.
@@ -232,45 +208,36 @@ class SerializerParameterField(composite.SerializerCompositeField):
         if data not in self.specific_serializers:
             self.fail('parameter', value=data)
 
-        self.current_parameter = data
-        return self.specific_serializers[data]
+        self.parameter_serializer.child = self.specific_serializers[data]
+        return self.parameter_serializer.child
 
-    def get_attribute(self, instance):
-        """
-        Get the specific serializer corresponding to the value.
-        """
-        if isinstance(instance, serializer_helpers.ReturnDict):
-            return instance.serializer
-
-        model = type(instance)
-        if model not in self.specific_serializers_by_type:
-            view = self.context.get('view')
-            if hasattr(view, 'get_queryset'):
-                try:
-                    queryset = view.get_queryset()
-                except AssertionError:
-                    pass
-                else:
-                    model = queryset.model
-            if model not in self.specific_serializers_by_type:
-                self.current_parameter = super(
-                    SerializerParameterField, self).get_attribute(instance)
-                return self.specific_serializers[self.current_parameter]
-
-        specific = self.specific_serializers_by_type[model]
-        self.current_parameter = self.parameters[type(specific)]
-        return specific
-
-    def to_representation(self, value):
+    def to_representation(self, instance):
         """
         The parameter corresponding to the specific serializer.
         """
-        self.current_parameter = self.parameters[type(value)]
-        return self.current_parameter
+        if isinstance(instance, serializer_helpers.ReturnDict):
+            # Serializing self.validated_data
+            specific = instance.serializer
+        else:
+            # Infer the specific serializer from the instance type
+            model = type(instance)
+            assert model in self.specific_serializers_by_type, (
+                'Could not lookup parameter from {0!r}'.format(instance))
+            specific = self.specific_serializers_by_type[model]
+
+        self.parameter_serializer.child = specific
+        return self.parameters[type(specific)]
+
+
+class SerializerParameterField(
+        composite.ParentField, SerializerParameterFieldBase):
+    """
+    Map field data to the specific serializer and back.
+    """
 
 
 class SerializerParameterDictField(
-        composite.SerializerDictField, SerializerParameterField):
+        composite.SerializerDictField, SerializerParameterFieldBase):
     """
     Map dictionary keys to the specific serializers and back.
     """
@@ -295,33 +262,49 @@ class SerializerParameterDictField(
         super(SerializerParameterDictField, self).bind(field_name, parent)
         self.bind_parameter_field(self.child)
 
-    get_attribute = composite.SerializerDictField.get_attribute
-
-    def clone_child(self, key, child, **kwargs):
+    def to_internal_value(self, data):
         """
-        Record the current parameter before cloning.
+        Use the dictionary keys as the parameter.x
         """
-        SerializerParameterField.to_internal_value(self, key)
-        return super(SerializerParameterDictField, self).clone_child(
-            key, child, **kwargs)
+        if html.is_html_input(data):
+            data = html.parse_html_dict(data)
+        if not isinstance(data, dict):
+            self.fail('not_a_dict', input_type=type(data).__name__)
+
+        value = serializer_helpers.ReturnDict(serializer=self)
+        for key, val in data.items():
+            # Set the specific serializer using the key as the parameter
+            SerializerParameterFieldBase.to_internal_value(self, key)
+            value[six.text_type(key)] = self.child.run_validation(val)
+        return value
+
+    def to_representation(self, value):
+        """
+        Use the dictionary keys as the parameter.x
+        """
+        data = serializer_helpers.ReturnDict(serializer=self)
+        for key, val in value.items():
+            # Set the specific serializer using the key as the parameter
+            SerializerParameterFieldBase.to_internal_value(self, key)
+            if val is None:
+                data[six.text_type(key)] = None
+            else:
+                data[six.text_type(key)] = self.child.to_representation(val)
+        return data
 
 
-class ParameterizedGenericSerializer(
-        serializers.Serializer, composite.SerializerCompositeField):
+class ParameterizedGenericSerializer(composite.CompositeSerializer):
     """
     Process generic schema, then delegate the rest to the specific serializer.
     """
 
     # Class-based defaults for instantiation kwargs
-    handle_errors = False
     exclude_parameterized = False
 
     def __init__(
             self, instance=None, data=serializers.empty,
-            parameter_field_name=None, handle_errors=None,
-            skip_parameterized=None, exclude_parameterized=None, **kwargs):
-        """
-        Process generic schema, then delegate the rest to the specific.
+            parameter_field_name=None, exclude_parameterized=None, **kwargs):
+        """Process generic schema, then delegate the rest to the specific.
 
         `SerializerParameterField` expects to be a field in the same
         JavaScript object as the parameterized fields:
@@ -335,46 +318,22 @@ class ParameterizedGenericSerializer(
         field next to the serializer, such as the JSON API format:
         `{"type": "users", "attributes": {"username": "foo_username", ...}}`.
 
-        In most cases, error response payloads do not have the same schema as
-        success responses.  As such, by default parameterized serializers skip
-        all handling of error response bodies.  Give `handle_errors=True` to
-        force processing error response payloads with the parameterized
-        serializer.
-
         By default, the looked up parameterized serializer is used to process
-        the data during `to_internal_value()` and `to_representation()`,
-        unless `skip_parameterized=True` in which case it is skipped.  This
-        can be useful if the input data has already been processed by a
-        parameterized serializer, such as when used in a renderer/parser.
-
+        the data during `to_internal_value()` and `to_representation()`.
         Alternatively, only the paramaterized serializer fields which are
         consumed by the generic serializer's fields can be used if
         `exclude_parameterized=True`.  This can be useful where you need the
         parameterized serializer to lookup the parameter but don't actually
         want to include it's schema, such as when just looking up a `type`:
         `{"type": "users", "id": 1}`
+
         """
         super(ParameterizedGenericSerializer, self).__init__(
             instance=instance, data=data, **kwargs)
-        if handle_errors is not None:
-            # Allow class to provide a default
-            self.handle_errors = handle_errors
         self.parameter_field_name = parameter_field_name
-        if skip_parameterized is not None:
-            # Allow class to provide a default
-            self.skip_parameterized = skip_parameterized
         if exclude_parameterized is not None:
             # Allow class to provide a default
             self.exclude_parameterized = exclude_parameterized
-
-    def should_skip_error(self):
-        """
-        Is the current response an error response and should we process it?
-        """
-        return (
-            'response' in self.context and
-            not status.is_success(self.context['response'].status_code) and
-            not self.handle_errors)
 
     def bind(self, field_name, parent):
         """
@@ -386,97 +345,32 @@ class ParameterizedGenericSerializer(
                 self.parameter_field_name]
             parameter_field.bind_parameter_field(self)
 
-    @functional.cached_property
-    def field_source_attrs(self):
+    def get_serializer(self, **kwargs):
         """
-        Collect the keys the generic schema looks for.
+        Optionally exclude the specific child serialiers fields.
         """
-        return {field.source for field in self.fields.values()}
+        clone = super(ParameterizedGenericSerializer, self).get_serializer(
+            **kwargs)
 
-    def to_internal_value(self, data):
-        """
-        Merge generic values into the rest and pass onto the specific.
-        """
-        # Deserialize our schema
-        value = super(
-            ParameterizedGenericSerializer, self).to_internal_value(data)
+        if self.exclude_parameterized:
+            for field_name, field in list(clone.fields.items()):
+                if field_name not in self.field_source_attrs:
+                    del clone.fields[field_name]
 
-        # Include all keys not already processed by our schema.
-        value.update(
-            (key, value) for key, value in data.items()
-            if key not in self.fields)
-
-        specific = self.clone_meta[
-            'parameter_field'].clone_specific_internal(data=value)
-        if not getattr(self, 'skip_parameterized', self.context.get(
-                'skip_parameterized', False)):
-            if self.exclude_parameterized:
-                for field_name, field in list(specific.fields.items()):
-                    if field_name not in self.field_source_attrs:
-                        del specific.fields[field_name]
-            # Reconstitute and validate the specific serializer
-            specific.is_valid(raise_exception=True)
-            value = specific.validated_data
-
-        return serializer_helpers.ReturnDict(value, serializer=specific)
+        return clone
 
     def to_representation(self, instance):
         """
-        Include generic items that aren't in the specific schema.
+        Ensure the current parameter and serializer are set first.
         """
-        if self.should_skip_error():
-            return instance
+        # Ensure all fields are bound so the parameter field is available
+        self.fields
+        # Set the current parameter and specific serializer
+        parameter_field = self.clone_meta['parameter_field']
+        parameter_field.to_representation(instance)
 
-        if isinstance(instance, serializer_helpers.ReturnDict):
-            specific = instance.serializer
-        else:
-            # Ensure all fields are bound so that the parameter field is found
-            self.fields
-            if getattr(
-                    self.clone_meta['parameter_field'],
-                    'current_parameter', None) is None:
-                # Make sure the parameter field sets the specific serializer
-                self.clone_meta['parameter_field'].get_attribute(instance)
-            specific = self.clone_meta[
-                'parameter_field'].clone_specific_representation(
-                    value=instance)
-        if not getattr(self, 'skip_parameterized', self.context.get(
-                'skip_parameterized', False)):
-            if self.exclude_parameterized:
-                for field_name, field in list(specific.fields.items()):
-                    if field_name not in self.field_source_attrs:
-                        del specific.fields[field_name]
-            instance = serializer_helpers.ReturnDict(
-                specific.data, serializer=specific)
-
-        data = super(ParameterizedGenericSerializer, self).to_representation(
+        return super(ParameterizedGenericSerializer, self).to_representation(
             instance)
-
-        # Merge back in specific items that aren't overridden by our schema
-        data.update(
-            (key, value) for key, value in instance.items()
-            if key not in self.field_source_attrs)
-
-        return serializer_helpers.ReturnDict(data, serializer=specific)
-
-    def save(self, **kwargs):
-        """
-        Delegate to the specific serializer.
-        """
-        self.instance = self.validated_data.serializer.save(**kwargs)
-        return self.instance
-
-    def create(self, validated_data):
-        """
-        Delegate to the specific serializer.
-        """
-        return validated_data.serializer.create(validated_data)
-
-    def update(self, instance, validated_data):
-        """
-        Delegate to the specific serializer.
-        """
-        return validated_data.serializer.update(instance, validated_data)
 
 
 class ParameterizedRenderer(renderers.JSONRenderer):

@@ -1,9 +1,12 @@
+from django.utils import datastructures
+
 import copy
 import json
 import pprint
 
 import inflection
 
+from rest_framework import exceptions
 from rest_framework import serializers
 from rest_framework import test
 
@@ -43,7 +46,7 @@ class ExampleSiblingFieldSerializer(serializers.Serializer):
 
     type = parameterized.SerializerParameterField(
         specific_serializers=test_serializers.ExampleTypeFieldSerializer(
-        ).fields['type']._specific_serializers)
+        ).fields['type']._specific_serializers, source='attributes')
     attributes = parameterized.ParameterizedGenericSerializer(
         parameter_field_name='type')
 
@@ -128,11 +131,13 @@ class TestParameterizedSerializerFields(test.APITestCase):
         """
         Test parameterized serializer instance to representation.
         """
+        person = models.Person.objects.create(
+            name=self.person_field_data['name'])
         parent = test_serializers.ExampleTypeFieldSerializer(
-            instance=self.type_field_data,
+            instance=person,
             context=dict(view=test_viewsets.ExamplePersonViewset()))
         self.assertEqual(
-            parent.data, self.type_field_data,
+            parent.data, dict(self.type_field_data, id=str(person.uuid)),
             'Wrong type field serializer representation')
 
     def test_invalid_parameter(self):
@@ -171,23 +176,6 @@ class TestParameterizedSerializerFields(test.APITestCase):
             self.type_field_data['type'],
             'Wrong specific serializer reverse parameter lookup')
 
-    def test_parameterized_field_wo_queryset(self):
-        """
-        Test parameterized field handling of a view without a queryset.
-        """
-        foo_data = dict(
-            test_composite.TestCompositeSerializerFields.child_data,
-            type="foo-type")
-        parent = test_serializers.ExampleTypeFieldSerializer(
-            instance=foo_data, context=dict(
-                view=test_viewsets.ExampleTypeFieldViewset()))
-        self.assertIn(
-            'type', parent.data,
-            'Missing invalid parameter validation error')
-        self.assertEqual(
-            parent.data["type"], foo_data["type"],
-            'Wrong invalid parameter validation error')
-
     def test_sibling_parameterized_serializer(self):
         """
         Test delegating to a specific serializer from a sibling field.
@@ -200,15 +188,22 @@ class TestParameterizedSerializerFields(test.APITestCase):
         self.assertEqual(
             save_result, sibling_field_value,
             'Wrong sibling field serializer save results')
+        sibling_field_data = copy.deepcopy(self.sibling_field_data)
+        sibling_field_data["attributes"]["id"] = str(
+                sibling_field_value["attributes"].uuid)
         self.assertEqual(
-            parent.data, self.sibling_field_data,
+            parent.data, sibling_field_data,
             'Wrong sibling field serializer representation')
 
     def test_dict_parameterized_serializer(self):
         """
         Test delegating to a specific serializer from a dict key.
         """
-        parent = ExampleDictFieldSerializer(data=self.dict_field_data)
+        dict_data = self.dict_field_data.copy()
+        dict_data["types"] = datastructures.MultiValueDict({
+            '.' + key: [value]
+            for key, value in self.dict_field_data["types"].items()})
+        parent = ExampleDictFieldSerializer(data=dict_data)
         parent.is_valid(raise_exception=True)
         save_result = parent.save()
         dict_field_value = copy.deepcopy(self.dict_field_data)
@@ -223,20 +218,46 @@ class TestParameterizedSerializerFields(test.APITestCase):
             parent.data, dict_field_data,
             'Wrong dict field serializer representation')
 
-    def test_serializer_skip_parameterized(self):
+    def test_dict_parameterized_serializer_none(self):
         """
-        An parameterized serializer can optionally skip specific fields.
+        Test that a dict field handles none values.
+        """
+        none_data = self.dict_field_data.copy()
+        none_data["types"] = dict(self.dict_field_data["types"])
+        none_data["types"]["foo-type"] = None
+        none = ExampleDictFieldSerializer(data=none_data)
+        none.is_valid(raise_exception=True)
+        self.assertEqual(
+            none.data, none_data, 'Wrong serializer reproduction')
+
+    def test_dict_parameterized_serializer_type(self):
+        """
+        Test that a dict field validates type.
+        """
+        type_data = self.dict_field_data.copy()
+        type_data["types"] = [self.dict_field_data["types"]]
+        wrong_type = ExampleDictFieldSerializer(data=type_data)
+        with self.assertRaises(exceptions.ValidationError) as cm:
+            wrong_type.is_valid(raise_exception=True)
+        self.assertIn(
+            'expected a dictionary of items',
+            cm.exception.detail["types"][0].lower(),
+            'Wrong dict type validation error')
+
+    def test_serializer_exclude_parameterized(self):
+        """
+        An parameterized serializer can optionally exclude specific fields.
         """
         data_serializer = test_serializers.ExampleTypeFieldSerializer(
-            data=self.type_field_data, handle_errors=True,
-            skip_parameterized=False, exclude_parameterized=True)
+            data=self.type_field_data, exclude_parameterized=True)
         data_serializer.is_valid(raise_exception=True)
         self.assertNotIn(
             'name', data_serializer.data,
             'Parameterized field in internal value')
+        person = models.Person.objects.create(
+            name=self.person_field_data['name'])
         instance_serializer = test_serializers.ExampleTypeFieldSerializer(
-            instance=self.type_field_data, handle_errors=True,
-            skip_parameterized=False, exclude_parameterized=True)
+            instance=person, exclude_parameterized=True)
         self.assertNotIn(
             'name', instance_serializer.data,
             'Parameterized field in representation')
