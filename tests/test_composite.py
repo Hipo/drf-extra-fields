@@ -1,5 +1,3 @@
-from django.utils import datastructures
-
 from rest_framework import exceptions
 from rest_framework import request
 from rest_framework import serializers
@@ -67,10 +65,7 @@ class TestCompositeSerializerFields(test.APITestCase):
         """
         Test that a list field child serializer can be fully used.
         """
-        list_data = self.list_data.copy()
-        list_data["children"] = datastructures.MultiValueDict({
-            '[0]': [self.child_data]})
-        parent = ExampleListSerializer(data=list_data)
+        parent = ExampleListSerializer(data=self.list_data)
         parent.is_valid(raise_exception=True)
         save_result = parent.save()
         self.assertEqual(
@@ -112,26 +107,11 @@ class TestCompositeSerializerFields(test.APITestCase):
             cm.exception.detail["children"][0].lower(),
             'Wrong list type validation error')
 
-    def test_list_field_none(self):
-        """
-        Test that a list field handles none values.
-        """
-        none_data = self.list_data.copy()
-        none_data["children"] = [None]
-        none = ExampleListSerializer(data=none_data)
-        none.is_valid(raise_exception=True)
-        self.assertEqual(
-            none.data, none_data, 'Wrong serializer reproduction')
-
     def test_dict_field(self):
         """
         Test that a dict field child serializer can be fully used.
         """
-        dict_data = self.dict_data.copy()
-        dict_data["children"] = datastructures.MultiValueDict({
-            '.' + key: [value]
-            for key, value in self.dict_data["children"].items()})
-        parent = ExampleDictSerializer(data=dict_data)
+        parent = ExampleDictSerializer(data=self.dict_data)
         parent.is_valid(raise_exception=True)
         save_result = parent.save()
         self.assertEqual(
@@ -146,30 +126,6 @@ class TestCompositeSerializerFields(test.APITestCase):
         parent = ExampleDictSerializer(instance=self.dict_data)
         self.assertEqual(
             parent.data, self.dict_data, 'Wrong serializer reproduction')
-
-    def test_dict_field_type(self):
-        """
-        Test that a dict field validates type.
-        """
-        type = ExampleDictSerializer(data=self.list_data)
-        with self.assertRaises(exceptions.ValidationError) as cm:
-            type.is_valid(raise_exception=True)
-        self.assertIn(
-            'expected a dictionary of items',
-            cm.exception.detail["children"][0].lower(),
-            'Wrong dict type validation error')
-
-    def test_dict_field_none(self):
-        """
-        Test that a dict field handles none values.
-        """
-        none_data = self.dict_data.copy()
-        none_data["children"] = dict(
-            self.dict_data["children"], foo=None)
-        none = ExampleDictSerializer(data=none_data)
-        none.is_valid(raise_exception=True)
-        self.assertEqual(
-            none.data, none_data, 'Wrong serializer reproduction')
 
     def test_list_serializer(self):
         """
