@@ -1,9 +1,10 @@
-from drf_extra_fields import parameterized
+from rest_framework import renderers
+from rest_framework import parsers
 
 from . import serializers
 
 
-class ExampleParameterizedRenderer(parameterized.ParameterizedRenderer):
+class ExampleParameterizedRenderer(renderers.JSONRenderer):
     """
     ExampleParameterized JSON format renderer
     """
@@ -13,11 +14,8 @@ class ExampleParameterizedRenderer(parameterized.ParameterizedRenderer):
     serializer_class = serializers.ExampleTypeFieldSerializer
 
 
-class ExampleParameterizedParser(parameterized.ParameterizedParser):
+class ExampleParameterizedParser(parsers.JSONParser):
     """
     ExampleParameterized JSON format parser
     """
     media_type = ExampleParameterizedRenderer.media_type
-    renderer_class = ExampleParameterizedRenderer
-
-    serializer_class = ExampleParameterizedRenderer.serializer_class

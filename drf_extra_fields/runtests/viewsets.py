@@ -1,4 +1,4 @@
-from drf_extra_fields import viewsets
+from drf_extra_fields import serializer_formats as viewsets
 
 from . import models
 from . import serializers

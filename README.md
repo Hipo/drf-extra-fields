@@ -351,6 +351,26 @@ class ExampleTypeFieldSerializer(
 ```
 
 
+## `serializer_formats`: Serializer-based formats/renderers/parsers
+
+Support for defining JSON formats using DRF serializers.
+
+Many JSON based formats, such as [JSON API](http://jsonapi.org), specify a lot
+of structure in the JSON.  As such, defining the format in DRF terms is best
+done using DRF serializers.  To support using multiple formats with the same
+views/endpoints requires combining the serializer that defines the format with
+the specific serializer for the endpoint.  The
+`serializer_formats.FormatModelViewset` class will use the `serializer_class`
+of the negotiated parser instead of the viewset's `serializer_class`for
+create/update requests or of the negotiated renderer for retreive/list
+requests if `serializer_class` exists on the parser/renderer.  Note that the
+format's `serializer_class` is responsible for incorporating the specific
+viewset's `serializer_class`, such as the
+`composite.CompositeSerializer` does.  If the format's `serializer_class` is
+meant to also render error details, set `handle_errors = True` on the
+`serializer_class` and it will be used with the DRF error response 
+
+
 CONTRIBUTION
 =================
 

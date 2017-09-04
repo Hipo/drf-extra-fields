@@ -335,26 +335,3 @@ class TestParameterizedSerializerFields(test.APITestCase):
             'this field is required',
             invalid_response.data['type'][0].lower(),
             'Wrong invalid request error details.')
-
-    def test_parameterized_parser_exception(self):
-        """
-        Test the parameterized parser exception handling.
-        """
-        exception_field_data = dict(
-            self.person_field_data,
-            test_unhandled_exception='Foo parser exception')
-        exception_response = self.client.post(
-            '/people/?format=drf-extra-fields-parameterized',
-            json.dumps(exception_field_data),
-            content_type=formats.ExampleParameterizedRenderer.media_type)
-        self.assertEqual(
-            exception_response.status_code, 400,
-            'Exception request did return validation error:\n{0}'.format(
-                pprint.pformat(exception_response.data)))
-        self.assertIn(
-            'detail', exception_response.data,
-            'Exception request did not return error details.')
-        self.assertIn(
-            exception_field_data['test_unhandled_exception'].lower(),
-            exception_response.data['detail'].lower(),
-            'Wrong exception request error details.')
