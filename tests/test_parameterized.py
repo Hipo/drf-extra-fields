@@ -26,7 +26,7 @@ class ExampleDictFieldSerializer(serializers.Serializer):
 
     types = parameterized.SerializerParameterDictField(
         inflectors=[inflection.singularize, inflection.parameterize],
-        child=parameterized.ParameterizedGenericSerializer(),
+        child=parameterized.ParameterizedGenericSerializer(allow_null=True),
         specific_serializers=test_serializers.ExampleTypeFieldSerializer(
         ).fields['type']._specific_serializers)
 
