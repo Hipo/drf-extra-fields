@@ -38,7 +38,7 @@ class FormatAPIView(object):
             return response
 
         instance = exceptions.APIException(
-            detail=response.data, code=response.status)
+            detail=response.data, code=response.status_code)
         serializer = serializer_class(
             instance=instance, context=self.get_serializer_context())
         response.data = serializer.data

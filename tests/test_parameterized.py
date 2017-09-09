@@ -335,3 +335,20 @@ class TestParameterizedSerializerFields(test.APITestCase):
             'this field is required',
             invalid_response.data['type'][0].lower(),
             'Wrong invalid request error details.')
+
+    def test_parameterized_format_exception(self):
+        """
+        Test the parameterized format handling of errors.
+        """
+        view = test_viewsets.ExamplePersonViewset()
+        factory = test.APIRequestFactory()
+        view.request = request.Request(factory.get('/'))
+        view.format_kwarg = None
+        view.request.accepted_renderer = (
+            formats.ExampleParameterizedRenderer())
+        view.request.accepted_renderer.error_serializer_class = (
+            serializers.Serializer)
+        exc = exceptions.APIException('example exception')
+        response = view.handle_exception(exc)
+        self.assertEqual(
+            response.data, {}, 'Wrong exception response detail')
