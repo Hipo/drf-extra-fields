@@ -1,5 +1,7 @@
 from django.core import exceptions
 
+from collections import OrderedDict
+
 from rest_framework import serializers
 from rest_framework import relations
 
@@ -33,6 +35,19 @@ class PresentablePrimaryKeyRelatedField(relations.PrimaryKeyRelatedField):
             'a `presentation_serializer` argument'
         )
         super(PresentablePrimaryKeyRelatedField, self).__init__(**kwargs)
+
+    def get_choices(self, cutoff=None):
+        queryset = self.get_queryset()
+        if queryset is None:
+            # Ensure that field.choices returns something sensible
+            # even when accessed with a read-only field.
+            return {}
+
+        if cutoff is not None:
+            queryset = queryset[:cutoff]
+
+        return OrderedDict([(item.pk, self.display_value(item))
+                            for item in queryset])
 
     def to_representation(self, data):
         return self.presentation_serializer(data, context=self.context).data
