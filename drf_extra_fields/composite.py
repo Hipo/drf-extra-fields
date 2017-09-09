@@ -16,6 +16,8 @@ def clone_serializer(serializer, parent=None, **kwargs):
     """
     kwargs = dict(serializer._kwargs, **kwargs)
     if 'child' in kwargs:
+        kwargs['child'] = clone_serializer(kwargs['child'])
+    elif getattr(serializer, 'child', None) is not None:
         kwargs['child'] = clone_serializer(serializer.child)
 
     clone = type(serializer)(*serializer._args, **kwargs)

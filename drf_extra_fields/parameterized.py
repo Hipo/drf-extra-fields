@@ -260,7 +260,7 @@ class SerializerParameterDictField(
         Tell the generic serializer to get the specific serializers from us.
         """
         super(SerializerParameterDictField, self).bind(field_name, parent)
-        self.bind_parameter_field(self.child)
+        self.bind_parameter_field(self.child.child)
 
     def to_internal_value(self, data):
         """
