@@ -46,13 +46,18 @@ class ExampleTypeFieldSerializer(
 
     type = parameterized.SerializerParameterField(
         specific_serializers={
-            "foo-type": ExampleChildSerializer()},
+            "foo-type": ExampleChildSerializer(),
+            "wo-models": serializers.Serializer()},
         source='*')
 
-    def to_internal_value(self, data):
+
+class ExampleSerializerWOModel(serializers.Serializer):
+    """
+    A simple serialier without a model.
+    """
+
+    def create(self, validated_data):
         """
-        Add a hook for raising an unhandled exception.
+        Just return the validated data.
         """
-        if 'test_unhandled_exception' in data:
-            raise Exception(data['test_unhandled_exception'])
-        return super(ExampleTypeFieldSerializer, self).to_internal_value(data)
+        return validated_data

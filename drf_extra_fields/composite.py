@@ -133,6 +133,31 @@ class CompositeSerializer(serializers.Serializer, ParentField, Cloner):
     Process our schema, then delegate the rest to the child serializer.
     """
 
+    primary = True
+
+    def __init__(self, *args, **kwargs):
+        """
+        Accept an argument specifying whether this serializer is primary.
+
+        As opposed to a related serializer, or otherwise one that shouldn't
+        use the view's serializer.
+        """
+        primary = kwargs.pop('primary', None)
+        # Preserve class default if not given
+        if primary is not None:
+            self.primary = primary
+        super(CompositeSerializer, self).__init__(*args, **kwargs)
+
+    def get_view_serializer(self, *args, **kwargs):
+        """
+        Get the serializer from the view if we're the primary serializer.
+        """
+        view = self.context.get('view')
+        if self.primary and hasattr(view, 'get_serializer'):
+            serializer_class = view.serializer_class
+            kwargs['context'] = view.get_serializer_context()
+            return serializer_class(*args, **kwargs)
+
     def get_serializer(self, *args, **kwargs):
         """
         Return a clone of the child if present, or from the view.
@@ -140,13 +165,7 @@ class CompositeSerializer(serializers.Serializer, ParentField, Cloner):
         if self.child is not None:
             return self.clone_child(self.child, *args, **kwargs)
 
-        view = self.context.get('view')
-        if hasattr(view, 'get_serializer'):
-            return view.get_serializer(*args, **kwargs)
-
-        raise ValueError(
-            'Must give either a child serializer or be used in the context '
-            'of a view from which to get the serializer')
+        return self.get_view_serializer(*args, **kwargs)
 
     @functional.cached_property
     def field_source_attrs(self):
@@ -169,6 +188,10 @@ class CompositeSerializer(serializers.Serializer, ParentField, Cloner):
 
         # Reconstitute and validate the child serializer
         child = self.get_serializer(data=value)
+        if child is None:
+            raise ValueError(
+                'Must give either a child serializer or be used in the '
+                'context of a view from which to get the serializer')
         child.is_valid(raise_exception=True)
         value = child.validated_data
 
@@ -182,6 +205,10 @@ class CompositeSerializer(serializers.Serializer, ParentField, Cloner):
             child = instance.serializer
         else:
             child = self.get_serializer(instance=instance)
+            if child is None:
+                raise ValueError(
+                    'Must give either a child serializer or be used in the '
+                    'context of a view from which to get the serializer')
 
         instance = serializer_helpers.ReturnDict(child.data, serializer=child)
 

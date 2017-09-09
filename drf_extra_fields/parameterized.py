@@ -102,8 +102,13 @@ class SerializerParameterFieldBase(serializers.Field, composite.Cloner):
     """
 
     default_error_messages = {
-        'parameter': (
+        'unknown': (
             'No specific serializer available for parameter {value!r}'),
+        'serializer': (
+            'No parameter found for the specific serializer, {value!r}'),
+        'mismatch': (
+            'The parameter, {data!r}, '
+            'does not match the looked up parameter, {parameter!r}'),
     }
 
     def __init__(
@@ -206,10 +211,23 @@ class SerializerParameterFieldBase(serializers.Field, composite.Cloner):
         The specific serializer corresponding to the parameter.
         """
         if data not in self.specific_serializers:
-            self.fail('parameter', value=data)
+            self.fail('unknown', value=data)
 
-        self.parameter_serializer.child = self.specific_serializers[data]
-        return self.parameter_serializer.child
+        # if the generic serializer ends up using a serializer other than
+        # `self.child`, such as when the primary serializer looks up the
+        # serializer from the view, verify that the type matches.
+        child = self.parameter_serializer.get_view_serializer()
+        if child is not None:
+            parameter = self.parameters.get(type(child))
+            if parameter is None:
+                self.fail('serializer', value=child)
+            if data != parameter:
+                self.fail('mismatch', data=data, parameter=parameter)
+        else:
+            child = self.specific_serializers[data]
+
+        self.parameter_serializer.child = child
+        return child
 
     def to_representation(self, instance):
         """
@@ -217,16 +235,25 @@ class SerializerParameterFieldBase(serializers.Field, composite.Cloner):
         """
         if isinstance(instance, serializer_helpers.ReturnDict):
             # Serializing self.validated_data
-            specific = instance.serializer
+            child = instance.serializer
         else:
             # Infer the specific serializer from the instance type
             model = type(instance)
+            # TODO validation error?
             assert model in self.specific_serializers_by_type, (
                 'Could not lookup parameter from {0!r}'.format(instance))
-            specific = self.specific_serializers_by_type[model]
+            child = self.specific_serializers_by_type[model]
+        data = self.parameters[type(child)]
 
-        self.parameter_serializer.child = specific
-        return self.parameters[type(specific)]
+        # if the generic serializer ends up using a serializer other than
+        # `self.child`, such as when the primary serializer looks up the
+        # serializer from the view, verify that the type matches.
+        view_child = self.parameter_serializer.get_view_serializer()
+        if view_child is not None:
+            child = view_child
+
+        self.parameter_serializer.child = child
+        return data
 
 
 class SerializerParameterField(
@@ -245,14 +272,9 @@ class SerializerParameterDictField(
 
     def __init__(self, *args, **kwargs):
         """
-        Ensure that `DictField.child` is a `ParameterizedGenericSerializer`.
+        Don't skip the field by default.
         """
         kwargs.setdefault('skip', False)
-
-        child = kwargs.get('child')
-        assert isinstance(child, ParameterizedGenericSerializer), (
-            'The `child` must be a subclass of '
-            '`ParameterizedGenericSerializer`')
         super(SerializerParameterDictField, self).__init__(*args, **kwargs)
 
     def bind(self, field_name, parent):
@@ -351,6 +373,8 @@ class ParameterizedGenericSerializer(composite.CompositeSerializer):
         """
         clone = super(ParameterizedGenericSerializer, self).get_serializer(
             **kwargs)
+        if clone is None:
+            return
 
         if self.exclude_parameterized:
             for field_name, field in list(clone.fields.items()):

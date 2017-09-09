@@ -1,13 +1,14 @@
-from django.utils import datastructures
-
 import copy
 import json
 import pprint
 
 import inflection
 
+from django.utils import datastructures
+
 from rest_framework import exceptions
 from rest_framework import serializers
+from rest_framework import request
 from rest_framework import test
 
 from drf_extra_fields import parameterized
@@ -127,15 +128,26 @@ class TestParameterizedSerializerFields(test.APITestCase):
             parent.data, foo_data,
             'Wrong type field serializer representation')
 
+    def test_parameterized_serializer_wo_serializer(self):
+        """
+        A parameterized without a serializer returns None.
+        """
+        parent = test_serializers.ExampleTypeFieldSerializer()
+        self.assertIsNone(
+            parent.get_serializer(), 'Wrong missing serializer value')
+
     def test_parameterized_serializer_instance(self):
         """
         Test parameterized serializer instance to representation.
         """
         person = models.Person.objects.create(
             name=self.person_field_data['name'])
+        view = test_viewsets.ExamplePersonViewset()
+        factory = test.APIRequestFactory()
+        view.request = request.Request(factory.get('/'))
+        view.format_kwarg = None
         parent = test_serializers.ExampleTypeFieldSerializer(
-            instance=person,
-            context=dict(view=test_viewsets.ExamplePersonViewset()))
+            instance=person, context=dict(view=view))
         self.assertEqual(
             parent.data, dict(self.type_field_data, id=str(person.uuid)),
             'Wrong type field serializer representation')
@@ -316,9 +328,9 @@ class TestParameterizedSerializerFields(test.APITestCase):
             list_json[0], type_field_data,
             'Wrong parameterized format list response results')
 
-    def test_parameterized_parser_validation(self):
+    def test_parameterized_format_validation(self):
         """
-        Test the parameterized parser validation.
+        Test the parameterized format validation.
         """
         invalid_response = self.client.post(
             '/people/?format=drf-extra-fields-parameterized',
@@ -333,6 +345,47 @@ class TestParameterizedSerializerFields(test.APITestCase):
             'Invalid request did not return error details.')
         self.assertIn(
             'this field is required',
+            invalid_response.data['type'][0].lower(),
+            'Wrong invalid request error details.')
+
+    def test_parameterized_format_mismatched_type(self):
+        """
+        Test the parameterized format mismatched type validation.
+        """
+        data = dict(self.type_field_data, type='foo-type')
+        invalid_response = self.client.post(
+            '/people/?format=drf-extra-fields-parameterized',
+            json.dumps(data),
+            content_type=formats.ExampleParameterizedRenderer.media_type)
+        self.assertEqual(
+            invalid_response.status_code, 400,
+            'Invalid request did return validation error:\n{0}'.format(
+                pprint.pformat(invalid_response.data)))
+        self.assertIn(
+            'type', invalid_response.data,
+            'Invalid request did not return error details.')
+        self.assertIn(
+            'does not match',
+            invalid_response.data['type'][0].lower(),
+            'Wrong invalid request error details.')
+
+    def test_parameterized_format_wo_serializer(self):
+        """
+        Test the parameterized format no serializer validation on POST.
+        """
+        invalid_response = self.client.post(
+            '/wo-model/?format=drf-extra-fields-parameterized',
+            json.dumps(self.type_field_data),
+            content_type=formats.ExampleParameterizedRenderer.media_type)
+        self.assertEqual(
+            invalid_response.status_code, 400,
+            'Invalid request did return validation error:\n{0}'.format(
+                pprint.pformat(invalid_response.data)))
+        self.assertIn(
+            'type', invalid_response.data,
+            'Invalid request did not return error details.')
+        self.assertIn(
+            'no parameter found',
             invalid_response.data['type'][0].lower(),
             'Wrong invalid request error details.')
 

@@ -183,7 +183,8 @@ class TestCompositeSerializerFields(test.APITestCase):
         """
         data = {"name": "Foo name"}
         parent = ExampleCompositeSerializer(
-            child=parameterized.ExampleChildSerializer(), data=data)
+            child=parameterized.ExampleChildSerializer(), data=data,
+            primary=True)
         parent.is_valid(raise_exception=True)
         self.assertEqual(
             parent.save(), data,
@@ -214,11 +215,18 @@ class TestCompositeSerializerFields(test.APITestCase):
         """
         Test the composite serializer wthout a child.
         """
-        parent = composite.CompositeSerializer(data={})
-        with self.assertRaises(Exception) as cm:
-            parent.is_valid(raise_exception=True)
+        data_parent = composite.CompositeSerializer(data={})
+        with self.assertRaises(Exception) as to_internal_value:
+            data_parent.is_valid(raise_exception=True)
         self.assertIn(
-            'must give either', str(cm.exception).lower(),
+            'must give either', str(to_internal_value.exception).lower(),
+            'Wrong composite serializer missing child error')
+
+        instance_parent = composite.CompositeSerializer(instance={})
+        with self.assertRaises(Exception) as to_representation:
+            instance_parent.data
+        self.assertIn(
+            'must give either', str(to_representation.exception).lower(),
             'Wrong composite serializer missing child error')
 
     def test_composite_serializer_instance(self):
