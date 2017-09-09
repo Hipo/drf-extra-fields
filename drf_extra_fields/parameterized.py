@@ -367,7 +367,8 @@ class ParameterizedGenericSerializer(composite.CompositeSerializer):
         self.fields
         # Set the current parameter and specific serializer
         parameter_field = self.clone_meta['parameter_field']
-        parameter_field.to_representation(instance)
+        SerializerParameterFieldBase.to_representation(
+            parameter_field, instance)
 
         return super(ParameterizedGenericSerializer, self).to_representation(
             instance)
