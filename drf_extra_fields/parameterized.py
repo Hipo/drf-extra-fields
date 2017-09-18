@@ -148,6 +148,8 @@ class SerializerParameterFieldBase(serializers.Field, composite.Cloner):
         self.skip = skip
         self.validators.append(SerializerParameterValidator())
 
+        self.parameter_serializers = []
+
     def bind_parameter_field(self, serializer):
         """
         Bind the serializer to the parameter field.
@@ -155,7 +157,8 @@ class SerializerParameterFieldBase(serializers.Field, composite.Cloner):
         if not hasattr(serializer, 'clone_meta'):
             serializer.clone_meta = {}
         serializer.clone_meta['parameter_field'] = self
-        self.parameter_serializer = serializer
+        if isinstance(serializer, ParameterizedGenericSerializer):
+            self.parameter_serializers.append(serializer)
 
     def bind(self, field_name, parent):
         """
@@ -216,7 +219,7 @@ class SerializerParameterFieldBase(serializers.Field, composite.Cloner):
         # if the generic serializer ends up using a serializer other than
         # `self.child`, such as when the primary serializer looks up the
         # serializer from the view, verify that the type matches.
-        child = self.parameter_serializer.get_view_serializer()
+        child = self.parameter_serializers[0].get_view_serializer()
         if child is not None:
             parameter = self.parameters.get(type(child))
             if parameter is None:
@@ -226,7 +229,8 @@ class SerializerParameterFieldBase(serializers.Field, composite.Cloner):
         else:
             child = self.specific_serializers[data]
 
-        self.parameter_serializer.child = child
+        for parameter_serializer in self.parameter_serializers:
+            parameter_serializer.child = child
         return child
 
     def to_representation(self, instance):
@@ -248,11 +252,12 @@ class SerializerParameterFieldBase(serializers.Field, composite.Cloner):
         # if the generic serializer ends up using a serializer other than
         # `self.child`, such as when the primary serializer looks up the
         # serializer from the view, verify that the type matches.
-        view_child = self.parameter_serializer.get_view_serializer()
+        view_child = self.parameter_serializers[0].get_view_serializer()
         if view_child is not None:
             child = view_child
 
-        self.parameter_serializer.child = child
+        for parameter_serializer in self.parameter_serializers:
+            parameter_serializer.child = child
         return data
 
 
