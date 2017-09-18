@@ -2,7 +2,6 @@
 Support for defining JSON formats using DRF serializers.
 """
 
-from rest_framework import exceptions
 from rest_framework import generics
 from rest_framework import viewsets
 
@@ -37,10 +36,8 @@ class FormatAPIView(object):
         if serializer_class is None:
             return response
 
-        instance = exceptions.APIException(
-            detail=response.data, code=response.status_code)
         serializer = serializer_class(
-            instance=instance, context=self.get_serializer_context())
+            instance=exc, context=self.get_serializer_context())
         response.data = serializer.data
         return response
 
