@@ -50,7 +50,7 @@ def lookup_serializer_parameters(
             if url_match is not None:
                 parameter = url_match.group(1)
             elif model is not None:
-                parameter = model._meta.verbose_name.replace(' ', '-')
+                parameter = model._meta.verbose_name
         if parameter is not None:
             for inflector in inflectors:
                 parameter = inflector(parameter)
