@@ -26,6 +26,22 @@ class FormatAPIView(object):
 
         return super(FormatAPIView, self).get_serializer_class()
 
+    def get_paginated_response(self, data):
+        """
+        Pass the paginated data through the `pagination_serializer_class`.
+        """
+        response = super(FormatAPIView, self).get_paginated_response(data)
+        serializer_class = getattr(
+            self.request.accepted_renderer, 'pagination_serializer_class',
+            None)
+        if serializer_class is None:
+            return response
+
+        serializer = serializer_class(
+            instance=data, context=self.get_serializer_context())
+        response.data = serializer.data
+        return response
+
     def handle_exception(self, exc):
         """
         Use the format's renderer `error_serializer_class` if available.

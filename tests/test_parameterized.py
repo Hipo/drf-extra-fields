@@ -9,6 +9,7 @@ from django.utils import datastructures
 from rest_framework import exceptions
 from rest_framework import serializers
 from rest_framework import request
+from rest_framework import pagination
 from rest_framework import test
 
 from drf_extra_fields import parameterized
@@ -18,6 +19,14 @@ from drf_extra_fields.runtests import viewsets as test_viewsets
 from drf_extra_fields.runtests import formats
 
 from . import test_composite
+
+
+class ExamplePageNumberPagination(pagination.PageNumberPagination):
+    """
+    Example pagination class for testing format pagination.
+    """
+
+    page_size = 1
 
 
 class ExampleDictFieldSerializer(serializers.Serializer):
@@ -405,6 +414,30 @@ class TestParameterizedSerializerFields(test.APITestCase):
         response = view.handle_exception(exc)
         self.assertEqual(
             response.data, {}, 'Wrong exception response detail')
+
+    def test_parameterized_format_pagination(self):
+        """
+        Test the parameterized format handling of errors.
+        """
+        view = test_viewsets.ExamplePersonViewset()
+        factory = test.APIRequestFactory()
+        view.request = request.Request(factory.get('/'))
+        view.format_kwarg = None
+        view.request.accepted_renderer = (
+            formats.ExampleParameterizedRenderer())
+        view.pagination_class = ExamplePageNumberPagination
+
+        wo_pagination_serializer = view.list(view.request)
+        self.assertEqual(
+            wo_pagination_serializer.data,
+            {'count': 0, 'next': None, 'previous': None, 'results': []},
+            'Wrong pagination response without pagination serializer')
+
+        view.request.accepted_renderer.pagination_serializer_class = (
+            serializers.Serializer)
+        response = view.list(view.request)
+        self.assertEqual(
+            response.data, {}, 'Wrong pagination response')
 
     def test_resource_type(self):
         """

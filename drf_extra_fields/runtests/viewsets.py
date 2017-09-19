@@ -12,7 +12,7 @@ class ExamplePersonViewset(viewsets.UUIDModelViewSet):
     """
 
     serializer_class = serializers.ExamplePersonSerializer
-    queryset = models.Person.objects
+    queryset = models.Person.objects.all()
 
 
 class ExampleTypeFieldViewset(viewsets.UUIDModelViewSet):
