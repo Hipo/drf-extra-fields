@@ -405,3 +405,15 @@ class TestParameterizedSerializerFields(test.APITestCase):
         response = view.handle_exception(exc)
         self.assertEqual(
             response.data, {}, 'Wrong exception response detail')
+
+    def test_resource_type(self):
+        """
+        Test resource type parameter lookup from an instance.
+        """
+        person = models.Person.objects.create(
+            name=self.person_field_data['name'])
+        parameter, model, serializer = parameterized.get_resource_items(
+            person)
+        self.assertEqual(
+            parameter, 'people',
+            'Wrong looked up type parameter from instance')

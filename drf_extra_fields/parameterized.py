@@ -9,6 +9,7 @@ else:
 
 from django.conf import settings
 from django import urls
+from django.db import models
 from django.utils import functional
 
 from rest_framework import serializers
@@ -19,6 +20,43 @@ from rest_framework.utils import html
 from . import composite
 
 url_parameter_re = re.compile(r'\^([^/?]+)/\$')
+
+
+def get_resource_items(
+        instance, pattern=None,
+        url_re=url_parameter_re, inflectors=inflectors):
+    """
+    Lookup the resource type, model and serializer, from various sources.
+    """
+    if isinstance(instance, models.Model):
+        model = instance
+        serializer = parameter = None
+    elif hasattr(instance, 'get_serializer'):
+        serializer = instance.get_serializer()
+        model = getattr(getattr(serializer, 'Meta', None), 'model', None)
+        if hasattr(instance, 'get_queryset'):
+            try:
+                queryset = instance.get_queryset()
+            except AssertionError:
+                pass
+            else:
+                model = queryset.model
+
+        parameter = getattr(
+            getattr(serializer, 'Meta', None), 'parameter', None)
+
+    if parameter is None:
+        if pattern is not None:
+            url_match = url_re.match(pattern.regex.pattern)
+            if url_match is not None:
+                parameter = url_match.group(1)
+        if pattern is None and model is not None:
+            parameter = model._meta.verbose_name
+    if parameter is not None:
+        for inflector in inflectors:
+            parameter = inflector(parameter)
+
+    return parameter, model, serializer
 
 
 def lookup_serializer_parameters(
@@ -33,30 +71,13 @@ def lookup_serializer_parameters(
     class_ = getattr(getattr(pattern, 'callback', None), 'cls', None)
     if hasattr(class_, 'get_serializer'):
         viewset = class_(request=None, format_kwarg=None)
-        serializer = viewset.get_serializer(context=field.context)
-        model = getattr(getattr(serializer, 'Meta', None), 'model', None)
-        if hasattr(class_, 'get_queryset'):
-            try:
-                queryset = viewset.get_queryset()
-            except AssertionError:
-                pass
-            else:
-                model = queryset.model
-
-        parameter = getattr(
-            getattr(serializer, 'Meta', None), 'parameter', None)
-        if parameter is None:
-            url_match = url_re.match(pattern.regex.pattern)
-            if url_match is not None:
-                parameter = url_match.group(1)
-            elif model is not None:
-                parameter = model._meta.verbose_name
-        if parameter is not None:
-            for inflector in inflectors:
-                parameter = inflector(parameter)
-            specific_serializers.setdefault(parameter, serializer)
-        if model is not None:
-            specific_serializers_by_type.setdefault(model, serializer)
+        parameter, model, serializer = get_resource_items(
+            viewset, pattern, url_re, inflectors)
+        if serializer is not None:
+            if parameter is not None:
+                specific_serializers.setdefault(parameter, serializer)
+            if model is not None:
+                specific_serializers_by_type.setdefault(model, serializer)
 
     if hasattr(pattern, 'url_patterns'):
         for recursed_pattern in pattern.url_patterns:
