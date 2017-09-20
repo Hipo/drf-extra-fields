@@ -38,7 +38,7 @@ class FormatAPIView(object):
             return response
 
         serializer = serializer_class(
-            instance=data, context=self.get_serializer_context())
+            instance=response.data, context=self.get_serializer_context())
         response.data = serializer.data
         return response
 
