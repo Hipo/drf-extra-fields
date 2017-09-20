@@ -28,9 +28,11 @@ def get_resource_items(
     """
     Lookup the resource type, model and serializer, from various sources.
     """
+    parameter = serializer = uninflected = model = None
+
     if isinstance(instance, models.Model):
-        model = instance
-        serializer = parameter = None
+        model = type(instance)
+
     elif hasattr(instance, 'get_serializer'):
         serializer = instance.get_serializer()
         model = getattr(getattr(serializer, 'Meta', None), 'model', None)
@@ -42,17 +44,21 @@ def get_resource_items(
             else:
                 model = queryset.model
 
+        # If the serializer sets the parameter explicitly, do not inflect
         parameter = getattr(
             getattr(serializer, 'Meta', None), 'parameter', None)
 
-    if parameter is None:
+    if parameter is None and uninflected is None:
         if pattern is not None:
             url_match = url_re.match(pattern.regex.pattern)
             if url_match is not None:
-                parameter = url_match.group(1)
+                uninflected = url_match.group(1)
         if pattern is None and model is not None:
-            parameter = model._meta.verbose_name
-    if parameter is not None:
+            uninflected = model._meta.verbose_name
+
+    if parameter is None and uninflected is not None:
+        # No explicit parameter, inflect the derived parameter
+        parameter = uninflected
         for inflector in inflectors:
             parameter = inflector(parameter)
 
