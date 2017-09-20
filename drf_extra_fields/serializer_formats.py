@@ -48,7 +48,8 @@ class FormatAPIView(object):
         """
         response = super(FormatAPIView, self).handle_exception(exc)
         serializer_class = getattr(
-            self.request.accepted_renderer, 'error_serializer_class', None)
+            getattr(self.request, 'accepted_renderer', None),
+            'error_serializer_class', None)
         if serializer_class is None:
             return response
 
