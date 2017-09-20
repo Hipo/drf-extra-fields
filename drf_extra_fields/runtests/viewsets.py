@@ -15,6 +15,14 @@ class ExamplePersonViewset(viewsets.UUIDModelViewSet):
     queryset = models.Person.objects.all()
 
 
+class OverriddenPersonViewSet(ExamplePersonViewset):
+    """
+    An example of a view that overrides another.
+    """
+
+    serializer_class = serializers.OverriddenPersonSerializer
+
+
 class ExampleTypeFieldViewset(viewsets.UUIDModelViewSet):
     """
     A generic viewset with a type field.

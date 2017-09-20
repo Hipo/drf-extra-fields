@@ -11,4 +11,10 @@ router.register(
 router.register(
     'wo-model', viewsets.ExampleViewSetWOModel, base_name='wo-model')
 
-urlpatterns = [url(r'^', include(router.urls))]
+override_router = routers.DefaultRouter()
+override_router.register('people', viewsets.OverriddenPersonViewSet)
+
+urlpatterns = [
+    url(r'^', include(override_router.urls)),
+    url(r'^', include(router.urls)),
+]

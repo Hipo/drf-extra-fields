@@ -38,6 +38,12 @@ class ExamplePersonSerializer(relations.UUIDModelSerializer):
         extra_kwargs = dict(related_to=dict(lookup_field='uuid'))
 
 
+class OverriddenPersonSerializer(ExamplePersonSerializer):
+    """
+    An example of a serializer for a view that overrides another.
+    """
+
+
 class ExampleTypeFieldSerializer(
         parameterized.ParameterizedGenericSerializer):
     """

@@ -151,7 +151,7 @@ class TestParameterizedSerializerFields(test.APITestCase):
         """
         person = models.Person.objects.create(
             name=self.person_field_data['name'])
-        view = test_viewsets.ExamplePersonViewset()
+        view = test_viewsets.OverriddenPersonViewSet()
         factory = test.APIRequestFactory()
         view.request = request.Request(factory.get('/'))
         view.format_kwarg = None
@@ -186,14 +186,14 @@ class TestParameterizedSerializerFields(test.APITestCase):
         """
         parent = test_serializers.ExampleTypeFieldSerializer(
             instance=self.type_field_data,
-            context=dict(view=test_viewsets.ExamplePersonViewset()))
+            context=dict(view=test_viewsets.OverriddenPersonViewSet()))
         self.assertIn(
-            test_serializers.ExamplePersonSerializer,
+            test_serializers.OverriddenPersonSerializer,
             parent.fields['type'].parameters,
             'Missing specific serializer in reverse parameter lookup')
         self.assertEqual(
             parent.fields['type'].parameters[
-                test_serializers.ExamplePersonSerializer],
+                test_serializers.OverriddenPersonSerializer],
             self.type_field_data['type'],
             'Wrong specific serializer reverse parameter lookup')
 
