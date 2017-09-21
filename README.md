@@ -252,6 +252,24 @@ primary resource and related resources.  These can be useful for creating APIs
 that use UUIDs throughout while still using integer PKs in the DB on the
 back-end.
 
+## `generic.HyperlinkedGenericRelationsField`
+
+This field supports serializing and deserializing [Django
+`django.contrib.contenttypes` generic
+relations](https://docs.djangoproject.com/en/dev/ref/contrib/contenttypes/#generic-relations)
+as hyperlinks.  The `generic.GenericRelationsModelSerializer` serializer base
+classes`generic.HyperlinkedGenericRelationsModelSerializer` also support using
+this field for generic relations in model serializers:
+
+```python
+from drf_extra_fields.generic import HyperlinkedGenericRelationsModelSerializer
+
+class UserSerializer(HyperlinkedGenericRelationsModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+```
+
 ## `composite.SerializerListField`, `composite.SerializerDictField`
 
 The DRF composite list and dictionary fields both take a child serialzer
