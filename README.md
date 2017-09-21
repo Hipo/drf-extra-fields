@@ -392,10 +392,12 @@ of the negotiated parser instead of the viewset's `serializer_class`for
 create/update requests or of the negotiated renderer for retreive/list
 requests if `serializer_class` exists on the parser/renderer.  Note that the
 format's `serializer_class` is responsible for incorporating the specific
-viewset's `serializer_class`, such as the
-`composite.CompositeSerializer` does.  If the format's `serializer_class` is
-meant to also render error details, set `handle_errors = True` on the
-`serializer_class` and it will be used with the DRF error response 
+viewset's `serializer_class`, such as the `composite.CompositeSerializer`
+does.  If the format is meant to also render error details, set
+`error_serializer_class` on the renderer and it's `to_representation()` method
+will be used to generate a representation of the exception.  Similarly, if the
+renderer has a `pagination_serializer_class`, it will be used to generate a
+represenation of the output of the paginated reponse.
 
 
 CONTRIBUTION
