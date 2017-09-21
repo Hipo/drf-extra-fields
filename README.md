@@ -252,6 +252,15 @@ primary resource and related resources.  These can be useful for creating APIs
 that use UUIDs throughout while still using integer PKs in the DB on the
 back-end.
 
+```python
+from drf_extra_fields.relations import UUIDModelSerializer
+
+class UserSerializer(UUIDModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+```
+
 ## `generic.HyperlinkedGenericRelationsField`
 
 This field supports serializing and deserializing [Django
