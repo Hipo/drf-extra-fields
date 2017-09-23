@@ -4,6 +4,9 @@ env:
     - TESTENV=py27
     - TESTENV=py34
 
+before_install:
+    - sudo apt install libgdal-dev
+
 install:
     - pip install tox
 
