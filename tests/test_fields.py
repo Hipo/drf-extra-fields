@@ -18,7 +18,6 @@ from drf_extra_fields.fields import (
     DateRangeField,
     DateTimeRangeField,
     FloatRangeField,
-    HybridFileField,
     HybridImageField,
     IntegerRangeField,
 )
@@ -232,19 +231,6 @@ class Base64FileSerializerTests(TestCase):
             self.assertEqual(serializer.data['file'], encoded_source)
         finally:
             os.remove('im.jpg')
-
-    def test_hybrid_file_field(self):
-        field = HybridFileField()
-        with patch('drf_extra_fields.fields.Base64FieldMixin') as mixin_patch:
-            field.to_internal_value({})
-            self.assertTrue(mixin_patch.to_internal_value.called)
-
-        with patch('drf_extra_fields.fields.Base64FieldMixin') as mixin_patch:
-            mixin_patch.to_internal_value.side_effect = ValidationError('foobar')
-            with patch('drf_extra_fields.fields.FileField') as image_patch:
-                field.to_internal_value({})
-                self.assertTrue(mixin_patch.to_internal_value.called)
-                self.assertTrue(image_patch.to_internal_value.called)
 
 
 class SavePoint(object):
