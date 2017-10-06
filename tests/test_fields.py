@@ -233,7 +233,7 @@ class Base64FileSerializerTests(TestCase):
         finally:
             os.remove('im.jpg')
 
-    def test_hybrid_field_field(self):
+    def test_hybrid_file_field(self):
         field = HybridFileField()
         with patch('drf_extra_fields.fields.Base64FieldMixin') as mixin_patch:
             field.to_internal_value({})
