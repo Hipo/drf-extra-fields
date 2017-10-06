@@ -2,24 +2,18 @@ FROM ubuntu
 
 MAINTAINER Marco Chiappetta <lambdacomplete@gmail.com>
 
-WORKDIR /drf-extra-fields
+# Needed to be able to install python versions.
+RUN apt-get update && apt-get install -y software-properties-common python-software-properties
+RUN add-apt-repository ppa:fkrull/deadsnakes
 
 RUN apt-get update && apt-get install -y \
-	git \
-	python2.7 \
-	python-dev \
-	build-essential \
-	postgresql \
-	python-pip \
-	postgresql-server-dev-9.3 \
-	zlib1g-dev \
-	libjpeg8-dev \
-	libgeos-dev
+	python3.4 \
+	python3.5 \
+	python3.6 \
+	gdal-bin \
+	python-pip
 
-RUN git clone https://github.com/Hipo/drf-extra-fields.git .
+WORKDIR /app
 
-RUN pip install -r requirements.txt
-
+RUN pip install --upgrade pip
 RUN pip install tox
-
-CMD ["cd", "/drf-extra-fields"]
