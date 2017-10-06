@@ -107,7 +107,7 @@ class HybridImageField(Base64ImageField):
 
     def to_internal_value(self, data):
         """
-        Try Base64Field first, and then try the FileField
+        Try Base64Field first, and then try the ImageField
         ``to_internal_value``, MRO doesn't work here because
         Base64FieldMixin throws before ImageField can run.
         """
@@ -138,7 +138,7 @@ class HybridFileField(Base64FileField):
 
     def to_internal_value(self, data):
         """
-        Try ImageField first, and then try the Base64FieldMixin
+        Try Base64FieldMixin first, and then try the FileField
         ``to_internal_value``, MRO doesn't work here because
         Base64FieldMixin throws before FileField can run.
         """
