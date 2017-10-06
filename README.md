@@ -27,7 +27,7 @@ Fields:
 
 An image representation for Base64ImageField
 
-Intherited by `ImageField`
+Inherited by `ImageField`
 
 
 **Signature:** `Base64ImageField()`
@@ -60,7 +60,7 @@ serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
 
 An file representation for Base64FileField
 
-Intherited by `FileField`
+Inherited by `FileField`
 
 
 **Signature:** `Base64FileField()`
@@ -126,11 +126,11 @@ from rest_framework import serializers
 from drf_extra_fields.fields import IntegerRangeField
 
 
-class RangeSerizalizer(serializers.Serializer):
+class RangeSerializer(serializers.Serializer):
     ranges = IntegerRangeField()
 
 
-serializer = RangeSerizalizer(data={'ranges': {'lower': 0, 'upper': 1}})
+serializer = RangeSerializer(data={'ranges': {'lower': 0, 'upper': 1}})
 
 ```
 
@@ -141,11 +141,11 @@ from rest_framework import serializers
 from drf_extra_fields.fields import FloatRangeField
 
 
-class RangeSerizalizer(serializers.Serializer):
+class RangeSerializer(serializers.Serializer):
     ranges = FloatRangeField()
 
 
-serializer = IntegerRangeSerizalizer(data={'ranges': {'lower': 0., 'upper': 1.}})
+serializer = RangeSerializer(data={'ranges': {'lower': 0., 'upper': 1.}})
 
 ```
 
@@ -158,11 +158,11 @@ from rest_framework import serializers
 from drf_extra_fields.fields import DateRangeField
 
 
-class RangeSerizalizer(serializers.Serializer):
+class RangeSerializer(serializers.Serializer):
     ranges = DateRangeField()
 
 
-serializer = RangeSerizalizer(data={'ranges': {'lower': datetime.date(2015, 1, 1), 'upper': datetime.date(2015, 2, 1)}})
+serializer = RangeSerializer(data={'ranges': {'lower': datetime.date(2015, 1, 1), 'upper': datetime.date(2015, 2, 1)}})
 
 ```
 
@@ -175,11 +175,11 @@ from rest_framework import serializers
 from drf_extra_fields.fields import DateTimeRangeField
 
 
-class RangeSerizalizer(serializers.Serializer):
+class RangeSerializer(serializers.Serializer):
     ranges = DateTimeRangeField()
 
 
-serializer = RangeSerizalizer(data={'ranges': {'lower': datetime.datetime(2015, 1, 1, 0), 'upper': datetime.datetime(2015, 2, 1, 0)}})
+serializer = RangeSerializer(data={'ranges': {'lower': datetime.datetime(2015, 1, 1, 0), 'upper': datetime.datetime(2015, 2, 1, 0)}})
 
 ```
 
@@ -239,6 +239,20 @@ class PostSerializer(serializers.ModelSerializer):
     },
     "title": "test"
 }
+```
+
+## HybridImageField
+A django-rest-framework field for handling image-uploads through raw post data, with a fallback to multipart form data.
+
+It first tries Base64ImageField. if it fails then tries ImageField.
+
+```python
+from rest_framework import serializers
+from drf_extra_fields.fields import HybridImageField
+
+
+class HybridImageSerializer(serializers.Serializer):
+    image = HybridImageField()
 ```
 
 
