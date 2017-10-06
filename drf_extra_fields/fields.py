@@ -99,6 +99,24 @@ class Base64ImageField(Base64FieldMixin, ImageField):
         return extension
 
 
+class HybridImageField(Base64ImageField):
+    """
+    A django-rest-framework field for handling image-uploads through
+    raw post data, with a fallback to multipart form data.
+    """
+
+    def to_internal_value(self, data):
+        """
+        Try Base64Field first, and then try the FileField
+        ``to_internal_value``, MRO doesn't work here because
+        Base64FieldMixin throws before ImageField can run.
+        """
+        try:
+            return Base64FieldMixin.to_internal_value(self, data)
+        except ValidationError:
+            return ImageField.to_internal_value(self, data)
+
+
 class Base64FileField(Base64FieldMixin, FileField):
     """
     A django-rest-framework field for handling file-uploads through raw post data.
@@ -110,6 +128,24 @@ class Base64FileField(Base64FieldMixin, FileField):
 
     def get_file_extension(self, filename, decoded_file):
         raise NotImplemented('Implement file validation and return matching extension.')
+
+
+class HybridFileField(Base64FileField):
+    """
+    A django-rest-framework field for handling file-uploads through
+    raw post data, with a fallback to multipart form data.
+    """
+
+    def to_internal_value(self, data):
+        """
+        Try ImageField first, and then try the Base64FieldMixin
+        ``to_internal_value``, MRO doesn't work here because
+        Base64FieldMixin throws before FileField can run.
+        """
+        try:
+            return Base64FieldMixin.to_internal_value(self, data)
+        except ValidationError:
+            return FileField.to_internal_value(self, data)
 
 
 class RangeField(DictField):
