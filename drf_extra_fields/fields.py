@@ -17,7 +17,7 @@ from rest_framework.fields import (
     ImageField,
     IntegerField,
 )
-from rest_framework.utils import html, humanize_datetime, representation
+from rest_framework.utils import html
 from .compat import (
     DateRange,
     DateTimeTZRange,
@@ -195,6 +195,7 @@ class DateTimeRangeField(RangeField):
 class DateRangeField(RangeField):
     child = DateField()
     range_type = DateRange
+
 
 if postgres_fields is not None:
     # monkey patch modelserializer to map Native django Range fields to
