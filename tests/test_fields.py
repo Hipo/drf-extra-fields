@@ -5,8 +5,7 @@ import os
 import django
 from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
-from django.db import models
-from mock import MagicMock, patch
+from mock import patch
 import pytz
 from rest_framework import serializers
 
@@ -145,6 +144,7 @@ class Base64ImageSerializerTests(TestCase):
                 self.assertTrue(mixin_patch.to_internal_value.called)
                 self.assertTrue(image_patch.to_internal_value.called)
 
+
 class PDFBase64FileField(Base64FileField):
     ALLOWED_TYPES = ('pdf',)
 
@@ -194,18 +194,15 @@ class Base64FileSerializerTests(TestCase):
         self.assertEqual(serializer.validated_data['created'], uploaded_file.created)
         self.assertFalse(serializer.validated_data is uploaded_file)
 
-
     def test_validation_error_with_non_file(self):
         """
         Passing non-base64 should raise a validation error.
         """
         now = datetime.datetime.now()
         errmsg = "Please upload a valid file."
-        serializer = UploadedBase64FileSerializer(data={'created': now,
-                                                         'file': 'abc'})
+        serializer = UploadedBase64FileSerializer(data={'created': now, 'file': 'abc'})
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors, {'file': [errmsg]})
-
 
     def test_remove_with_empty_string(self):
         """
@@ -309,8 +306,8 @@ class PointSerializerTest(TestCase):
         serializer = PointSerializer(data={'created': now, 'point': point})
         self.assertFalse(serializer.is_valid())
 
-# Backported from django_rest_framework/tests/test_fields.py
 
+# Backported from django_rest_framework/tests/test_fields.py
 def get_items(mapping_or_list_of_two_tuples):
     # Tests accept either lists of two tuples, or dictionaries.
     if isinstance(mapping_or_list_of_two_tuples, dict):

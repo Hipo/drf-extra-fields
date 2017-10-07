@@ -1,3 +1,6 @@
+import os
+import django
+
 # Django settings for testproject project.
 
 DEBUG = True
@@ -14,7 +17,7 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'sqlite.db',                     # Or path to database file if using sqlite3.
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
@@ -68,7 +71,7 @@ SECRET_KEY = 'u@x-aj9(hoh#rb-^ymf#g2jx_hp0vj7u5#b@ag1n^seu9e!%cy'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
+    # 'django.template.loaders.eggs.Loader',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -105,42 +108,6 @@ INSTALLED_APPS = (
     # 'rest_framework.tests.users',
 )
 
-# OAuth is optional and won't work if there is no oauth_provider & oauth2
-try:
-    import oauth_provider
-    import oauth2
-except ImportError:
-    pass
-else:
-    INSTALLED_APPS += (
-        'oauth_provider',
-    )
-
-try:
-    import provider
-except ImportError:
-    pass
-else:
-    INSTALLED_APPS += (
-        'provider',
-        'provider.oauth2',
-    )
-
-# guardian is optional
-try:
-    import guardian
-except ImportError:
-    pass
-else:
-    ANONYMOUS_USER_ID = -1
-    AUTHENTICATION_BACKENDS = (
-        'django.contrib.auth.backends.ModelBackend', # default
-        'guardian.backends.ObjectPermissionBackend',
-    )
-    INSTALLED_APPS += (
-        'guardian',
-    )
-
 STATIC_URL = '/static/'
 
 PASSWORD_HASHERS = (
@@ -154,13 +121,10 @@ PASSWORD_HASHERS = (
 
 AUTH_USER_MODEL = 'auth.User'
 
-import django
-
 if django.VERSION < (1, 3):
     INSTALLED_APPS += ('staticfiles',)
 
 # If we're running on the Jenkins server we want to archive the coverage reports as XML.
-import os
 if os.environ.get('HUDSON_URL', None):
     TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
     TEST_OUTPUT_VERBOSE = True

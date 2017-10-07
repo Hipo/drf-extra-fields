@@ -1,5 +1,3 @@
-import pytest
-
 from rest_framework import serializers
 from rest_framework.test import APISimpleTestCase
 from .utils import (
