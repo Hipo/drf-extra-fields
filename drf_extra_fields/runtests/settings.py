@@ -23,19 +23,12 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or
-        # 'oracle'.
-        'ENGINE': 'django.db.backends.sqlite3',
-        # Or path to database file if using sqlite3.
-        'NAME': 'sqlite.db',
-        # Not used with sqlite3.
-        'USER': '',
-        # Not used with sqlite3.
-        'PASSWORD': '',
-        # Set to empty string for localhost. Not used with sqlite3.
-        'HOST': '',
-        # Set to empty string for default. Not used with sqlite3.
-        'PORT': '',
+        'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'sqlite.db',                     # Or path to database file if using sqlite3.
+        'USER': '',                      # Not used with sqlite3.
+        'PASSWORD': '',                  # Not used with sqlite3.
+        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
 
@@ -124,42 +117,6 @@ INSTALLED_APPS = (
     'drf_extra_fields.runtests',
 )
 
-# OAuth is optional and won't work if there is no oauth_provider & oauth2
-try:
-    import oauth_provider  # noqa
-    import oauth2  # noqa
-except ImportError:
-    pass
-else:
-    INSTALLED_APPS += (
-        'oauth_provider',
-    )
-
-try:
-    import provider  # noqa
-except ImportError:
-    pass
-else:
-    INSTALLED_APPS += (
-        'provider',
-        'provider.oauth2',
-    )
-
-# guardian is optional
-try:
-    import guardian  # noqa
-except ImportError:
-    pass
-else:
-    ANONYMOUS_USER_ID = -1
-    AUTHENTICATION_BACKENDS = (
-        'django.contrib.auth.backends.ModelBackend',  # default
-        'guardian.backends.ObjectPermissionBackend',
-    )
-    INSTALLED_APPS += (
-        'guardian',
-    )
-
 STATIC_URL = '/static/'
 
 PASSWORD_HASHERS = (
@@ -200,8 +157,7 @@ if django_nose is not None:  # pragma: no cover
     TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 
-# If we're running on the Jenkins server we want to archive the coverage
-# reports as XML.
+# If we're running on the Jenkins server we want to archive the coverage reports as XML.
 if os.environ.get('HUDSON_URL', None):
     TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
     TEST_OUTPUT_VERBOSE = True

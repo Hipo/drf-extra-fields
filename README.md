@@ -27,7 +27,7 @@ Fields:
 
 An image representation for Base64ImageField
 
-Intherited by `ImageField`
+Inherited by `ImageField`
 
 
 **Signature:** `Base64ImageField()`
@@ -60,7 +60,7 @@ serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
 
 An file representation for Base64FileField
 
-Intherited by `FileField`
+Inherited by `FileField`
 
 
 **Signature:** `Base64FileField()`
@@ -126,11 +126,11 @@ from rest_framework import serializers
 from drf_extra_fields.fields import IntegerRangeField
 
 
-class RangeSerizalizer(serializers.Serializer):
+class RangeSerializer(serializers.Serializer):
     ranges = IntegerRangeField()
 
 
-serializer = RangeSerizalizer(data={'ranges': {'lower': 0, 'upper': 1}})
+serializer = RangeSerializer(data={'ranges': {'lower': 0, 'upper': 1}})
 
 ```
 
@@ -141,11 +141,11 @@ from rest_framework import serializers
 from drf_extra_fields.fields import FloatRangeField
 
 
-class RangeSerizalizer(serializers.Serializer):
+class RangeSerializer(serializers.Serializer):
     ranges = FloatRangeField()
 
 
-serializer = IntegerRangeSerizalizer(data={'ranges': {'lower': 0., 'upper': 1.}})
+serializer = RangeSerializer(data={'ranges': {'lower': 0., 'upper': 1.}})
 
 ```
 
@@ -158,11 +158,11 @@ from rest_framework import serializers
 from drf_extra_fields.fields import DateRangeField
 
 
-class RangeSerizalizer(serializers.Serializer):
+class RangeSerializer(serializers.Serializer):
     ranges = DateRangeField()
 
 
-serializer = RangeSerizalizer(data={'ranges': {'lower': datetime.date(2015, 1, 1), 'upper': datetime.date(2015, 2, 1)}})
+serializer = RangeSerializer(data={'ranges': {'lower': datetime.date(2015, 1, 1), 'upper': datetime.date(2015, 2, 1)}})
 
 ```
 
@@ -175,11 +175,11 @@ from rest_framework import serializers
 from drf_extra_fields.fields import DateTimeRangeField
 
 
-class RangeSerizalizer(serializers.Serializer):
+class RangeSerializer(serializers.Serializer):
     ranges = DateTimeRangeField()
 
 
-serializer = RangeSerizalizer(data={'ranges': {'lower': datetime.datetime(2015, 1, 1, 0), 'upper': datetime.datetime(2015, 2, 1, 0)}})
+serializer = RangeSerializer(data={'ranges': {'lower': datetime.datetime(2015, 1, 1, 0), 'upper': datetime.datetime(2015, 2, 1, 0)}})
 
 ```
 
@@ -240,6 +240,22 @@ class PostSerializer(serializers.ModelSerializer):
     "title": "test"
 }
 ```
+
+
+## HybridImageField
+A django-rest-framework field for handling image-uploads through raw post data, with a fallback to multipart form data.
+
+It first tries Base64ImageField. if it fails then tries ImageField.
+
+```python
+from rest_framework import serializers
+from drf_extra_fields.fields import HybridImageField
+
+
+class HybridImageSerializer(serializers.Serializer):
+    image = HybridImageField()
+```
+
 
 ## `relations.PrimaryKeySourceRelatedField` and `relations.UUIDModelSerializer`
 
@@ -409,24 +425,16 @@ and run with command before sending a pull request:
 
 ```bash
 $ pip install tox  # if not already installed
-$ tox -e py27
+$ tox
 ```
 
-Or, if you prefer using Docker (interactively):
+Or, if you prefer using Docker (recommended):
 
 ```bash
-docker pull lambdacomplete/drf-extra-fields
-docker run -i -t lambdacomplete/drf-extra-fields /bin/bash
-$ tox -e py27
+docker build -t drf_extra_fields .
+docker run -v $(pwd):/app -it drf_extra_fields /bin/bash
+tox
 ```
-
-To build the image yourself and run the tests automatically:
-```bash
-docker build -t ${MY_IMAGE} .
-docker run ${MY_IMAGE}
-```
-
-*Note:* mounting the working directory via `-v` prevents tox from running (tox uses hard links which do not work with mounted directories). We are still working on this.
 
 **README**
 - Make sure that you add the documentation for the field added to README.md

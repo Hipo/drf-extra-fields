@@ -1,17 +1,17 @@
 language: python
 
-env:
-    - TESTENV=py27
-    - TESTENV=py34
-
-before_install:
-    - sudo apt install libgdal-dev
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
 
 install:
-    - pip install tox
+    - pip install tox-travis
+    - sudo apt-get install gdal-bin
 
 script:
-    - tox -e $TESTENV
+    - tox
 
 notifications:
     email: false

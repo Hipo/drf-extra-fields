@@ -3,8 +3,12 @@ import base64
 import os
 
 import django
+from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
-from django.utils import timezone
+
+from mock import patch
+import pytz
+
 from rest_framework import serializers
 
 from drf_extra_fields import compat
@@ -15,6 +19,7 @@ from drf_extra_fields.fields import (
     DateRangeField,
     DateTimeRangeField,
     FloatRangeField,
+    HybridImageField,
     IntegerRangeField,
 )
 
@@ -136,6 +141,19 @@ class Base64ImageSerializerTests(TestCase):
         finally:
             os.remove('im.jpg')
 
+    def test_hybrid_image_field(self):
+        field = HybridImageField()
+        with patch('drf_extra_fields.fields.Base64FieldMixin') as mixin_patch:
+            field.to_internal_value({})
+            self.assertTrue(mixin_patch.to_internal_value.called)
+
+        with patch('drf_extra_fields.fields.Base64FieldMixin') as mixin_patch:
+            mixin_patch.to_internal_value.side_effect = ValidationError('foobar')
+            with patch('drf_extra_fields.fields.ImageField') as image_patch:
+                field.to_internal_value({})
+                self.assertTrue(mixin_patch.to_internal_value.called)
+                self.assertTrue(image_patch.to_internal_value.called)
+
 
 class PDFBase64FileField(Base64FileField):
     ALLOWED_TYPES = ('pdf',)
@@ -198,8 +216,7 @@ class Base64FileSerializerTests(TestCase):
         """
         now = datetime.datetime.now()
         errmsg = "Please upload a valid file."
-        serializer = UploadedBase64FileSerializer(data={'created': now,
-                                                        'file': 'abc'})
+        serializer = UploadedBase64FileSerializer(data={'created': now, 'file': 'abc'})
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors, {'file': [errmsg]})
 
@@ -309,9 +326,8 @@ class PointSerializerTest(TestCase):
         serializer = PointSerializer(data={'created': now, 'point': point})
         self.assertFalse(serializer.is_valid())
 
+
 # Backported from django_rest_framework/tests/test_fields.py
-
-
 def get_items(mapping_or_list_of_two_tuples):
     # Tests accept either lists of two tuples, or dictionaries.
     if isinstance(mapping_or_list_of_two_tuples, dict):
@@ -458,22 +474,18 @@ class TestDateTimeRangeField(TestCase, FieldValues):
               'upper': '2001-02-02T13:00:00Z',
               'bounds': '[)'},
              compat.DateTimeTZRange(
-                 **{'lower': datetime.datetime(
-                     2001, 1, 1, 13, 00, tzinfo=timezone.utc),
-                    'upper': datetime.datetime(
-                     2001, 2, 2, 13, 00, tzinfo=timezone.utc),
+                 **{'lower': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=pytz.utc),
+                    'upper': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=pytz.utc),
                     'bounds': '[)'})),
             ({'upper': '2001-02-02T13:00:00Z',
               'bounds': '[)'},
              compat.DateTimeTZRange(
-                 **{'upper': datetime.datetime(
-                     2001, 2, 2, 13, 00, tzinfo=timezone.utc),
+                 **{'upper': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=pytz.utc),
                     'bounds': '[)'})),
             ({'lower': '2001-01-01T13:00:00Z',
               'bounds': '[)'},
              compat.DateTimeTZRange(
-                 **{'lower': datetime.datetime(
-                     2001, 1, 1, 13, 00, tzinfo=timezone.utc),
+                 **{'lower': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=pytz.utc),
                     'bounds': '[)'})),
             ({'empty': True},
              compat.DateTimeTZRange(**{'empty': True})),
@@ -489,10 +501,8 @@ class TestDateTimeRangeField(TestCase, FieldValues):
         ]
         outputs = [
             (compat.DateTimeTZRange(
-                **{'lower': datetime.datetime(
-                    2001, 1, 1, 13, 00, tzinfo=timezone.utc),
-                   'upper': datetime.datetime(
-                    2001, 2, 2, 13, 00, tzinfo=timezone.utc)}),
+                **{'lower': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=pytz.utc),
+                   'upper': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=pytz.utc)}),
                 {'lower': '2001-01-01T13:00:00Z',
                  'upper': '2001-02-02T13:00:00Z',
                  'bounds': '[)'}),
