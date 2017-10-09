@@ -14,6 +14,9 @@ class Person(models.Model):
     Example related model with UUID.
     """
 
+    class Meta:
+        ordering = ['name']
+
     uuid = models.UUIDField(
         default=uuid.uuid4, blank=False, editable=False, unique=True)
     name = models.CharField(max_length=255)
