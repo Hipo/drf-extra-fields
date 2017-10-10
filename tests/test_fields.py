@@ -1,6 +1,7 @@
 import datetime
 import base64
 import os
+import unittest
 
 import django
 from django.core.exceptions import ValidationError
@@ -22,9 +23,6 @@ from drf_extra_fields.fields import (
     HybridImageField,
     IntegerRangeField,
 )
-
-
-import pytest
 
 
 class UploadedBase64Image(object):
@@ -354,9 +352,9 @@ class FieldValues:
         Ensure that invalid values raise the expected validation error.
         """
         for input_value, expected_failure in get_items(self.invalid_inputs):
-            with pytest.raises(serializers.ValidationError) as exc_info:
+            with self.assertRaises(serializers.ValidationError) as exc_info:
                 self.field.run_validation(input_value)
-            assert exc_info.value.detail == expected_failure
+            assert exc_info.exception.detail == expected_failure
 
     def test_outputs(self):
         for output_value, expected_output in get_items(self.outputs):
@@ -366,10 +364,10 @@ class FieldValues:
 # end of backport
 
 
-@pytest.mark.skipif(django.VERSION < (1, 8) or compat.postgres_fields is None,
-                    reason='RangeField is only available for django1.8+'
-                    ' and with psycopg2.')
-class TestIntegerRangeField(FieldValues):
+@unittest.skipIf(
+    django.VERSION < (1, 8) or compat.postgres_fields is None,
+    reason='RangeField is only available for django1.8+ and with psycopg2.')
+class TestIntegerRangeField(TestCase, FieldValues):
     """
     Values for `ListField` with CharField as child.
     """
@@ -403,20 +401,20 @@ class TestIntegerRangeField(FieldValues):
     field = IntegerRangeField()
 
     def test_no_source_on_child(self):
-        with pytest.raises(AssertionError) as exc_info:
+        with self.assertRaises(AssertionError) as exc_info:
             IntegerRangeField(child=serializers.IntegerField(source='other'))
 
-        assert str(exc_info.value) == (
+        assert str(exc_info.exception) == (
             "The `source` argument is not meaningful "
             "when applied to a `child=` field. "
             "Remove `source=` from the field declaration."
         )
 
 
-@pytest.mark.skipif(django.VERSION < (1, 8) or compat.postgres_fields is None,
-                    reason='RangeField is only available for django1.8+'
-                    ' and with psycopg2.')
-class TestFloatRangeField(FieldValues):
+@unittest.skipIf(
+    django.VERSION < (1, 8) or compat.postgres_fields is None,
+    reason='RangeField is only available for django1.8+ and with psycopg2.')
+class TestFloatRangeField(TestCase, FieldValues):
     """
     Values for `ListField` with CharField as child.
     """
@@ -450,19 +448,19 @@ class TestFloatRangeField(FieldValues):
     field = FloatRangeField()
 
     def test_no_source_on_child(self):
-        with pytest.raises(AssertionError) as exc_info:
+        with self.assertRaises(AssertionError) as exc_info:
             FloatRangeField(child=serializers.IntegerField(source='other'))
 
-        assert str(exc_info.value) == (
+        assert str(exc_info.exception) == (
             "The `source` argument is not meaningful "
             "when applied to a `child=` field. "
             "Remove `source=` from the field declaration."
         )
 
 
-@pytest.mark.skipif(django.VERSION < (1, 8) or compat.postgres_fields is None,
-                    reason='RangeField is only available for django1.8+'
-                    ' and with psycopg2.')
+@unittest.skipIf(
+    django.VERSION < (1, 8) or compat.postgres_fields is None,
+    reason='RangeField is only available for django1.8+ and with psycopg2.')
 @override_settings(USE_TZ=True)
 class TestDateTimeRangeField(TestCase, FieldValues):
     """
@@ -514,20 +512,20 @@ class TestDateTimeRangeField(TestCase, FieldValues):
     field = DateTimeRangeField()
 
     def test_no_source_on_child(self):
-        with pytest.raises(AssertionError) as exc_info:
+        with self.assertRaises(AssertionError) as exc_info:
             DateTimeRangeField(child=serializers.IntegerField(source='other'))
 
-        assert str(exc_info.value) == (
+        assert str(exc_info.exception) == (
             "The `source` argument is not meaningful "
             "when applied to a `child=` field. "
             "Remove `source=` from the field declaration."
         )
 
 
-@pytest.mark.skipif(django.VERSION < (1, 8) or compat.postgres_fields is None,
-                    reason='RangeField is only available for django1.8+'
-                    ' and with psycopg2.')
-class TestDateRangeField(FieldValues):
+@unittest.skipIf(
+    django.VERSION < (1, 8) or compat.postgres_fields is None,
+    reason='RangeField is only available for django1.8+ and with psycopg2.')
+class TestDateRangeField(TestCase, FieldValues):
     """
     Values for `ListField` with CharField as child.
     """
@@ -576,10 +574,10 @@ class TestDateRangeField(FieldValues):
     field = DateRangeField()
 
     def test_no_source_on_child(self):
-        with pytest.raises(AssertionError) as exc_info:
+        with self.assertRaises(AssertionError) as exc_info:
             DateRangeField(child=serializers.IntegerField(source='other'))
 
-        assert str(exc_info.value) == (
+        assert str(exc_info.exception) == (
             "The `source` argument is not meaningful "
             "when applied to a `child=` field. "
             "Remove `source=` from the field declaration."
