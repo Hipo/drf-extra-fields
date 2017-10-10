@@ -57,13 +57,6 @@ class UploadedBase64ImageSerializer(serializers.Serializer):
     file = Base64ImageField(required=False)
     created = serializers.DateTimeField()
 
-    def update(self, instance, validated_data):
-        instance.file = validated_data['file']
-        return instance
-
-    def create(self, validated_data):
-        return UploadedBase64Image(**validated_data)
-
 
 class DownloadableBase64ImageSerializer(serializers.Serializer):
     image = Base64ImageField(represent_in_base64=True)
@@ -164,13 +157,6 @@ class UploadedBase64FileSerializer(serializers.Serializer):
     file = PDFBase64FileField(required=False)
     created = serializers.DateTimeField()
 
-    def update(self, instance, validated_data):
-        instance.file = validated_data['file']
-        return instance
-
-    def create(self, validated_data):
-        return UploadedBase64File(**validated_data)
-
 
 class DownloadableBase64FileSerializer(serializers.Serializer):
     file = PDFBase64FileField(represent_in_base64=True)
@@ -256,13 +242,6 @@ class PointSerializer(serializers.Serializer):
     point = PointField(required=False)
     created = serializers.DateTimeField()
 
-    def update(self, instance, validated_data):
-        instance.point = validated_data['point']
-        return instance
-
-    def create(self, validated_data):
-        return SavePoint(**validated_data)
-
 
 class PointSerializerTest(TestCase):
 
@@ -325,16 +304,6 @@ class PointSerializerTest(TestCase):
         self.assertFalse(serializer.is_valid())
 
 
-# Backported from django_rest_framework/tests/test_fields.py
-def get_items(mapping_or_list_of_two_tuples):
-    # Tests accept either lists of two tuples, or dictionaries.
-    if isinstance(mapping_or_list_of_two_tuples, dict):
-        # {value: expected}
-        return mapping_or_list_of_two_tuples.items()
-    # [(value, expected), ...]
-    return mapping_or_list_of_two_tuples
-
-
 class FieldValues:
     """
     Base class for testing valid and invalid input values.
@@ -344,20 +313,20 @@ class FieldValues:
         """
         Ensure that valid values return the expected validated data.
         """
-        for input_value, expected_output in get_items(self.valid_inputs):
+        for input_value, expected_output in self.valid_inputs:
             assert self.field.run_validation(input_value) == expected_output
 
     def test_invalid_inputs(self):
         """
         Ensure that invalid values raise the expected validation error.
         """
-        for input_value, expected_failure in get_items(self.invalid_inputs):
+        for input_value, expected_failure in self.invalid_inputs:
             with self.assertRaises(serializers.ValidationError) as exc_info:
                 self.field.run_validation(input_value)
             assert exc_info.exception.detail == expected_failure
 
     def test_outputs(self):
-        for output_value, expected_output in get_items(self.outputs):
+        for output_value, expected_output in self.outputs:
             assert self.field.to_representation(
                 output_value) == expected_output
 

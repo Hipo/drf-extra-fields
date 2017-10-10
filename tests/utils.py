@@ -8,13 +8,6 @@ class MockObject(object):
         for key, val in kwargs.items():
             setattr(self, key, val)
 
-    def __str__(self):
-        kwargs_str = ', '.join([
-            '%s=%s' % (key, value)
-            for key, value in sorted(self._kwargs.items())
-        ])
-        return '<MockObject %s>' % kwargs_str
-
 
 class MockQueryset(object):
     def __init__(self, iterable):

@@ -61,9 +61,3 @@ class ExampleSerializerWOModel(serializers.Serializer):
     """
     A simple serialier without a model.
     """
-
-    def create(self, validated_data):
-        """
-        Just return the validated data.
-        """
-        return validated_data
