@@ -306,6 +306,17 @@ class PointSerializerTest(TestCase):
         serializer = PointSerializer(data={'created': now, 'point': point})
         self.assertFalse(serializer.is_valid())
 
+    def test_json_representation(self):
+        now = datetime.datetime.now()
+        point = {
+            "latitude": 49.8782482189424,
+            "longitude": 24.452545489
+        }
+        saved_point = SavePoint(point=point, created=now)
+        serializer = PointSerializer(saved_point)
+        self.assertTrue(isinstance(serializer.data['point']['latitude'], float))
+        self.assertTrue(isinstance(serializer.data['point']['longitude'], float))
+
 
 # Backported from django_rest_framework/tests/test_fields.py
 def get_items(mapping_or_list_of_two_tuples):
