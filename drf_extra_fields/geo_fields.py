@@ -1,6 +1,7 @@
 import json
 from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.gis.geos.error import GEOSException
+from django.utils.encoding import smart_str
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
@@ -25,6 +26,10 @@ class PointField(serializers.Field):
     default_error_messages = {
         'invalid': _('Enter a valid location.'),
     }
+
+    def __init__(self, *args, **kwargs):
+        self.str_points = kwargs.pop('str_points', False)
+        super(PointField, self).__init__(*args, **kwargs)
 
     def to_internal_value(self, value):
         """
@@ -64,4 +69,9 @@ class PointField(serializers.Field):
                 "latitude": value.y,
                 "longitude": value.x
             }
+
+        if self.str_points:
+            value['longitude'] = smart_str(value.pop('longitude'))
+            value['latitude'] = smart_str(value.pop('latitude'))
+
         return value
