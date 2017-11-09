@@ -99,6 +99,8 @@ Point field for GeoDjango
      "latitude": 49.8782482189424,
      "longitude": 24.452545489
     }
+ - It takes the optional parameter `str_points` (False by default), if set to True it serializes the longitude/latitude
+ values as strings
     
 **Example:**
 
