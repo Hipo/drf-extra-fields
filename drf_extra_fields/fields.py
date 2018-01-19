@@ -52,7 +52,7 @@ class Base64FieldMixin(object):
             # Try to decode the file. Return validation error if it fails.
             try:
                 decoded_file = base64.b64decode(base64_data)
-            except (TypeError, binascii.Error):
+            except (TypeError, binascii.Error, ValueError):
                 raise ValidationError(self.INVALID_FILE_MESSAGE)
             # Generate file name:
             file_name = str(uuid.uuid4())[:12]  # 12 characters are more than enough.
