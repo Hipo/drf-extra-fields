@@ -27,6 +27,10 @@ class PointField(serializers.Field):
         'invalid': _('Enter a valid location.'),
     }
 
+    def __init__(self, *args, **kwargs):
+        self.str_points = kwargs.pop('str_points', False)
+        super(PointField, self).__init__(*args, **kwargs)
+
     def to_internal_value(self, value):
         """
         Parse json data and return a point object
@@ -62,7 +66,12 @@ class PointField(serializers.Field):
 
         if isinstance(value, GEOSGeometry):
             value = {
-                "latitude": smart_str(value.y),
-                "longitude": smart_str(value.x)
+                "latitude": value.y,
+                "longitude": value.x
             }
+
+        if self.str_points:
+            value['longitude'] = smart_str(value.pop('longitude'))
+            value['latitude'] = smart_str(value.pop('latitude'))
+
         return value

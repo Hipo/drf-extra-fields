@@ -248,6 +248,10 @@ class PointSerializer(serializers.Serializer):
         return SavePoint(**validated_data)
 
 
+class StringPointSerializer(PointSerializer):
+    point = PointField(required=False, str_points=True)
+
+
 class PointSerializerTest(TestCase):
 
     def test_create(self):
@@ -305,6 +309,30 @@ class PointSerializerTest(TestCase):
         }
         serializer = PointSerializer(data={'created': now, 'point': point})
         self.assertFalse(serializer.is_valid())
+
+    def test_serialization(self):
+        """
+        Regular JSON serialization should output float values
+        """
+        from django.contrib.gis.geos import Point
+        now = datetime.datetime.now()
+        point = Point(24.452545489, 49.8782482189424)
+        saved_point = SavePoint(point=point, created=now)
+        serializer = PointSerializer(saved_point)
+        self.assertEqual(serializer.data['point'], {'latitude': 49.8782482189424, 'longitude': 24.452545489})
+
+    def test_str_points_serialization(self):
+        """
+        PointField with str_points=True should output string values
+        """
+        from django.contrib.gis.geos import Point
+        now = datetime.datetime.now()
+        # test input is shortened due to string conversion rounding
+        # gps has at max 8 decimals, so it doesn't make a difference
+        point = Point(24.452545489, 49.8782482189)
+        saved_point = SavePoint(point=point, created=now)
+        serializer = StringPointSerializer(saved_point)
+        self.assertEqual(serializer.data['point'], {'latitude': '49.8782482189', 'longitude': '24.452545489'})
 
 
 # Backported from django_rest_framework/tests/test_fields.py
