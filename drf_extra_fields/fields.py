@@ -178,22 +178,22 @@ class RangeField(DictField):
 
 
 class IntegerRangeField(RangeField):
-    child = IntegerField()
+    child = IntegerField(allow_null=True)
     range_type = NumericRange
 
 
 class FloatRangeField(RangeField):
-    child = FloatField()
+    child = FloatField(allow_null=True)
     range_type = NumericRange
 
 
 class DateTimeRangeField(RangeField):
-    child = DateTimeField()
+    child = DateTimeField(allow_null=True)
     range_type = DateTimeTZRange
 
 
 class DateRangeField(RangeField):
-    child = DateField()
+    child = DateField(allow_null=True)
     range_type = DateRange
 
 

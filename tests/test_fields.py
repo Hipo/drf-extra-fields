@@ -392,6 +392,8 @@ class TestIntegerRangeField(FieldValues):
             ({'empty': True},
              compat.NumericRange(**{'empty': True})),
             ({}, compat.NumericRange()),
+            ({'lower': None, 'upper': None, 'bounds': '()'},
+             compat.NumericRange(upper=None, lower=None, bounds='()')),
         ]
         invalid_inputs = [
             ({'lower': 'a'}, ['A valid integer is required.']),
@@ -436,6 +438,8 @@ class TestFloatRangeField(FieldValues):
             ({'empty': True},
              compat.NumericRange(**{'empty': True})),
             ({}, compat.NumericRange()),
+            ({'lower': None, 'upper': None, 'bounds': '()'},
+             compat.NumericRange(upper=None, lower=None, bounds='()')),
         ]
         invalid_inputs = [
             ({'lower': 'a'}, ['A valid number is required.']),
@@ -489,6 +493,8 @@ class TestDateTimeRangeField(TestCase, FieldValues):
             ({'empty': True},
              compat.DateTimeTZRange(**{'empty': True})),
             ({}, compat.DateTimeTZRange()),
+            ({'lower': None, 'upper': None, 'bounds': '()'},
+             compat.DateTimeTZRange(upper=None, lower=None, bounds='()')),
         ]
         invalid_inputs = [
             ({'lower': 'a'}, ['Datetime has wrong format. Use one of these'
@@ -549,6 +555,8 @@ class TestDateRangeField(FieldValues):
             ({'empty': True},
              compat.DateRange(**{'empty': True})),
             ({}, compat.DateRange()),
+            ({'lower': None, 'upper': None, 'bounds': '()'},
+             compat.DateRange(upper=None, lower=None, bounds='()')),
         ]
         invalid_inputs = [
             ({'lower': 'a'}, ['Date has wrong format. Use one of these'
