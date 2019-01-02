@@ -8,7 +8,7 @@ Extra Fields for Django Rest Framework
 Usage
 ================
  
-install the package
+Install the package
  
 ```bash
 pip install django-extra-fields
@@ -66,7 +66,7 @@ serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
 
 ## Base64FileField
 
-An file representation for Base64FileField
+A file representation for Base64FileField
 
 Inherited by `FileField`
 
