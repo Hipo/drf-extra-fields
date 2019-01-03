@@ -41,7 +41,7 @@ Inherited by `ImageField`
 **Signature:** `Base64ImageField()`
 
  - It takes a base64 image as a string.
- - a base64 image:  `data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7`
+ - A base64 image:  `data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7`
  - Base64ImageField accepts the entire string or just the part after base64, `R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7`
  - It takes the optional parameter represent_in_base64(False by default), if set to True it wil allow for base64-encoded downloads of an ImageField.
  - You can inherit the Base64ImageField class and set allowed extensions (ALLOWED_TYPES list), or customize the validation messages (INVALID_FILE_MESSAGE, INVALID_TYPE_MESSAGE)
