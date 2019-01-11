@@ -210,7 +210,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     user = PresentablePrimaryKeyRelatedField(
-        queryset=User.objects,
+        queryset=User.objects.all(),
         presentation_serializer=UserSerializer
     )
     class Meta:
