@@ -553,7 +553,7 @@ class TestDateRangeField(FieldValues):
         invalid_inputs = [
             ({'lower': 'a'}, ['Date has wrong format. Use one of these'
                               ' formats instead: '
-                              'YYYY[-MM[-DD]].']),
+                              'YYYY-MM-DD.']),
             ('not a dict', ['Expected a dictionary of items but got type "str".']),
         ]
         outputs = [
