@@ -8,7 +8,7 @@ Extra Fields for Django Rest Framework
 Usage
 ================
  
-install the package
+Install the package
  
 ```bash
 pip install django-extra-fields
@@ -41,7 +41,7 @@ Inherited by `ImageField`
 **Signature:** `Base64ImageField()`
 
  - It takes a base64 image as a string.
- - a base64 image:  `data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7`
+ - A base64 image:  `data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7`
  - Base64ImageField accepts the entire string or just the part after base64, `R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7`
  - It takes the optional parameter represent_in_base64(False by default), if set to True it wil allow for base64-encoded downloads of an ImageField.
  - You can inherit the Base64ImageField class and set allowed extensions (ALLOWED_TYPES list), or customize the validation messages (INVALID_FILE_MESSAGE, INVALID_TYPE_MESSAGE)
@@ -66,7 +66,7 @@ serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
 
 ## Base64FileField
 
-An file representation for Base64FileField
+A file representation for Base64FileField
 
 Inherited by `FileField`
 
@@ -81,16 +81,16 @@ Inherited by `FileField`
 **Example:**
 
 ```python
-    class PDFBase64File(Base64FileField):
-        ALLOWED_TYPES = ['pdf']
+class PDFBase64File(Base64FileField):
+    ALLOWED_TYPES = ['pdf']
 
-        def get_file_extension(self, filename, decoded_file):
-            try:
-                PyPDF2.PdfFileReader(io.BytesIO(decoded_file))
-            except PyPDF2.utils.PdfReadError as e:
-                logger.warning(e)
-            else:
-                return 'pdf'
+    def get_file_extension(self, filename, decoded_file):
+        try:
+            PyPDF2.PdfFileReader(io.BytesIO(decoded_file))
+        except PyPDF2.utils.PdfReadError as e:
+            logger.warning(e)
+        else:
+            return 'pdf'
 ```
 
 
