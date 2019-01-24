@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:16.04
 
 MAINTAINER Marco Chiappetta <lambdacomplete@gmail.com>
 
