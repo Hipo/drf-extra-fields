@@ -30,9 +30,18 @@ DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
 
 class Base64FieldMixin(object):
-    ALLOWED_TYPES = NotImplementedError
-    INVALID_FILE_MESSAGE = NotImplementedError
-    INVALID_TYPE_MESSAGE = NotImplementedError
+    @property
+    def ALLOWED_TYPES(self):
+        raise NotImplementedError
+
+    @property
+    def INVALID_FILE_MESSAGE(self):
+        raise NotImplementedError
+
+    @property
+    def INVALID_TYPE_MESSAGE(self):
+        raise NotImplementedError
+
     EMPTY_VALUES = (None, '', [], (), {})
 
     def __init__(self, *args, **kwargs):
@@ -122,7 +131,10 @@ class Base64FileField(Base64FieldMixin, FileField):
     A django-rest-framework field for handling file-uploads through raw post data.
     It uses base64 for en-/decoding the contents of the file.
     """
-    ALLOWED_TYPES = NotImplementedError('List allowed file extensions')
+    @property
+    def ALLOWED_TYPES(self):
+        raise NotImplementedError('List allowed file extensions')
+
     INVALID_FILE_MESSAGE = _("Please upload a valid file.")
     INVALID_TYPE_MESSAGE = _("The type of the file couldn't be determined.")
 
