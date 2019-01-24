@@ -30,9 +30,9 @@ DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
 
 class Base64FieldMixin(object):
-    ALLOWED_TYPES = NotImplemented
-    INVALID_FILE_MESSAGE = NotImplemented
-    INVALID_TYPE_MESSAGE = NotImplemented
+    ALLOWED_TYPES = NotImplementedError
+    INVALID_FILE_MESSAGE = NotImplementedError
+    INVALID_TYPE_MESSAGE = NotImplementedError
     EMPTY_VALUES = (None, '', [], (), {})
 
     def __init__(self, *args, **kwargs):
@@ -66,7 +66,7 @@ class Base64FieldMixin(object):
         raise ValidationError(_('This is not an base64 string'))
 
     def get_file_extension(self, filename, decoded_file):
-        raise NotImplemented
+        raise NotImplementedError
 
     def to_representation(self, file):
         if self.represent_in_base64:
@@ -127,7 +127,7 @@ class Base64FileField(Base64FieldMixin, FileField):
     INVALID_TYPE_MESSAGE = _("The type of the file couldn't be determined.")
 
     def get_file_extension(self, filename, decoded_file):
-        raise NotImplemented('Implement file validation and return matching extension.')
+        raise NotImplementedError('Implement file validation and return matching extension.')
 
 
 class RangeField(DictField):
