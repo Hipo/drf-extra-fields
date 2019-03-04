@@ -31,7 +31,9 @@ DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
 class Base64FieldMixin(object):
 
-    ALLOW_ALL_TYPES = False
+    @property
+    def ALLOW_ALL_TYPES(self):
+        return False
 
     @property
     def ALLOWED_TYPES(self):
