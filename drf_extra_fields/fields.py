@@ -72,7 +72,8 @@ class Base64FieldMixin(object):
             complete_file_name = file_name + "." + file_extension
             data = ContentFile(decoded_file, name=complete_file_name)
             return super(Base64FieldMixin, self).to_internal_value(data)
-        raise ValidationError(_('This is not an base64 string'))
+        raise ValidationError(_('Invalid type. This is not an base64 string: {}'.format(
+            type(base64_data))))
 
     def get_file_extension(self, filename, decoded_file):
         raise NotImplementedError
