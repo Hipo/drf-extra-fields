@@ -22,7 +22,12 @@ pip install django-extra-fields
 Releases
 --------
 
-**1.0.0 (Latest version)**
+**1.1.0 (Latest version)**
+
+- Python 3.7 support is added.
+
+
+**1.0.0 **
 
 - `PointField` is changed. The field now returns float coordinates instead of strings. It's a breaking change. If you want to return string coordinates add `str_points=True` as an argument. See [PointField](#pointfield) documentation for more details.
 
