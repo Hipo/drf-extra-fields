@@ -1,7 +1,9 @@
+import io
 import base64
 import binascii
-import imghdr
 import uuid
+
+from PIL import Image
 
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
@@ -103,7 +105,8 @@ class Base64ImageField(Base64FieldMixin, ImageField):
     INVALID_TYPE_MESSAGE = _("The type of the image couldn't be determined.")
 
     def get_file_extension(self, filename, decoded_file):
-        extension = imghdr.what(filename, decoded_file)
+        image = Image.open(io.BytesIO(decoded_file))
+        extension = image.format.lower()
         extension = "jpg" if extension == "jpeg" else extension
         return extension
 
