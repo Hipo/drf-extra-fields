@@ -82,6 +82,12 @@ class Base64FieldMixin(object):
             try:
                 with open(file.path, 'rb') as f:
                     return base64.b64encode(f.read()).decode()
+            except ValueError:
+                # If the underlying ImageField is blank, a ValueError will be 
+                # raised. When representing as base64, simply return an empty 
+                # base64 str rather than let the exception propagate unhandled 
+                # up into serializers.
+                return ''
             except Exception:
                 raise IOError("Error encoding file")
         else:
