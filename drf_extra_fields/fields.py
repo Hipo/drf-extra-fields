@@ -80,7 +80,7 @@ class Base64FieldMixin(object):
     def to_representation(self, file):
         if self.represent_in_base64:
             # If the underlying ImageField is blank, a ValueError would be
-            # raised one `open`. When representing as base64, simply return an
+            # raised on `open`. When representing as base64, simply return an
             # empty base64 str rather than let the exception propagate unhandled
             # up into serializers.
             if not file:
