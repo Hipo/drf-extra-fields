@@ -40,7 +40,7 @@ Fields:
 
 An image representation for Base64ImageField
 
-Inherited by `ImageField`
+Inherited from `ImageField`
 
 
 **Signature:** `Base64ImageField()`
@@ -73,7 +73,7 @@ serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
 
 A file representation for Base64FileField
 
-Inherited by `FileField`
+Inherited from `FileField`
 
 
 **Signature:** `Base64FileField()`
