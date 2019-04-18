@@ -22,7 +22,12 @@ pip install django-extra-fields
 Releases
 --------
 
-**1.1.0 (Latest version)**
+**1.2.0 (Latest version)**
+
+- Properly handle blank image fields when `represent_in_base64` is enabled.
+
+
+**1.1.0**
 
 - Python 3.7 support is added.
 
