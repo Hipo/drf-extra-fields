@@ -64,7 +64,7 @@ class Base64FieldMixin(object):
             except (TypeError, binascii.Error, ValueError):
                 raise ValidationError(self.INVALID_FILE_MESSAGE)
             # Generate file name:
-            file_name = str(uuid.uuid4())[:12]  # 12 characters are more than enough.
+            file_name = self.get_file_name(decoded_file)
             # Get the file name extension:
             file_extension = self.get_file_extension(file_name, decoded_file)
             if file_extension not in self.ALLOWED_TYPES:
@@ -76,6 +76,9 @@ class Base64FieldMixin(object):
 
     def get_file_extension(self, filename, decoded_file):
         raise NotImplementedError
+    
+    def get_file_name(self, decoded_file):
+        return str(uuid.uuid4())[:12]  # 12 characters are more than enough.
 
     def to_representation(self, file):
         if self.represent_in_base64:
