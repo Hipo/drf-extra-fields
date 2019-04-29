@@ -76,7 +76,7 @@ class Base64FieldMixin(object):
 
     def get_file_extension(self, filename, decoded_file):
         raise NotImplementedError
-    
+
     def get_file_name(self, decoded_file):
         return str(uuid.uuid4())[:12]  # 12 characters are more than enough.
 
