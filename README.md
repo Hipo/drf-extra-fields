@@ -22,7 +22,12 @@ pip install django-extra-fields
 Releases
 --------
 
-**1.2.0 (Latest version)**
+**1.2.1 (Latest version)**
+
+- Moved filename generation of Base64FieldMixin into a method.
+
+
+**1.2.0**
 
 - Properly handle blank image fields when `represent_in_base64` is enabled.
 
