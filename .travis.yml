@@ -12,7 +12,6 @@ python:
 install:
     - pip install tox-travis
     - pip install codecov
-    - pip install pytest-cov
     - sudo apt-get install gdal-bin
 
 script:
