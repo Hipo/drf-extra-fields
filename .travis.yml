@@ -11,10 +11,15 @@ python:
 
 install:
     - pip install tox-travis
+    - pip install codecov
     - sudo apt-get install gdal-bin
 
 script:
-    - tox
+    - codecov run tox
 
 notifications:
     email: false
+
+after_success:
+  - codecov
+
