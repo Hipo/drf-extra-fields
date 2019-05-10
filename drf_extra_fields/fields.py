@@ -5,7 +5,7 @@ import io
 import uuid
 
 from django.core.exceptions import ValidationError
-from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.postgres import fields as postgres_fields
 from django.utils.translation import gettext_lazy as _
 from psycopg2.extras import DateRange, DateTimeTZRange, NumericRange
@@ -23,7 +23,6 @@ from rest_framework.fields import (
 from rest_framework.serializers import ModelSerializer
 from rest_framework.utils import html
 from drf_extra_fields import compat
-
 
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
@@ -53,9 +52,12 @@ class Base64FieldMixin(object):
             return None
 
         if isinstance(base64_data, str):
-            # Strip base64 header.
+            file_mime_type = None
+
+            # Strip base64 header, get mime_type from base64 header.
             if ';base64,' in base64_data:
                 header, base64_data = base64_data.split(';base64,')
+                file_mime_type = header.replace('data:', '')
 
             # Try to decode the file. Return validation error if it fails.
             try:
@@ -69,7 +71,9 @@ class Base64FieldMixin(object):
             if file_extension not in self.ALLOWED_TYPES:
                 raise ValidationError(self.INVALID_TYPE_MESSAGE)
             complete_file_name = file_name + "." + file_extension
-            data = ContentFile(decoded_file, name=complete_file_name)
+            data = SimpleUploadedFile(name=complete_file_name, content=decoded_file,
+                                      content_type=file_mime_type
+                                      )
             return super(Base64FieldMixin, self).to_internal_value(data)
         raise ValidationError(_('Invalid type. This is not an base64 string: {}'.format(
             type(base64_data))))
@@ -156,6 +160,7 @@ class Base64FileField(Base64FieldMixin, FileField):
     A django-rest-framework field for handling file-uploads through raw post data.
     It uses base64 for en-/decoding the contents of the file.
     """
+
     @property
     def ALLOWED_TYPES(self):
         raise NotImplementedError('List allowed file extensions')
@@ -168,7 +173,6 @@ class Base64FileField(Base64FieldMixin, FileField):
 
 
 class RangeField(DictField):
-
     range_type = None
 
     default_error_messages = dict(DictField.default_error_messages)
