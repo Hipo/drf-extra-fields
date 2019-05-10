@@ -3,3 +3,4 @@ djangorestframework >= 3.0.1
 pillow
 flake8
 mock
+pytest-django
