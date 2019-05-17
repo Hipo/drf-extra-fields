@@ -24,6 +24,15 @@ from drf_extra_fields.fields import (
 
 import pytest
 
+UNDETECTABLE_BY_IMGHDR_SAMPLE = """data:image/jpeg;base64,
+/9j/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD
+/2wBDAQMDAwQDBAgEBAgQCwkLEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/wAARCAAQABADASIAAhEBAxEB
+/8QAFgABAQEAAAAAAAAAAAAAAAAABwQF/8QAJBAAAQQBBAICAwAAAAAAAAAAAQIDBAYFBwgSExEiABQJMTL/xAAVAQEBAAAAAAAAAAAAAAAAAAAABv
+/EACMRAAECBQMFAAAAAAAAAAAAAAECEQMEBQYhABIxFRZhgeH/2gAMAwEAAhEDEQA/ABSm0mobc8HmExLUlRzzEWPkJWW
++ulrsaUVAseUgslSlH9LKuPryIKuWPZdskzXmm3fX5m2nF4GlVxx/HOpx4ks51+MiU/Iaad7UcUo4tILoS4kqcWkezS0hO
+/HvuRp0rO6hWnWO1UisZVuFi4GFeyEpmGepa5S5SWVPuciFKRFLgSrwetnyPIB+Vb4N9mKhQMzo5po9XLdDs9d6ZVix2VEhiL9kuNPxw2gEKcDQ
+/rs8AuA8VAe0vdl7VOYn+27flGAUgmITjbhSmCg3BYlyeWDkMolvw4KOp1KM6iCNvngZHwetf//Z """
+
 
 class UploadedBase64Image(object):
     def __init__(self, file=None, created=None):
@@ -112,6 +121,19 @@ class Base64ImageSerializerTests(TestCase):
         """
         now = datetime.datetime.now()
         file = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
+        uploaded_image = UploadedBase64Image(file=file, created=now)
+        serializer = UploadedBase64ImageSerializer(instance=uploaded_image, data={'created': now, 'file': ''})
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['created'], uploaded_image.created)
+        self.assertIsNone(serializer.validated_data['file'])
+
+    def test_fallback_to_pil_if_not_detected_by_imghdr(self):
+        """
+        Passing a sample image which goes undetected by imghdr should
+        still be detected by PIL.
+        """
+        now = datetime.datetime.now()
+        file = UNDETECTABLE_BY_IMGHDR_SAMPLE
         uploaded_image = UploadedBase64Image(file=file, created=now)
         serializer = UploadedBase64ImageSerializer(instance=uploaded_image, data={'created': now, 'file': ''})
         self.assertTrue(serializer.is_valid())
