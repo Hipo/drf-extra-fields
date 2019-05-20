@@ -1,5 +1,6 @@
 import datetime
 import base64
+import imghdr
 import os
 
 import django
@@ -134,11 +135,15 @@ class Base64ImageSerializerTests(TestCase):
         """
         now = datetime.datetime.now()
         file = UNDETECTABLE_BY_IMGHDR_SAMPLE
+
+        # check image is undetectable by imghdr
+        self.assertIsNone(imghdr.what('test.jpeg', base64.b64decode(file)))
+
         uploaded_image = UploadedBase64Image(file=file, created=now)
-        serializer = UploadedBase64ImageSerializer(instance=uploaded_image, data={'created': now, 'file': ''})
+        serializer = UploadedBase64ImageSerializer(instance=uploaded_image, data={'created': now, 'file': file})
         self.assertTrue(serializer.is_valid())
         self.assertEqual(serializer.validated_data['created'], uploaded_image.created)
-        self.assertIsNone(serializer.validated_data['file'])
+        self.assertIsNotNone(serializer.validated_data['file'])
 
     def test_download(self):
         encoded_source = 'R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs='
