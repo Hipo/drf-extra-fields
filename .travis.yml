@@ -10,15 +10,15 @@ python:
   - "3.7"
 
 install:
-    - pip install tox-travis
-    - pip install codecov
-    - sudo apt-get install gdal-bin
+  - pip install tox-travis
+  - pip install codecov
+  - sudo apt-get install gdal-bin
 
 script:
-    tox
+  - tox
 
 notifications:
-    email: false
+  email: false
 
 after_success:
   - codecov
