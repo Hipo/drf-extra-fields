@@ -16,6 +16,7 @@ setup(
     license='BSD License',
     description='Additional fields for Django Rest Framework.',
     long_description=README,
+    long_description_content_type="text/markdown",
     author='hipo',
     author_email='pypi@hipolabs.com',
     url='https://github.com/Hipo/drf-extra-fields',
