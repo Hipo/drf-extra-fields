@@ -23,7 +23,12 @@ pip install django-extra-fields
 Releases
 --------
 
-**1.2.1 (Latest version)**
+**1.2.2 (Latest version)**
+
+- Fixed [a bug](https://github.com/Hipo/drf-extra-fields/pull/75) in Base64ImageField.
+- Added codecov support.
+
+**1.2.1**
 
 - Moved filename generation of Base64FieldMixin into a method.
 
