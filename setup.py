@@ -13,7 +13,7 @@ setup(
     packages=['drf_extra_fields',
               'drf_extra_fields.runtests'],
     include_package_data=True,
-    license='BSD License',
+    license='Apache-2.0',
     description='Additional fields for Django Rest Framework.',
     long_description=README,
     author='hipo',
