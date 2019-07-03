@@ -20,6 +20,7 @@ class PresentablePrimaryKeyRelatedField(PrimaryKeyRelatedField):
 
     def __init__(self, **kwargs):
         self.presentation_serializer = kwargs.pop('presentation_serializer', None)
+        self.presentation_serializer_kwargs = kwargs.pop('presentation_serializer_kwargs', dict())
         assert self.presentation_serializer is not None, (
             'PresentablePrimaryKeyRelatedField must provide a `presentation_serializer` argument'
         )
@@ -39,4 +40,4 @@ class PresentablePrimaryKeyRelatedField(PrimaryKeyRelatedField):
                             for item in queryset])
 
     def to_representation(self, data):
-        return self.presentation_serializer(data, context=self.context).data
+        return self.presentation_serializer(data, context=self.context, **self.presentation_serializer_kwargs).data

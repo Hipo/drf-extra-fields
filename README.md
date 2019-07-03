@@ -232,7 +232,16 @@ class UserSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     user = PresentablePrimaryKeyRelatedField(
         queryset=User.objects.all(),
-        presentation_serializer=UserSerializer
+        presentation_serializer=UserSerializer,
+        presentation_serializer_kwargs={
+            'example': [
+                'of', 
+                'passing', 
+                'kwargs', 
+                'to', 
+                'serializer',
+            ]
+        }
     )
     class Meta:
         model = Post
