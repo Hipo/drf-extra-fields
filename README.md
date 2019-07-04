@@ -23,7 +23,11 @@ pip install django-extra-fields
 Releases
 --------
 
-**1.2.2 (Latest version)**
+**1.2.3 (Latest version)**
+
+- Added `presentation_serializer_kwargs` attribute to `PresentablePrimaryKeyRelatedField`.
+
+**1.2.2**
 
 - Fixed [a bug](https://github.com/Hipo/drf-extra-fields/pull/75) in Base64ImageField.
 - Added codecov support.
