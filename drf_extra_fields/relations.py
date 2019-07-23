@@ -1,11 +1,19 @@
 from collections import OrderedDict
-from rest_framework.relations import PrimaryKeyRelatedField
+
+from rest_framework.relations import PrimaryKeyRelatedField, SlugRelatedField
 
 
-class PresentablePrimaryKeyRelatedField(PrimaryKeyRelatedField):
-    """
-    Override PrimaryKeyRelatedField to represent serializer data instead of a pk field of the object.
-    """
+class PresentableRelatedFieldMixin(object):
+    def __init__(self, **kwargs):
+        self.presentation_serializer = kwargs.pop("presentation_serializer", None)
+        self.presentation_serializer_kwargs = kwargs.pop(
+            "presentation_serializer_kwargs", dict()
+        )
+        assert self.presentation_serializer is not None, (
+            self.__class__.__name__
+            + " must provide a `presentation_serializer` argument"
+        )
+        super(PresentableRelatedFieldMixin, self).__init__(**kwargs)
 
     def use_pk_only_optimization(self):
         """
@@ -18,14 +26,6 @@ class PresentablePrimaryKeyRelatedField(PrimaryKeyRelatedField):
         """
         return False
 
-    def __init__(self, **kwargs):
-        self.presentation_serializer = kwargs.pop('presentation_serializer', None)
-        self.presentation_serializer_kwargs = kwargs.pop('presentation_serializer_kwargs', dict())
-        assert self.presentation_serializer is not None, (
-            'PresentablePrimaryKeyRelatedField must provide a `presentation_serializer` argument'
-        )
-        super(PresentablePrimaryKeyRelatedField, self).__init__(**kwargs)
-
     def get_choices(self, cutoff=None):
         queryset = self.get_queryset()
         if queryset is None:
@@ -36,8 +36,27 @@ class PresentablePrimaryKeyRelatedField(PrimaryKeyRelatedField):
         if cutoff is not None:
             queryset = queryset[:cutoff]
 
-        return OrderedDict([(item.pk, self.display_value(item))
-                            for item in queryset])
+        return OrderedDict([(item.pk, self.display_value(item)) for item in queryset])
 
     def to_representation(self, data):
-        return self.presentation_serializer(data, context=self.context, **self.presentation_serializer_kwargs).data
+        return self.presentation_serializer(
+            data, context=self.context, **self.presentation_serializer_kwargs
+        ).data
+
+
+class PresentablePrimaryKeyRelatedField(
+    PresentableRelatedFieldMixin, PrimaryKeyRelatedField
+):
+    """
+    Override PrimaryKeyRelatedField to represent serializer data instead of a pk field of the object.
+    """
+
+    pass
+
+
+class PresentableSlugRelatedField(PresentableRelatedFieldMixin, SlugRelatedField):
+    """
+    Override SlugRelatedField to represent serializer data instead of a slug field of the object.
+    """
+
+    pass

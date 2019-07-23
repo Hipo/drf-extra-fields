@@ -285,6 +285,78 @@ class PostSerializer(serializers.ModelSerializer):
 }
 ```
 
+
+## PresentableSlugRelatedField
+
+Represents related object retrieved using slug with a serializer.
+
+```python
+from drf_extra_fields.relations import PresentableSlugRelatedField
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = (
+            "id",
+            "slug",
+            "name"
+        )
+
+class ProductSerializer(serializers.ModelSerializer):
+    category = PresentableSlugRelatedField(
+        slug_field="slug",
+        queryset=Category.objects.all(),
+        presentation_serializer=CategorySerializer,
+        presentation_serializer_kwargs={
+            'example': [
+                'of', 
+                'passing', 
+                'kwargs', 
+                'to', 
+                'serializer',
+            ]
+        }
+    )
+    class Meta:
+        model = Product
+        fields = (
+            "id",
+            "name",
+            "category",
+        )
+```
+
+**Serializer data:**
+```
+{
+    "category": "vegetables",
+    "name": "Tomato"
+}
+```
+
+**Serialized data with SlugRelatedField:**
+```
+{
+    "id": 1,
+    "name": "Tomato",
+    "category": "vegetables"
+}
+```
+
+**Serialized data with PresentableSlugRelatedField:**
+```
+{
+    "id": 1,
+    "name": "Tomato",
+    "category": {
+        "id": 1,
+        "slug": "vegetables",
+        "name": "Vegetables"
+    }
+}
+```
+
+
 ## HybridImageField
 A django-rest-framework field for handling image-uploads through raw post data, with a fallback to multipart form data.
 
