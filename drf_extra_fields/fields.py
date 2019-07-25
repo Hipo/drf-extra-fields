@@ -68,7 +68,6 @@ class Base64FieldMixin(object):
             file_name = str(uuid.uuid4())[:12]  # 12 characters are more than enough.
             # Get the file name extension:
             file_extension = self.get_file_extension(file_name, decoded_file)
-            
             if self.ALLOWED_TYPES is not ["*"] and file_extension not in self.ALLOWED_TYPES:
                 raise ValidationError(self.INVALID_TYPE_MESSAGE)
             complete_file_name = file_name + "." + file_extension
