@@ -1,5 +1,4 @@
 Django >= 1.4
 djangorestframework >= 3.0.1
-pillow
 flake8
 mock
