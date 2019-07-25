@@ -32,10 +32,6 @@ DEFAULT_CONTENT_TYPE = "application/octet-stream"
 class Base64FieldMixin(object):
 
     @property
-    def ALLOW_ALL_TYPES(self):
-        return False
-
-    @property
     def ALLOWED_TYPES(self):
         raise NotImplementedError
 
@@ -72,9 +68,9 @@ class Base64FieldMixin(object):
             file_name = str(uuid.uuid4())[:12]  # 12 characters are more than enough.
             # Get the file name extension:
             file_extension = self.get_file_extension(file_name, decoded_file)
-            if not self.ALLOW_ALL_TYPES:
-                if file_extension not in self.ALLOWED_TYPES:
-                    raise ValidationError(self.INVALID_TYPE_MESSAGE)
+            
+            if self.ALLOWED_TYPES is not ["*"] and file_extension not in self.ALLOWED_TYPES:
+                raise ValidationError(self.INVALID_TYPE_MESSAGE)
             complete_file_name = file_name + "." + file_extension
             data = ContentFile(decoded_file, name=complete_file_name)
             return super(Base64FieldMixin, self).to_internal_value(data)
