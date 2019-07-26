@@ -80,7 +80,7 @@ class Base64FieldMixin(object):
         raise NotImplementedError
 
     def get_file_name(self, decoded_file):
-        return str(uuid.uuid4())[:14]  # 14 characters are more than enough. 12 Characters can trigger ablockers.
+        return str(uuid.uuid4())[:13]  # 13 characters are more than enough. 12 Characters can trigger ablockers.
 
     def to_representation(self, file):
         if self.represent_in_base64:
