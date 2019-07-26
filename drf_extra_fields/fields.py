@@ -4,8 +4,6 @@ import base64
 import binascii
 import uuid
 
-from PIL import Image
-
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils import six
@@ -117,6 +115,10 @@ class Base64ImageField(Base64FieldMixin, ImageField):
     INVALID_TYPE_MESSAGE = _("The type of the image couldn't be determined.")
 
     def get_file_extension(self, filename, decoded_file):
+        try:
+            from PIL import Image
+        except ImportError:
+            raise ImportError("Pillow is not installed.")
         extension = imghdr.what(filename, decoded_file)
 
         # Try with PIL as fallback if format not detected due
