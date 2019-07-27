@@ -80,9 +80,9 @@ class Base64FieldMixin(object):
         raise NotImplementedError
 
     def get_file_name(self, decoded_file):
+        # 12 Characters can result in filenames that trigger ablockers. (https://stackoverflow.com/questions/57227131)
         return str(uuid.uuid4())[:13]  # 13 characters are more than enough. 
-        # 12 Characters can result in filenames that trigger ablockers.
-        # See https://stackoverflow.com/questions/57227131/images-that-fit-the-regexp-ad0-9-png-can-not-be-loaded-in-any-browser
+
 
     def to_representation(self, file):
         if self.represent_in_base64:
