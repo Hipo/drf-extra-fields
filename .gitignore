@@ -8,3 +8,5 @@ dist/
 .pypirc
 .tox/
 .cache/
+venv/
+.vscode/
