@@ -83,7 +83,7 @@ class Base64FieldMixin(object):
         # 12 Characters can result in filenames that trigger ablockers because
         # they can end with '-ad0[.png]', which is blocked by adblockers
         # See https://stackoverflow.com/questions/57227131
-        return str(uuid.uuid4())[:13]  # 13 characters are more than enough. 
+        return str(uuid.uuid4())[:13]  # 13 characters are more than enough.
 
     def to_representation(self, file):
         if self.represent_in_base64:
