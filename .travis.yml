@@ -14,6 +14,9 @@ install:
   - pip install codecov
   - sudo apt-get install gdal-bin
 
+before_script:
+  - "flake8 ."
+
 script:
   - tox
 
