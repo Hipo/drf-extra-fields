@@ -12,6 +12,7 @@ python:
 install:
   - pip install tox-travis
   - pip install codecov
+  - pip install flake8
   - sudo apt-get install gdal-bin
 
 before_script:
