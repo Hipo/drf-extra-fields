@@ -8,15 +8,12 @@ python:
   - "3.5"
   - "3.6"
   - "3.7"
+  - "flake8"
 
 install:
   - pip install tox-travis
   - pip install codecov
-  - pip install flake8
   - sudo apt-get install gdal-bin
-
-before_script:
-  - "flake8 ."
 
 script:
   - tox
