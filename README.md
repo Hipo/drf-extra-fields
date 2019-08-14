@@ -19,39 +19,6 @@ pip install django-extra-fields
 - Install version 0.1 for Django Rest Framework 2.*
 - Install version 0.3 or greater for Django Rest Framework 3.*
 
-
-Releases
---------
-
-**1.2.3 (Latest version)**
-
-- Added `presentation_serializer_kwargs` attribute to `PresentablePrimaryKeyRelatedField`.
-
-**1.2.2**
-
-- Fixed [a bug](https://github.com/Hipo/drf-extra-fields/pull/75) in Base64ImageField.
-- Added codecov support.
-
-**1.2.1**
-
-- Moved filename generation of Base64FieldMixin into a method.
-
-
-**1.2.0**
-
-- Properly handle blank image fields when `represent_in_base64` is enabled.
-
-
-**1.1.0**
-
-- Python 3.7 support is added.
-
-
-**1.0.0**
-
-- `PointField` is changed. The field now returns float coordinates instead of strings. It's a breaking change. If you want to return string coordinates add `str_points=True` as an argument. See [PointField](#pointfield) documentation for more details.
-
-
 Fields:
 ----------------
 
