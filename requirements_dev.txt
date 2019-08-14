@@ -1,0 +1,8 @@
+django
+djangorestframework>=3.0
+Pillow == 5.4.1
+pytest-django
+pytest-cov
+psycopg2-binary
+mock
+flake8

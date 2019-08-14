@@ -13,6 +13,10 @@ setup(
     packages=['drf_extra_fields',
               'drf_extra_fields.runtests'],
     include_package_data=True,
+    install_requires=['Django >= 1.4', 'djangorestframework >= 3.0.1'],
+    extras_require={
+        "Base64ImageField": ["Pillow == 5.4.1"],
+    },
     license='Apache-2.0',
     description='Additional fields for Django Rest Framework.',
     long_description=README,
