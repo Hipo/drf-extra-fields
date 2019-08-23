@@ -338,6 +338,38 @@ class HybridImageSerializer(serializers.Serializer):
     image = HybridImageField()
 ```
 
+drf-yasg fix for BASE64 Fields:
+----------------
+The [drf-yasg](https://github.com/axnsan12/drf-yasg) project seems to generate wrong documentation on Base64ImageField or Base64FileField. It marks those fields as readonly. Here is the workaround code for correct the generated document. (More detail on issue #66)
+
+```python 
+from drf_yasg.inspectors import FieldInspector, SwaggerAutoSchema
+from drf_yasg.app_settings import swagger_settings
+
+
+class Base64FileFieldInspector(FieldInspector):
+    BASE_64_FIELDS = ['Base64ImageField', 'Base64FileField', 'Base64FieldMixin']
+
+    def process_result(self, result, method_name, obj, **kwargs):
+        if isinstance(result, openapi.Schema.OR_REF) and \
+                obj.__class__.__name__ in Base64FileFieldInspector.BASE_64_FIELDS:
+            schema = openapi.resolve_ref(result, self.components)
+            schema.pop('readOnly', None)
+            schema.pop('format', None)  # Remove $url format from string
+
+        return result
+
+
+class Base64FileAutoSchema(SwaggerAutoSchema):
+    field_inspectors = [Base64FileFieldInspector] + swagger_settings.DEFAULT_FIELD_INSPECTORS
+
+
+class FormAttachmentViewSet(viewsets.ModelViewSet):
+    queryset = .......
+    serializer_class = ..........
+    swagger_schema = Base64FileAutoSchema
+```
+
 
 CONTRIBUTION
 =================
