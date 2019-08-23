@@ -340,7 +340,7 @@ class HybridImageSerializer(serializers.Serializer):
 
 drf-yasg fix for BASE64 Fields:
 ----------------
-The [drf-yasg](https://github.com/axnsan12/drf-yasg) project seems to generate wrong documentation on Base64ImageField or Base64FileField. It marks those fields as readonly. Here is the workaround code for correct the generated document. (More detail on issue #66)
+The [drf-yasg](https://github.com/axnsan12/drf-yasg) project seems to generate wrong documentation on Base64ImageField or Base64FileField. It marks those fields as readonly. Here is the workaround code for correct the generated document. (More detail on issue [#66](https://github.com/Hipo/drf-extra-fields/issues/66))
 
 ```python 
 from drf_yasg.inspectors import FieldInspector, SwaggerAutoSchema
