@@ -351,12 +351,20 @@ from drf_yasg.app_settings import swagger_settings
 class Base64FileFieldInspector(FieldInspector):
     BASE_64_FIELDS = ['Base64ImageField', 'Base64FileField', 'Base64FieldMixin']
 
+    def __classlookup(self, cls):
+        """List all base class of the given class"""
+        c = list(cls.__bases__)
+        for base in c:
+            c.extend(self.__classlookup(base))
+        return c
+
     def process_result(self, result, method_name, obj, **kwargs):
-        if isinstance(result, openapi.Schema.OR_REF) and \
-                obj.__class__.__name__ in Base64FileFieldInspector.BASE_64_FIELDS:
-            schema = openapi.resolve_ref(result, self.components)
-            schema.pop('readOnly', None)
-            schema.pop('format', None)  # Remove $url format from string
+        if isinstance(result, openapi.Schema.OR_REF):
+            base_classes = [x.__name__ for x in self.__classlookup(obj.__class__)]
+            if any(item in Base64FileFieldInspector.BASE_64_FIELDS for item in base_classes):
+                schema = openapi.resolve_ref(result, self.components)
+                schema.pop('readOnly', None)
+                schema.pop('format', None)  # Remove $url format from string
 
         return result
 
