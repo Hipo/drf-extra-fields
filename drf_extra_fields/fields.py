@@ -4,7 +4,7 @@ import base64
 import binascii
 import uuid
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, FieldDoesNotExist
 from django.core.files.base import ContentFile
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
