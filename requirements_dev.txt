@@ -1,6 +1,6 @@
 django
 djangorestframework>=3.0
-Pillow == 5.4.1
+Pillow == 6.2.0
 pytest-django
 pytest-cov
 psycopg2-binary
