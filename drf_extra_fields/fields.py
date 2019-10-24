@@ -211,6 +211,14 @@ class RangeField(DictField):
                 'upper': upper,
                 'bounds': value._bounds}
 
+    def run_validators(self, value):
+        try:
+            model_field = self.parent.Meta.model._meta.get_field(self.field_name)
+            self.validators += model_field.validators
+            super(RangeField, self).run_validators(value)
+        except FieldDoesNotExist:
+            super(RangeField, self).run_validators(value)
+
 
 class IntegerRangeField(RangeField):
     child = IntegerField()
