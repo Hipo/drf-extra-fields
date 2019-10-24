@@ -10,3 +10,5 @@ dist/
 .cache/
 venv/
 .vscode/
+.coverage
+coverage.xml
