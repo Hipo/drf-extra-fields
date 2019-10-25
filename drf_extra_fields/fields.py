@@ -178,6 +178,7 @@ class RangeField(DictField):
         """
         Range instances <- Dicts of primitive datatypes.
         """
+        initial_data = copy.deepcopy(self.parent.initial_data)
         if html.is_html_input(data):
             data = html.parse_html_dict(data)
         if not isinstance(data, dict):
@@ -197,6 +198,8 @@ class RangeField(DictField):
             validated_dict[six.text_type(key)] = value
         if data:
             self.fail('too_much_content', extra=', '.join(map(str, data.keys())))
+
+        self.parent.initial_data = initial_data
         return self.range_type(**validated_dict)
 
     def to_representation(self, value):
