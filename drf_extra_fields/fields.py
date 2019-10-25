@@ -3,6 +3,7 @@ import io
 import base64
 import binascii
 import uuid
+import copy
 
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
