@@ -3,7 +3,6 @@ import io
 import base64
 import binascii
 import uuid
-import copy
 
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
@@ -179,30 +178,32 @@ class RangeField(DictField):
         """
         Range instances <- Dicts of primitive datatypes.
         """
-        initial_data = copy.deepcopy(data)
-
         if html.is_html_input(data):
             data = html.parse_html_dict(data)
+
         if not isinstance(data, dict):
             self.fail('not_a_dict', input_type=type(data).__name__)
+
+        extra_content = list(set(data) - set(["lower", "upper", "bounds", "empty"]))
+        if extra_content:
+            self.fail('too_much_content', extra=', '.join(map(str, extra_content)))
+
         validated_dict = {}
         for key in ('lower', 'upper'):
             try:
-                value = data.pop(key)
+                value = data[key]
             except KeyError:
                 continue
+
             validated_dict[six.text_type(key)] = self.child.run_validation(value)
+
         for key in ('bounds', 'empty'):
             try:
-                value = data.pop(key)
+                value = data[key]
             except KeyError:
                 continue
-            validated_dict[six.text_type(key)] = value
-        if data:
-            self.fail('too_much_content', extra=', '.join(map(str, data.keys())))
 
-        for key, value in initial_data.items():
-            data[key] = value
+            validated_dict[six.text_type(key)] = value
 
         return self.range_type(**validated_dict)
 
