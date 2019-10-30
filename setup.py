@@ -9,13 +9,13 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='django-extra-fields',
-    version='1.2.4',
+    version='2.0.0',
     packages=['drf_extra_fields',
               'drf_extra_fields.runtests'],
     include_package_data=True,
     install_requires=['Django >= 1.4', 'djangorestframework >= 3.0.1'],
     extras_require={
-        "Base64ImageField": ["Pillow == 5.4.1"],
+        "Base64ImageField": ["Pillow == 6.2.1"],
     },
     license='Apache-2.0',
     description='Additional fields for Django Rest Framework.',
@@ -24,7 +24,7 @@ setup(
     author='hipo',
     author_email='pypi@hipolabs.com',
     url='https://github.com/Hipo/drf-extra-fields',
-    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',

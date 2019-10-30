@@ -7,7 +7,6 @@ RUN apt-get update && apt-get install -y software-properties-common python-softw
 RUN add-apt-repository ppa:deadsnakes/ppa
 
 RUN apt-get update && apt-get install -y \
-	python3.4 \
 	python3.5 \
 	python3.6 \
 	python3.7 \
