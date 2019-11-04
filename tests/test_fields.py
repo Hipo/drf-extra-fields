@@ -20,6 +20,7 @@ from drf_extra_fields.fields import (
     FloatRangeField,
     HybridImageField,
     IntegerRangeField,
+    LowercaseEmailField,
 )
 
 
@@ -604,3 +605,17 @@ class TestDateRangeField(FieldValues):
             "The `source` argument is not meaningful when applied to a `child=` field. "
             "Remove `source=` from the field declaration."
         )
+
+
+class EmailSerializer(serializers.Serializer):
+    email = LowercaseEmailField()
+
+
+class LowercaseEmailFieldTest(TestCase):
+
+    def test_serialization(self):
+        email = 'ALL_CAPS@example.com'
+        serializer = EmailSerializer(data={'email': email})
+        serializer.is_valid()
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['email'], email.lower())
