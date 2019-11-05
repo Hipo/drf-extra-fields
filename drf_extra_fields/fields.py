@@ -170,9 +170,35 @@ class RangeField(DictField):
     range_type = None
 
     default_error_messages = {
-        'not_a_dict': _('Expected a dictionary of items but got type "{input_type}".'),
-        'too_much_content': _('Extra content not allowed "{extra}".'),
+        'not_a_dict': _(
+            'Expected a dictionary of items but got type "{input_type}".'),
+        'too_much_content': _(
+            'Extra content not allowed "{extra}".'),
+        'bound_ordering': _(
+            'The start of the range must not exceed the end of the range.'),
     }
+    _schema_fields = (
+        'lower', 'upper', 'bounds', 'empty'
+    )
+
+    def _validate_schema_fields(self, data):
+        validated_dict = {}
+        validation_mapping = {
+            'lower': lambda x: self.child.run_validation(x),
+            'upper': lambda x: self.child.run_validation(x),
+            'bounds': lambda x: x,
+            'empty': lambda x: x,
+        }
+
+        for key in self._schema_fields:
+            try:
+                value = data[key]
+            except KeyError:
+                continue
+
+            validated_dict[six.text_type(key)] = validation_mapping[key](value)
+
+        return validated_dict
 
     def to_internal_value(self, data):
         """
@@ -180,24 +206,23 @@ class RangeField(DictField):
         """
         if html.is_html_input(data):
             data = html.parse_html_dict(data)
+
         if not isinstance(data, dict):
             self.fail('not_a_dict', input_type=type(data).__name__)
-        validated_dict = {}
-        for key in ('lower', 'upper'):
-            try:
-                value = data.pop(key)
-            except KeyError:
-                continue
-            validated_dict[six.text_type(key)] = self.child.run_validation(value)
-        for key in ('bounds', 'empty'):
-            try:
-                value = data.pop(key)
-            except KeyError:
-                continue
-            validated_dict[six.text_type(key)] = value
-        if data:
-            self.fail('too_much_content', extra=', '.join(map(str, data.keys())))
-        return self.range_type(**validated_dict)
+
+        validated_data = self._validate_schema_fields(data)
+        lower, upper = validated_data.get('lower'), validated_data.get('upper')
+
+        if set(data.keys()) - set(self._schema_fields):
+            self.fail(
+                'too_much_content',
+                extra=', '.join(map(str, data.keys()))
+            )
+
+        if lower is not None and upper is not None and lower > upper:
+            self.fail('bound_ordering')
+
+        return self.range_type(**validated_data)
 
     def to_representation(self, value):
         """

@@ -424,6 +424,8 @@ class TestIntegerRangeField(FieldValues):
             ({'lower': 'a'}, ['A valid integer is required.']),
             ('not a dict', ['Expected a dictionary of items but got type "str".']),
             ({'foo': 'bar'}, ['Extra content not allowed "foo".']),
+            ({'lower': 20, 'upper': 10},
+             ['The start of the range must not exceed the end of the range.']),
         ]
         outputs = [
             (compat.NumericRange(**{'lower': '1', 'upper': '2'}),
@@ -467,6 +469,8 @@ class TestFloatRangeField(FieldValues):
         invalid_inputs = [
             ({'lower': 'a'}, ['A valid number is required.']),
             ('not a dict', ['Expected a dictionary of items but got type "str".']),
+            ({'lower': 20.0, 'upper': 10.0},
+             ['The start of the range must not exceed the end of the range.']),
         ]
         outputs = [
             (compat.NumericRange(**{'lower': '1.1', 'upper': '2'}),
@@ -522,6 +526,13 @@ class TestDateTimeRangeField(TestCase, FieldValues):
                               ' formats instead: '
                               'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].']),
             ('not a dict', ['Expected a dictionary of items but got type "str".']),
+            (
+                {
+                    'lower': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=pytz.utc),
+                    'upper': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=pytz.utc),
+                },
+                ['The start of the range must not exceed the end of the range.'],
+            ),
         ]
         outputs = [
             (compat.DateTimeTZRange(
@@ -582,6 +593,11 @@ class TestDateRangeField(FieldValues):
                               ' formats instead: '
                               'YYYY-MM-DD.']),
             ('not a dict', ['Expected a dictionary of items but got type "str".']),
+            (
+                {'lower': datetime.date(2001, 2, 2),
+                 'upper': datetime.date(2001, 1, 1)},
+                ['The start of the range must not exceed the end of the range.']
+            ),
         ]
         outputs = [
             (compat.DateRange(
