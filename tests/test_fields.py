@@ -2,6 +2,7 @@ import datetime
 import base64
 import imghdr
 import os
+import copy
 
 import django
 from django.core.exceptions import ValidationError
@@ -372,6 +373,26 @@ def get_items(mapping_or_list_of_two_tuples):
     return mapping_or_list_of_two_tuples
 
 
+class IntegerRangeSerializer(serializers.Serializer):
+
+    range = IntegerRangeField()
+
+
+class FloatRangeSerializer(serializers.Serializer):
+
+    range = FloatRangeField()
+
+
+class DateTimeRangeSerializer(serializers.Serializer):
+
+    range = DateTimeRangeField()
+
+
+class DateRangeSerializer(serializers.Serializer):
+
+    range = DateRangeField()
+
+
 class FieldValues:
     """
     Base class for testing valid and invalid input values.
@@ -381,7 +402,13 @@ class FieldValues:
         Ensure that valid values return the expected validated data.
         """
         for input_value, expected_output in get_items(self.valid_inputs):
-            assert self.field.run_validation(input_value) == expected_output
+            initial_input_value = copy.deepcopy(input_value)
+
+            serializer = self.serializer_class(data=input_value)
+            serializer.is_valid()
+
+            assert serializer.initial_data == initial_input_value
+            assert self.field.run_validation(initial_input_value) == expected_output
 
     def test_invalid_inputs(self):
         """
@@ -406,6 +433,8 @@ class TestIntegerRangeField(FieldValues):
     """
     Values for `ListField` with CharField as child.
     """
+    serializer_class = IntegerRangeSerializer
+
     if compat.NumericRange is not None:
         valid_inputs = [
             ({'lower': '1', 'upper': 2, 'bounds': '[)'},
@@ -450,6 +479,8 @@ class TestFloatRangeField(FieldValues):
     """
     Values for `ListField` with CharField as child.
     """
+    serializer_class = FloatRangeSerializer
+
     if compat.NumericRange is not None:
         valid_inputs = [
             ({'lower': '1', 'upper': 2., 'bounds': '[)'},
@@ -494,6 +525,8 @@ class TestDateTimeRangeField(TestCase, FieldValues):
     """
     Values for `ListField` with CharField as child.
     """
+    serializer_class = DateTimeRangeSerializer
+
     if compat.DateTimeTZRange is not None:
         valid_inputs = [
             ({'lower': '2001-01-01T13:00:00Z',
@@ -554,6 +587,8 @@ class TestDateRangeField(FieldValues):
     """
     Values for `ListField` with CharField as child.
     """
+    serializer_class = DateRangeSerializer
+
     if compat.DateRange is not None:
         valid_inputs = [
             ({'lower': '2001-01-01',
