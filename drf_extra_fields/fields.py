@@ -13,6 +13,7 @@ from rest_framework.fields import (
     DateField,
     DateTimeField,
     DictField,
+    EmailField,
     FileField,
     FloatField,
     ImageField,
@@ -248,3 +249,17 @@ if postgres_fields is not None:
     ModelSerializer.serializer_field_mapping[postgres_fields.DateRangeField] = DateRangeField
     ModelSerializer.serializer_field_mapping[postgres_fields.IntegerRangeField] = IntegerRangeField
     ModelSerializer.serializer_field_mapping[postgres_fields.FloatRangeField] = FloatRangeField
+
+
+class LowercaseEmailField(EmailField):
+    """
+    An enhancement over django-rest-framework's EmailField to allow
+    case-insensitive serialization and deserialization of e-mail addresses.
+    """
+    def to_internal_value(self, data):
+        data = super(LowercaseEmailField, self).to_internal_value(data)
+        return data.lower()
+
+    def to_representation(self, value):
+        value = super(LowercaseEmailField, self).to_representation(value)
+        return value.lower()
