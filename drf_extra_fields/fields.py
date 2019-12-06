@@ -6,7 +6,6 @@ import uuid
 
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
-from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
 from rest_framework.fields import (
@@ -25,6 +24,8 @@ from .compat import (
     DateTimeTZRange,
     NumericRange,
     postgres_fields,
+    string_types,
+    text_type,
 )
 
 
@@ -55,7 +56,7 @@ class Base64FieldMixin(object):
         if base64_data in self.EMPTY_VALUES:
             return None
 
-        if isinstance(base64_data, six.string_types):
+        if isinstance(base64_data, string_types):
             # Strip base64 header.
             if ';base64,' in base64_data:
                 header, base64_data = base64_data.split(';base64,')
@@ -196,7 +197,7 @@ class RangeField(DictField):
             except KeyError:
                 continue
 
-            validated_dict[six.text_type(key)] = self.child.run_validation(value)
+            validated_dict[text_type(key)] = self.child.run_validation(value)
 
         for key in ('bounds', 'empty'):
             try:
@@ -204,7 +205,7 @@ class RangeField(DictField):
             except KeyError:
                 continue
 
-            validated_dict[six.text_type(key)] = value
+            validated_dict[text_type(key)] = value
 
         return self.range_type(**validated_dict)
 
