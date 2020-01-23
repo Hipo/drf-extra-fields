@@ -18,6 +18,7 @@ setup(
         "Base64ImageField": ["Pillow == 6.2.1"],
     },
     license='Apache-2.0',
+    license_files=['LICENSE'],
     description='Additional fields for Django Rest Framework.',
     long_description=README,
     long_description_content_type="text/markdown",
