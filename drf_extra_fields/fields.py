@@ -126,7 +126,11 @@ class Base64ImageField(Base64FieldMixin, ImageField):
         # Try with PIL as fallback if format not detected due
         # to bug in imghdr https://bugs.python.org/issue16512
         if extension is None:
-            image = Image.open(io.BytesIO(decoded_file))
+            try:
+                image = Image.open(io.BytesIO(decoded_file))
+            except (OSError, IOError):
+                raise ValidationError(self.INVALID_FILE_MESSAGE)
+
             extension = image.format.lower()
 
         extension = "jpg" if extension == "jpeg" else extension

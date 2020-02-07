@@ -107,16 +107,26 @@ class Base64ImageSerializerTests(TestCase):
         self.assertEqual(serializer.validated_data['created'], uploaded_image.created)
         self.assertFalse(serializer.validated_data is uploaded_image)
 
+    def test_create_with_invalid_base64(self):
+        """
+        Test for creating Base64 image with an invalid Base64 string in the server side
+        """
+        now = datetime.datetime.now()
+        file = 'this_is_not_a_base64'
+        serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
+
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors, {'file': [Base64ImageField.INVALID_FILE_MESSAGE]})
+
     def test_validation_error_with_non_file(self):
         """
         Passing non-base64 should raise a validation error.
         """
         now = datetime.datetime.now()
-        errmsg = "Please upload a valid image."
         serializer = UploadedBase64ImageSerializer(data={'created': now,
                                                          'file': 'abc'})
         self.assertFalse(serializer.is_valid())
-        self.assertEqual(serializer.errors, {'file': [errmsg]})
+        self.assertEqual(serializer.errors, {'file': [Base64ImageField.INVALID_FILE_MESSAGE]})
 
     def test_remove_with_empty_string(self):
         """
@@ -228,10 +238,9 @@ class Base64FileSerializerTests(TestCase):
         Passing non-base64 should raise a validation error.
         """
         now = datetime.datetime.now()
-        errmsg = "Please upload a valid file."
         serializer = UploadedBase64FileSerializer(data={'created': now, 'file': 'abc'})
         self.assertFalse(serializer.is_valid())
-        self.assertEqual(serializer.errors, {'file': [errmsg]})
+        self.assertEqual(serializer.errors, {'file': [Base64FileField.INVALID_FILE_MESSAGE]})
 
     def test_remove_with_empty_string(self):
         """
