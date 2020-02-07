@@ -339,6 +339,19 @@ class HybridImageSerializer(serializers.Serializer):
 ```
 
 
+## LowercaseEmailField
+An enhancement over django-rest-framework's EmailField to allow case-insensitive serialization and deserialization of e-mail addresses.
+
+```python
+from rest_framework import serializers
+from drf_extra_fields.fields import LowercaseEmailField
+
+
+class EmailSerializer(serializers.Serializer):
+    email = LowercaseEmailField()
+
+```
+
 CONTRIBUTION
 =================
 

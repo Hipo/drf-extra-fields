@@ -6,13 +6,13 @@ import uuid
 
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
-from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 
 from rest_framework.fields import (
     DateField,
     DateTimeField,
     DictField,
+    EmailField,
     FileField,
     FloatField,
     ImageField,
@@ -24,6 +24,8 @@ from .compat import (
     DateTimeTZRange,
     NumericRange,
     postgres_fields,
+    string_types,
+    text_type,
 )
 
 
@@ -54,7 +56,7 @@ class Base64FieldMixin(object):
         if base64_data in self.EMPTY_VALUES:
             return None
 
-        if isinstance(base64_data, six.string_types):
+        if isinstance(base64_data, string_types):
             # Strip base64 header.
             if ';base64,' in base64_data:
                 header, base64_data = base64_data.split(';base64,')
@@ -184,23 +186,31 @@ class RangeField(DictField):
         """
         if html.is_html_input(data):
             data = html.parse_html_dict(data)
+
         if not isinstance(data, dict):
             self.fail('not_a_dict', input_type=type(data).__name__)
+
+        extra_content = list(set(data) - set(["lower", "upper", "bounds", "empty"]))
+        if extra_content:
+            self.fail('too_much_content', extra=', '.join(map(str, extra_content)))
+
         validated_dict = {}
         for key in ('lower', 'upper'):
             try:
-                value = data.pop(key)
+                value = data[key]
             except KeyError:
                 continue
-            validated_dict[six.text_type(key)] = self.child.run_validation(value)
+
+            validated_dict[text_type(key)] = self.child.run_validation(value)
+
         for key in ('bounds', 'empty'):
             try:
-                value = data.pop(key)
+                value = data[key]
             except KeyError:
                 continue
-            validated_dict[six.text_type(key)] = value
-        if data:
-            self.fail('too_much_content', extra=', '.join(map(str, data.keys())))
+
+            validated_dict[text_type(key)] = value
+
         return self.range_type(**validated_dict)
 
     def to_representation(self, value):
@@ -244,3 +254,17 @@ if postgres_fields is not None:
     ModelSerializer.serializer_field_mapping[postgres_fields.DateRangeField] = DateRangeField
     ModelSerializer.serializer_field_mapping[postgres_fields.IntegerRangeField] = IntegerRangeField
     ModelSerializer.serializer_field_mapping[postgres_fields.FloatRangeField] = FloatRangeField
+
+
+class LowercaseEmailField(EmailField):
+    """
+    An enhancement over django-rest-framework's EmailField to allow
+    case-insensitive serialization and deserialization of e-mail addresses.
+    """
+    def to_internal_value(self, data):
+        data = super(LowercaseEmailField, self).to_internal_value(data)
+        return data.lower()
+
+    def to_representation(self, value):
+        value = super(LowercaseEmailField, self).to_representation(value)
+        return value.lower()
