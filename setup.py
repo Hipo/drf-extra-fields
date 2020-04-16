@@ -15,7 +15,7 @@ setup(
     include_package_data=True,
     install_requires=['Django >= 1.4', 'djangorestframework >= 3.0.1'],
     extras_require={
-        "Base64ImageField": ["Pillow == 6.2.1"],
+        "Base64ImageField": ["Pillow >= 6.2.1"],
     },
     license='Apache-2.0',
     license_files=['LICENSE'],
