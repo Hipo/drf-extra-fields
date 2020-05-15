@@ -12,9 +12,9 @@ RUN apt-get update && apt-get install -y \
 	python3.7 \
 	python3.8 \
 	gdal-bin \
-	python-pip
+	python3-pip
 
 WORKDIR /app
 
-RUN pip install --upgrade pip
-RUN pip install tox
+RUN pip3 install --upgrade pip
+RUN pip3 install tox
