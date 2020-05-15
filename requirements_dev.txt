@@ -1,5 +1,5 @@
-django
-djangorestframework>=3.0
+Django >= 2.2
+djangorestframework>=3.9.2
 Pillow >= 6.2.1
 pytest-django
 pytest-cov
