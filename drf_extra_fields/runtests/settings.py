@@ -1,5 +1,4 @@
 import os
-import django
 
 # Django settings for testproject project.
 

@@ -7,7 +7,7 @@ import uuid
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
-from psycopg2._range import NumericRange, DateTimeTZRange, DateRange
+from psycopg2.extras import DateRange, DateTimeTZRange, NumericRange
 from rest_framework.fields import (
     DateField,
     DateTimeField,
