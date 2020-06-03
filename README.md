@@ -101,7 +101,8 @@ Point field for GeoDjango
     }
  - It takes the optional parameter `str_points` (False by default), if set to True it serializes the longitude/latitude
  values as strings
-    
+ - It takes the optional parameter `srid` (None by default), if set the Point created object will have its srid attribute set to the same value.
+
 **Example:**
 
 ```python
