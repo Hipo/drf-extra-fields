@@ -11,6 +11,7 @@ from psycopg2.extras import DateRange, DateTimeTZRange, NumericRange
 from rest_framework.fields import (
     DateField,
     DateTimeField,
+    DecimalField,
     DictField,
     EmailField,
     FileField,
@@ -223,8 +224,14 @@ class IntegerRangeField(RangeField):
     range_type = NumericRange
 
 
+# Deprecated - remove?
 class FloatRangeField(RangeField):
     child = FloatField()
+    range_type = NumericRange
+
+
+class DecimalRangeField(RangeField):
+    child = DecimalField(max_digits=5, decimal_places=2)
     range_type = NumericRange
 
 
@@ -243,7 +250,11 @@ class DateRangeField(RangeField):
 ModelSerializer.serializer_field_mapping[DateTimeRangeField] = DateTimeRangeField
 ModelSerializer.serializer_field_mapping[DateRangeField] = DateRangeField
 ModelSerializer.serializer_field_mapping[IntegerRangeField] = IntegerRangeField
-ModelSerializer.serializer_field_mapping[FloatRangeField] = FloatRangeField
+try:
+    compat_DecimalRangeField = DecimalRangeField
+except AttributeError:
+    compat_DecimalRangeField = FloatRangeField
+ModelSerializer.serializer_field_mapping[compat_DecimalRangeField] = DecimalRangeField
 
 
 class LowercaseEmailField(EmailField):
