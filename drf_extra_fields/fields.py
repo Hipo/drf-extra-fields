@@ -1,13 +1,13 @@
-import imghdr
-import io
 import base64
 import binascii
+import imghdr
+import io
 import uuid
 
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
-
+from psycopg2.extras import DateRange, DateTimeTZRange, NumericRange
 from rest_framework.fields import (
     DateField,
     DateTimeField,
@@ -18,16 +18,8 @@ from rest_framework.fields import (
     ImageField,
     IntegerField,
 )
+from rest_framework.serializers import ModelSerializer
 from rest_framework.utils import html
-from .compat import (
-    DateRange,
-    DateTimeTZRange,
-    NumericRange,
-    postgres_fields,
-    string_types,
-    text_type,
-)
-
 
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
@@ -56,7 +48,7 @@ class Base64FieldMixin(object):
         if base64_data in self.EMPTY_VALUES:
             return None
 
-        if isinstance(base64_data, string_types):
+        if isinstance(base64_data, str):
             # Strip base64 header.
             if ';base64,' in base64_data:
                 header, base64_data = base64_data.split(';base64,')
@@ -201,7 +193,7 @@ class RangeField(DictField):
             except KeyError:
                 continue
 
-            validated_dict[text_type(key)] = self.child.run_validation(value)
+            validated_dict[str(key)] = self.child.run_validation(value)
 
         for key in ('bounds', 'empty'):
             try:
@@ -209,7 +201,7 @@ class RangeField(DictField):
             except KeyError:
                 continue
 
-            validated_dict[text_type(key)] = value
+            validated_dict[str(key)] = value
 
         return self.range_type(**validated_dict)
 
@@ -246,14 +238,12 @@ class DateRangeField(RangeField):
     range_type = DateRange
 
 
-if postgres_fields is not None:
-    # monkey patch modelserializer to map Native django Range fields to
-    # drf_extra_fiels's Range fields.
-    from rest_framework.serializers import ModelSerializer
-    ModelSerializer.serializer_field_mapping[postgres_fields.DateTimeRangeField] = DateTimeRangeField
-    ModelSerializer.serializer_field_mapping[postgres_fields.DateRangeField] = DateRangeField
-    ModelSerializer.serializer_field_mapping[postgres_fields.IntegerRangeField] = IntegerRangeField
-    ModelSerializer.serializer_field_mapping[postgres_fields.FloatRangeField] = FloatRangeField
+# monkey patch modelserializer to map Native django Range fields to
+# drf_extra_fiels's Range fields.
+ModelSerializer.serializer_field_mapping[DateTimeRangeField] = DateTimeRangeField
+ModelSerializer.serializer_field_mapping[DateRangeField] = DateRangeField
+ModelSerializer.serializer_field_mapping[IntegerRangeField] = IntegerRangeField
+ModelSerializer.serializer_field_mapping[FloatRangeField] = FloatRangeField
 
 
 class LowercaseEmailField(EmailField):

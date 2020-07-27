@@ -1,5 +1,4 @@
 import os
-import django
 
 # Django settings for testproject project.
 
@@ -120,9 +119,6 @@ PASSWORD_HASHERS = (
 )
 
 AUTH_USER_MODEL = 'auth.User'
-
-if django.VERSION < (1, 3):
-    INSTALLED_APPS += ('staticfiles',)
 
 # If we're running on the Jenkins server we want to archive the coverage reports as XML.
 if os.environ.get('HUDSON_URL', None):

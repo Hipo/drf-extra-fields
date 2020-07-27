@@ -5,7 +5,6 @@ from django.utils.encoding import smart_str
 from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
-from .compat import string_types
 
 EMPTY_VALUES = (None, '', [], (), {})
 
@@ -38,7 +37,7 @@ class PointField(serializers.Field):
         if value in EMPTY_VALUES and not self.required:
             return None
 
-        if isinstance(value, string_types):
+        if isinstance(value, str):
             try:
                 value = value.replace("'", '"')
                 value = json.loads(value)

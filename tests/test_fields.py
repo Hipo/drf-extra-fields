@@ -1,18 +1,17 @@
-import datetime
 import base64
+import copy
+import datetime
 import imghdr
 import os
-import copy
 
-import django
+import pytest
+import pytz
 from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 from mock import patch
-import pytz
+from psycopg2._range import NumericRange, DateTimeTZRange, DateRange
 from rest_framework import serializers
 
-from drf_extra_fields import compat
-from drf_extra_fields.geo_fields import PointField
 from drf_extra_fields.fields import (
     Base64ImageField,
     Base64FileField,
@@ -23,9 +22,7 @@ from drf_extra_fields.fields import (
     IntegerRangeField,
     LowercaseEmailField,
 )
-
-
-import pytest
+from drf_extra_fields.geo_fields import PointField
 
 UNDETECTABLE_BY_IMGHDR_SAMPLE = """data:image/jpeg;base64,
 /9j/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD
@@ -291,7 +288,6 @@ class StringPointSerializer(PointSerializer):
 
 
 class PointSerializerTest(TestCase):
-
     def test_create(self):
         """
         Test for creating Point field in the server side
@@ -436,40 +432,36 @@ class FieldValues:
 # end of backport
 
 
-@pytest.mark.skipif(django.VERSION < (1, 8) or compat.postgres_fields is None,
-                    reason='RangeField is only available for django1.8+'
-                    ' and with psycopg2.')
 class TestIntegerRangeField(FieldValues):
     """
     Values for `ListField` with CharField as child.
     """
     serializer_class = IntegerRangeSerializer
 
-    if compat.NumericRange is not None:
-        valid_inputs = [
-            ({'lower': '1', 'upper': 2, 'bounds': '[)'},
-             compat.NumericRange(**{'lower': 1, 'upper': 2, 'bounds': '[)'})),
-            ({'lower': 1, 'upper': 2},
-             compat.NumericRange(**{'lower': 1, 'upper': 2})),
-            ({'lower': 1},
-             compat.NumericRange(**{'lower': 1})),
-            ({'upper': 1},
-             compat.NumericRange(**{'upper': 1})),
-            ({'empty': True},
-             compat.NumericRange(**{'empty': True})),
-            ({}, compat.NumericRange()),
-        ]
-        invalid_inputs = [
-            ({'lower': 'a'}, ['A valid integer is required.']),
-            ('not a dict', ['Expected a dictionary of items but got type "str".']),
-            ({'foo': 'bar'}, ['Extra content not allowed "foo".']),
-        ]
-        outputs = [
-            (compat.NumericRange(**{'lower': '1', 'upper': '2'}),
-             {'lower': 1, 'upper': 2, 'bounds': '[)'}),
-            (compat.NumericRange(**{'empty': True}), {'empty': True}),
-            (compat.NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
-        ]
+    valid_inputs = [
+        ({'lower': '1', 'upper': 2, 'bounds': '[)'},
+         NumericRange(**{'lower': 1, 'upper': 2, 'bounds': '[)'})),
+        ({'lower': 1, 'upper': 2},
+         NumericRange(**{'lower': 1, 'upper': 2})),
+        ({'lower': 1},
+         NumericRange(**{'lower': 1})),
+        ({'upper': 1},
+         NumericRange(**{'upper': 1})),
+        ({'empty': True},
+         NumericRange(**{'empty': True})),
+        ({}, NumericRange()),
+    ]
+    invalid_inputs = [
+        ({'lower': 'a'}, ['A valid integer is required.']),
+        ('not a dict', ['Expected a dictionary of items but got type "str".']),
+        ({'foo': 'bar'}, ['Extra content not allowed "foo".']),
+    ]
+    outputs = [
+        (NumericRange(**{'lower': '1', 'upper': '2'}),
+         {'lower': 1, 'upper': 2, 'bounds': '[)'}),
+        (NumericRange(**{'empty': True}), {'empty': True}),
+        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+    ]
     field = IntegerRangeField()
 
     def test_no_source_on_child(self):
@@ -482,39 +474,35 @@ class TestIntegerRangeField(FieldValues):
         )
 
 
-@pytest.mark.skipif(django.VERSION < (1, 8) or compat.postgres_fields is None,
-                    reason='RangeField is only available for django1.8+'
-                    ' and with psycopg2.')
 class TestFloatRangeField(FieldValues):
     """
     Values for `ListField` with CharField as child.
     """
     serializer_class = FloatRangeSerializer
 
-    if compat.NumericRange is not None:
-        valid_inputs = [
-            ({'lower': '1', 'upper': 2., 'bounds': '[)'},
-             compat.NumericRange(**{'lower': 1., 'upper': 2., 'bounds': '[)'})),
-            ({'lower': 1., 'upper': 2.},
-             compat.NumericRange(**{'lower': 1, 'upper': 2})),
-            ({'lower': 1},
-             compat.NumericRange(**{'lower': 1})),
-            ({'upper': 1},
-             compat.NumericRange(**{'upper': 1})),
-            ({'empty': True},
-             compat.NumericRange(**{'empty': True})),
-            ({}, compat.NumericRange()),
-        ]
-        invalid_inputs = [
-            ({'lower': 'a'}, ['A valid number is required.']),
-            ('not a dict', ['Expected a dictionary of items but got type "str".']),
-        ]
-        outputs = [
-            (compat.NumericRange(**{'lower': '1.1', 'upper': '2'}),
-             {'lower': 1.1, 'upper': 2, 'bounds': '[)'}),
-            (compat.NumericRange(**{'empty': True}), {'empty': True}),
-            (compat.NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
-        ]
+    valid_inputs = [
+        ({'lower': '1', 'upper': 2., 'bounds': '[)'},
+         NumericRange(**{'lower': 1., 'upper': 2., 'bounds': '[)'})),
+        ({'lower': 1., 'upper': 2.},
+         NumericRange(**{'lower': 1, 'upper': 2})),
+        ({'lower': 1},
+         NumericRange(**{'lower': 1})),
+        ({'upper': 1},
+         NumericRange(**{'upper': 1})),
+        ({'empty': True},
+         NumericRange(**{'empty': True})),
+        ({}, NumericRange()),
+    ]
+    invalid_inputs = [
+        ({'lower': 'a'}, ['A valid number is required.']),
+        ('not a dict', ['Expected a dictionary of items but got type "str".']),
+    ]
+    outputs = [
+        (NumericRange(**{'lower': '1.1', 'upper': '2'}),
+         {'lower': 1.1, 'upper': 2, 'bounds': '[)'}),
+        (NumericRange(**{'empty': True}), {'empty': True}),
+        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+    ]
     field = FloatRangeField()
 
     def test_no_source_on_child(self):
@@ -527,9 +515,6 @@ class TestFloatRangeField(FieldValues):
         )
 
 
-@pytest.mark.skipif(django.VERSION < (1, 8) or compat.postgres_fields is None,
-                    reason='RangeField is only available for django1.8+'
-                    ' and with psycopg2.')
 @override_settings(USE_TZ=True)
 class TestDateTimeRangeField(TestCase, FieldValues):
     """
@@ -537,47 +522,46 @@ class TestDateTimeRangeField(TestCase, FieldValues):
     """
     serializer_class = DateTimeRangeSerializer
 
-    if compat.DateTimeTZRange is not None:
-        valid_inputs = [
-            ({'lower': '2001-01-01T13:00:00Z',
-              'upper': '2001-02-02T13:00:00Z',
-              'bounds': '[)'},
-             compat.DateTimeTZRange(
-                 **{'lower': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=pytz.utc),
-                    'upper': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=pytz.utc),
-                    'bounds': '[)'})),
-            ({'upper': '2001-02-02T13:00:00Z',
-              'bounds': '[)'},
-             compat.DateTimeTZRange(
-                 **{'upper': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=pytz.utc),
-                    'bounds': '[)'})),
-            ({'lower': '2001-01-01T13:00:00Z',
-              'bounds': '[)'},
-             compat.DateTimeTZRange(
-                 **{'lower': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=pytz.utc),
-                    'bounds': '[)'})),
-            ({'empty': True},
-             compat.DateTimeTZRange(**{'empty': True})),
-            ({}, compat.DateTimeTZRange()),
-        ]
-        invalid_inputs = [
-            ({'lower': 'a'}, ['Datetime has wrong format. Use one of these'
-                              ' formats instead: '
-                              'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].']),
-            ('not a dict', ['Expected a dictionary of items but got type "str".']),
-        ]
-        outputs = [
-            (compat.DateTimeTZRange(
-                **{'lower': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=pytz.utc),
-                   'upper': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=pytz.utc)}),
-                {'lower': '2001-01-01T13:00:00Z',
-                 'upper': '2001-02-02T13:00:00Z',
-                 'bounds': '[)'}),
-            (compat.DateTimeTZRange(**{'empty': True}),
-             {'empty': True}),
-            (compat.DateTimeTZRange(),
-             {'bounds': '[)', 'lower': None, 'upper': None}),
-        ]
+    valid_inputs = [
+        ({'lower': '2001-01-01T13:00:00Z',
+          'upper': '2001-02-02T13:00:00Z',
+          'bounds': '[)'},
+         DateTimeTZRange(
+             **{'lower': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=pytz.utc),
+                'upper': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=pytz.utc),
+                'bounds': '[)'})),
+        ({'upper': '2001-02-02T13:00:00Z',
+          'bounds': '[)'},
+         DateTimeTZRange(
+             **{'upper': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=pytz.utc),
+                'bounds': '[)'})),
+        ({'lower': '2001-01-01T13:00:00Z',
+          'bounds': '[)'},
+         DateTimeTZRange(
+             **{'lower': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=pytz.utc),
+                'bounds': '[)'})),
+        ({'empty': True},
+         DateTimeTZRange(**{'empty': True})),
+        ({}, DateTimeTZRange()),
+    ]
+    invalid_inputs = [
+        ({'lower': 'a'}, ['Datetime has wrong format. Use one of these'
+                          ' formats instead: '
+                          'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].']),
+        ('not a dict', ['Expected a dictionary of items but got type "str".']),
+    ]
+    outputs = [
+        (DateTimeTZRange(
+            **{'lower': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=pytz.utc),
+               'upper': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=pytz.utc)}),
+            {'lower': '2001-01-01T13:00:00Z',
+             'upper': '2001-02-02T13:00:00Z',
+             'bounds': '[)'}),
+        (DateTimeTZRange(**{'empty': True}),
+         {'empty': True}),
+        (DateTimeTZRange(),
+         {'bounds': '[)', 'lower': None, 'upper': None}),
+    ]
     field = DateTimeRangeField()
 
     def test_no_source_on_child(self):
@@ -590,55 +574,51 @@ class TestDateTimeRangeField(TestCase, FieldValues):
         )
 
 
-@pytest.mark.skipif(django.VERSION < (1, 8) or compat.postgres_fields is None,
-                    reason='RangeField is only available for django1.8+'
-                    ' and with psycopg2.')
 class TestDateRangeField(FieldValues):
     """
     Values for `ListField` with CharField as child.
     """
     serializer_class = DateRangeSerializer
 
-    if compat.DateRange is not None:
-        valid_inputs = [
-            ({'lower': '2001-01-01',
-              'upper': '2001-02-02',
-              'bounds': '[)'},
-             compat.DateRange(
-                 **{'lower': datetime.date(2001, 1, 1),
-                    'upper': datetime.date(2001, 2, 2),
-                    'bounds': '[)'})),
-            ({'upper': '2001-02-02',
-              'bounds': '[)'},
-             compat.DateRange(
-                 **{'upper': datetime.date(2001, 2, 2),
-                    'bounds': '[)'})),
-            ({'lower': '2001-01-01',
-              'bounds': '[)'},
-             compat.DateRange(
-                 **{'lower': datetime.date(2001, 1, 1),
-                    'bounds': '[)'})),
-            ({'empty': True},
-             compat.DateRange(**{'empty': True})),
-            ({}, compat.DateRange()),
-        ]
-        invalid_inputs = [
-            ({'lower': 'a'}, ['Date has wrong format. Use one of these'
-                              ' formats instead: '
-                              'YYYY-MM-DD.']),
-            ('not a dict', ['Expected a dictionary of items but got type "str".']),
-        ]
-        outputs = [
-            (compat.DateRange(
-                **{'lower': datetime.date(2001, 1, 1),
-                   'upper': datetime.date(2001, 2, 2)}),
-                {'lower': '2001-01-01',
-                 'upper': '2001-02-02',
-                 'bounds': '[)'}),
-            (compat.DateRange(**{'empty': True}),
-             {'empty': True}),
-            (compat.DateRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
-        ]
+    valid_inputs = [
+        ({'lower': '2001-01-01',
+          'upper': '2001-02-02',
+          'bounds': '[)'},
+         DateRange(
+             **{'lower': datetime.date(2001, 1, 1),
+                'upper': datetime.date(2001, 2, 2),
+                'bounds': '[)'})),
+        ({'upper': '2001-02-02',
+          'bounds': '[)'},
+         DateRange(
+             **{'upper': datetime.date(2001, 2, 2),
+                'bounds': '[)'})),
+        ({'lower': '2001-01-01',
+          'bounds': '[)'},
+         DateRange(
+             **{'lower': datetime.date(2001, 1, 1),
+                'bounds': '[)'})),
+        ({'empty': True},
+         DateRange(**{'empty': True})),
+        ({}, DateRange()),
+    ]
+    invalid_inputs = [
+        ({'lower': 'a'}, ['Date has wrong format. Use one of these'
+                          ' formats instead: '
+                          'YYYY-MM-DD.']),
+        ('not a dict', ['Expected a dictionary of items but got type "str".']),
+    ]
+    outputs = [
+        (DateRange(
+            **{'lower': datetime.date(2001, 1, 1),
+               'upper': datetime.date(2001, 2, 2)}),
+            {'lower': '2001-01-01',
+             'upper': '2001-02-02',
+             'bounds': '[)'}),
+        (DateRange(**{'empty': True}),
+         {'empty': True}),
+        (DateRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+    ]
     field = DateRangeField()
 
     def test_no_source_on_child(self):
