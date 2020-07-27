@@ -287,6 +287,10 @@ class StringPointSerializer(PointSerializer):
     point = PointField(required=False, str_points=True)
 
 
+class SridPointSerializer(PointSerializer):
+    point = PointField(required=False, srid=4326)
+
+
 class PointSerializerTest(TestCase):
     def test_create(self):
         """
@@ -302,6 +306,7 @@ class PointSerializerTest(TestCase):
         self.assertTrue(serializer.is_valid())
         self.assertEqual(serializer.validated_data['created'], saved_point.created)
         self.assertFalse(serializer.validated_data is saved_point)
+        self.assertIsNone(serializer.validated_data['point'].srid)
 
     def test_validation_error_with_non_file(self):
         """
@@ -367,6 +372,19 @@ class PointSerializerTest(TestCase):
         saved_point = SavePoint(point=point, created=now)
         serializer = StringPointSerializer(saved_point)
         self.assertEqual(serializer.data['point'], {'latitude': '49.8782482189', 'longitude': '24.452545489'})
+
+    def test_srid_point(self):
+        """
+        PointField with srid should should result in a Point object with srid set
+        """
+        now = datetime.datetime.now()
+        point = {
+            "latitude": 49.8782482189424,
+            "longitude": 24.452545489
+        }
+        serializer = SridPointSerializer(data={'created': now, 'point': point})
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['point'].srid, 4326)
 
 
 # Backported from django_rest_framework/tests/test_fields.py
