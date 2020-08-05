@@ -79,7 +79,5 @@ class TestRegularFieldMappings(TestCase):
                 datetime_range_field = DateTimeRangeField()
                 integer_range_field = IntegerRangeField()
         """)
-        print(repr(TestSerializer()))
-        print(expected)
 
         self.assertEqual(repr(TestSerializer()), expected)
