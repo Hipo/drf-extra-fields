@@ -21,6 +21,7 @@ from drf_extra_fields.fields import (
     HybridImageField,
     IntegerRangeField,
     LowercaseEmailField,
+    DecimalRangeField,
 )
 from drf_extra_fields.geo_fields import PointField
 
@@ -417,6 +418,16 @@ class DateRangeSerializer(serializers.Serializer):
     range = DateRangeField()
 
 
+class DecimalRangeSerializer(serializers.Serializer):
+
+    range = DecimalRangeField()
+
+
+class DecimalRangeSerializerWithChildAttribute(serializers.Serializer):
+
+    range = DecimalRangeField(child_attrs={"max_digits": 5, "decimal_places": 2})
+
+
 class FieldValues:
     """
     Base class for testing valid and invalid input values.
@@ -481,6 +492,84 @@ class TestIntegerRangeField(FieldValues):
         (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
     ]
     field = IntegerRangeField()
+
+    def test_no_source_on_child(self):
+        with pytest.raises(AssertionError) as exc_info:
+            IntegerRangeField(child=serializers.IntegerField(source='other'))
+
+        assert str(exc_info.value) == (
+            "The `source` argument is not meaningful when applied to a `child=` field. "
+            "Remove `source=` from the field declaration."
+        )
+
+
+class TestDecimalRangeField(FieldValues):
+    serializer_class = DecimalRangeSerializer
+
+    valid_inputs = [
+        ({'lower': '1', 'upper': 2., 'bounds': '[)'},
+         NumericRange(**{'lower': 1., 'upper': 2., 'bounds': '[)'})),
+        ({'lower': 1., 'upper': 2.},
+         NumericRange(**{'lower': 1, 'upper': 2})),
+        ({'lower': 1},
+         NumericRange(**{'lower': 1})),
+        ({'upper': 1},
+         NumericRange(**{'upper': 1})),
+        ({'empty': True},
+         NumericRange(**{'empty': True})),
+        ({}, NumericRange()),
+    ]
+    invalid_inputs = [
+        ({'lower': 'a'}, ['A valid number is required.']),
+        ('not a dict', ['Expected a dictionary of items but got type "str".']),
+    ]
+    outputs = [
+        (NumericRange(**{'lower': '1.1', 'upper': '2'}),
+         {'lower': '1.1', 'upper': '2', 'bounds': '[)'}),
+        (NumericRange(**{'empty': True}), {'empty': True}),
+        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+    ]
+    field = DecimalRangeField()
+
+    def test_no_source_on_child(self):
+        with pytest.raises(AssertionError) as exc_info:
+            IntegerRangeField(child=serializers.IntegerField(source='other'))
+
+        assert str(exc_info.value) == (
+            "The `source` argument is not meaningful when applied to a `child=` field. "
+            "Remove `source=` from the field declaration."
+        )
+
+
+class TestDecimalRangeFieldWithChildAttribute(FieldValues):
+    serializer_class = DecimalRangeSerializerWithChildAttribute
+    field = DecimalRangeField(child_attrs={"max_digits": 5, "decimal_places": 2})
+
+    valid_inputs = [
+        ({'lower': '1', 'upper': 2., 'bounds': '[)'},
+         NumericRange(**{'lower': 1., 'upper': 2., 'bounds': '[)'})),
+        ({'lower': 1., 'upper': 2.},
+         NumericRange(**{'lower': 1, 'upper': 2})),
+        ({'lower': 1},
+         NumericRange(**{'lower': 1})),
+        ({'upper': 1},
+         NumericRange(**{'upper': 1})),
+        ({'empty': True},
+         NumericRange(**{'empty': True})),
+        ({}, NumericRange()),
+    ]
+    invalid_inputs = [
+        ({'lower': 'a'}, ['A valid number is required.']),
+        ({'upper': '123456'}, ['Ensure that there are no more than 5 digits in total.']),
+        ({'lower': '9.123'}, ['Ensure that there are no more than 2 decimal places.']),
+        ('not a dict', ['Expected a dictionary of items but got type "str".']),
+    ]
+    outputs = [
+        (NumericRange(**{'lower': '1.1', 'upper': '2'}),
+         {'lower': '1.10', 'upper': '2.00', 'bounds': '[)'}),
+        (NumericRange(**{'empty': True}), {'empty': True}),
+        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+    ]
 
     def test_no_source_on_child(self):
         with pytest.raises(AssertionError) as exc_info:
