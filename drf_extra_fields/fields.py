@@ -233,13 +233,8 @@ class FloatRangeField(RangeField):
 
 
 class DecimalRangeField(RangeField):
+    child = DecimalField(max_digits=None, decimal_places=None)
     range_type = NumericRange
-
-    def __init__(self, *args, **kwargs):
-        child_attrs = {"max_digits": None, "decimal_places": None}
-        child_attrs.update(kwargs.pop("child_attrs", {}))
-        self.child = DecimalField(**child_attrs)
-        super().__init__(*args, **kwargs)
 
 
 class DateTimeRangeField(RangeField):
@@ -258,10 +253,9 @@ class DateRangeField(RangeField):
 ModelSerializer.serializer_field_mapping[postgres_fields.DateTimeRangeField] = DateTimeRangeField
 ModelSerializer.serializer_field_mapping[postgres_fields.DateRangeField] = DateRangeField
 ModelSerializer.serializer_field_mapping[postgres_fields.IntegerRangeField] = IntegerRangeField
+ModelSerializer.serializer_field_mapping[postgres_fields.DecimalRangeField] = DecimalRangeField
 if compat.FloatRangeField:
     ModelSerializer.serializer_field_mapping[compat.FloatRangeField] = FloatRangeField
-if compat.DecimalRangeField:
-    ModelSerializer.serializer_field_mapping[compat.DecimalRangeField] = DecimalRangeField
 
 
 class LowercaseEmailField(EmailField):

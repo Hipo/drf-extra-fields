@@ -160,7 +160,7 @@ from drf_extra_fields.fields import DecimalRangeField
 
 
 class RangeSerializer(serializers.Serializer):
-    ranges = DecimalRangeField(child_attrs={"max_digits": 5, "decimal_places": 2})
+    ranges = DecimalRangeField()
 
 
 serializer = RangeSerializer(data={'ranges': {'lower': 0., 'upper': 1.}}, )

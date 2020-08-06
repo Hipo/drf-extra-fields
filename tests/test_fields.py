@@ -11,6 +11,7 @@ from django.test import TestCase, override_settings
 from mock import patch
 from psycopg2._range import NumericRange, DateTimeTZRange, DateRange
 from rest_framework import serializers
+from rest_framework.fields import DecimalField
 
 from drf_extra_fields.fields import (
     Base64ImageField,
@@ -425,7 +426,7 @@ class DecimalRangeSerializer(serializers.Serializer):
 
 class DecimalRangeSerializerWithChildAttribute(serializers.Serializer):
 
-    range = DecimalRangeField(child_attrs={"max_digits": 5, "decimal_places": 2})
+    range = DecimalRangeField(child=DecimalField(max_digits=5, decimal_places=2))
 
 
 class FieldValues:
@@ -543,7 +544,7 @@ class TestDecimalRangeField(FieldValues):
 
 class TestDecimalRangeFieldWithChildAttribute(FieldValues):
     serializer_class = DecimalRangeSerializerWithChildAttribute
-    field = DecimalRangeField(child_attrs={"max_digits": 5, "decimal_places": 2})
+    field = DecimalRangeField(child=DecimalField(max_digits=5, decimal_places=2))
 
     valid_inputs = [
         ({'lower': '1', 'upper': 2., 'bounds': '[)'},

@@ -2,7 +2,12 @@ from django.db import models
 from django.test import TestCase
 
 
-from django.contrib.postgres.fields import DateRangeField, DateTimeRangeField, IntegerRangeField
+from django.contrib.postgres.fields import (
+    DateRangeField,
+    DateTimeRangeField,
+    IntegerRangeField,
+    DecimalRangeField
+)
 from drf_extra_fields import compat
 from rest_framework import serializers
 
@@ -42,25 +47,24 @@ if compat.FloatRangeField:
             self.assertEqual(repr(TestSerializer()), expected)
 
 
-if compat.DecimalRangeField:
-    class TestDecimalRangeFieldMapping(TestCase):
-        def test_decimal_range_field(self):
-            class DecimalRangeFieldModel(models.Model):
-                decimal_range_field = compat.DecimalRangeField()
+class TestDecimalRangeFieldMapping(TestCase):
+    def test_decimal_range_field(self):
+        class DecimalRangeFieldModel(models.Model):
+            decimal_range_field = DecimalRangeField()
 
-                class Meta:
-                    app_label = 'tests'
+            class Meta:
+                app_label = 'tests'
 
-            class TestSerializer(serializers.ModelSerializer):
-                class Meta:
-                    model = DecimalRangeFieldModel
-                    fields = ("decimal_range_field",)
+        class TestSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = DecimalRangeFieldModel
+                fields = ("decimal_range_field",)
 
-            expected = dedent("""
+        expected = dedent("""
             TestSerializer():
                 decimal_range_field = DecimalRangeField()
-            """)
-            self.assertEqual(repr(TestSerializer()), expected)
+        """)
+        self.assertEqual(repr(TestSerializer()), expected)
 
 
 class TestRegularFieldMappings(TestCase):
