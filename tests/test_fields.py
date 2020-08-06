@@ -534,7 +534,7 @@ class TestDecimalRangeField(FieldValues):
 
     def test_no_source_on_child(self):
         with pytest.raises(AssertionError) as exc_info:
-            IntegerRangeField(child=serializers.IntegerField(source='other'))
+            DecimalRangeField(child=serializers.DecimalField(source='other', max_digits=None, decimal_places=None))
 
         assert str(exc_info.value) == (
             "The `source` argument is not meaningful when applied to a `child=` field. "
@@ -571,15 +571,6 @@ class TestDecimalRangeFieldWithChildAttribute(FieldValues):
         (NumericRange(**{'empty': True}), {'empty': True}),
         (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
     ]
-
-    def test_no_source_on_child(self):
-        with pytest.raises(AssertionError) as exc_info:
-            IntegerRangeField(child=serializers.IntegerField(source='other'))
-
-        assert str(exc_info.value) == (
-            "The `source` argument is not meaningful when applied to a `child=` field. "
-            "Remove `source=` from the field declaration."
-        )
 
 
 class TestFloatRangeField(FieldValues):
