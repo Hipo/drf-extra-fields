@@ -6,6 +6,7 @@ import uuid
 
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from django.contrib.postgres import fields as postgres_fields
 from django.utils.translation import gettext_lazy as _
 from psycopg2.extras import DateRange, DateTimeTZRange, NumericRange
 from rest_framework.fields import (
@@ -17,9 +18,12 @@ from rest_framework.fields import (
     FloatField,
     ImageField,
     IntegerField,
+    DecimalField,
 )
 from rest_framework.serializers import ModelSerializer
 from rest_framework.utils import html
+from drf_extra_fields import compat
+
 
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
@@ -228,6 +232,11 @@ class FloatRangeField(RangeField):
     range_type = NumericRange
 
 
+class DecimalRangeField(RangeField):
+    child = DecimalField(max_digits=None, decimal_places=None)
+    range_type = NumericRange
+
+
 class DateTimeRangeField(RangeField):
     child = DateTimeField()
     range_type = DateTimeTZRange
@@ -240,10 +249,13 @@ class DateRangeField(RangeField):
 
 # monkey patch modelserializer to map Native django Range fields to
 # drf_extra_fiels's Range fields.
-ModelSerializer.serializer_field_mapping[DateTimeRangeField] = DateTimeRangeField
-ModelSerializer.serializer_field_mapping[DateRangeField] = DateRangeField
-ModelSerializer.serializer_field_mapping[IntegerRangeField] = IntegerRangeField
-ModelSerializer.serializer_field_mapping[FloatRangeField] = FloatRangeField
+
+ModelSerializer.serializer_field_mapping[postgres_fields.DateTimeRangeField] = DateTimeRangeField
+ModelSerializer.serializer_field_mapping[postgres_fields.DateRangeField] = DateRangeField
+ModelSerializer.serializer_field_mapping[postgres_fields.IntegerRangeField] = IntegerRangeField
+ModelSerializer.serializer_field_mapping[postgres_fields.DecimalRangeField] = DecimalRangeField
+if compat.FloatRangeField:
+    ModelSerializer.serializer_field_mapping[compat.FloatRangeField] = FloatRangeField
 
 
 class LowercaseEmailField(EmailField):

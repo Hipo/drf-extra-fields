@@ -1,6 +1,7 @@
 import base64
 import copy
 import datetime
+import django
 import imghdr
 import os
 
@@ -11,6 +12,7 @@ from django.test import TestCase, override_settings
 from mock import patch
 from psycopg2._range import NumericRange, DateTimeTZRange, DateRange
 from rest_framework import serializers
+from rest_framework.fields import DecimalField
 
 from drf_extra_fields.fields import (
     Base64ImageField,
@@ -21,8 +23,10 @@ from drf_extra_fields.fields import (
     HybridImageField,
     IntegerRangeField,
     LowercaseEmailField,
+    DecimalRangeField,
 )
 from drf_extra_fields.geo_fields import PointField
+from drf_extra_fields import compat
 
 UNDETECTABLE_BY_IMGHDR_SAMPLE = """data:image/jpeg;base64,
 /9j/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD
@@ -417,6 +421,16 @@ class DateRangeSerializer(serializers.Serializer):
     range = DateRangeField()
 
 
+class DecimalRangeSerializer(serializers.Serializer):
+
+    range = DecimalRangeField()
+
+
+class DecimalRangeSerializerWithChildAttribute(serializers.Serializer):
+
+    range = DecimalRangeField(child=DecimalField(max_digits=5, decimal_places=2))
+
+
 class FieldValues:
     """
     Base class for testing valid and invalid input values.
@@ -492,6 +506,77 @@ class TestIntegerRangeField(FieldValues):
         )
 
 
+class TestDecimalRangeField(FieldValues):
+    serializer_class = DecimalRangeSerializer
+
+    valid_inputs = [
+        ({'lower': '1', 'upper': 2., 'bounds': '[)'},
+         NumericRange(**{'lower': 1., 'upper': 2., 'bounds': '[)'})),
+        ({'lower': 1., 'upper': 2.},
+         NumericRange(**{'lower': 1, 'upper': 2})),
+        ({'lower': 1},
+         NumericRange(**{'lower': 1})),
+        ({'upper': 1},
+         NumericRange(**{'upper': 1})),
+        ({'empty': True},
+         NumericRange(**{'empty': True})),
+        ({}, NumericRange()),
+    ]
+    invalid_inputs = [
+        ({'lower': 'a'}, ['A valid number is required.']),
+        ('not a dict', ['Expected a dictionary of items but got type "str".']),
+    ]
+    outputs = [
+        (NumericRange(**{'lower': '1.1', 'upper': '2'}),
+         {'lower': '1.1', 'upper': '2', 'bounds': '[)'}),
+        (NumericRange(**{'empty': True}), {'empty': True}),
+        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+    ]
+    field = DecimalRangeField()
+
+    def test_no_source_on_child(self):
+        with pytest.raises(AssertionError) as exc_info:
+            DecimalRangeField(child=serializers.DecimalField(source='other', max_digits=None, decimal_places=None))
+
+        assert str(exc_info.value) == (
+            "The `source` argument is not meaningful when applied to a `child=` field. "
+            "Remove `source=` from the field declaration."
+        )
+
+
+class TestDecimalRangeFieldWithChildAttribute(FieldValues):
+    serializer_class = DecimalRangeSerializerWithChildAttribute
+    field = DecimalRangeField(child=DecimalField(max_digits=5, decimal_places=2))
+
+    valid_inputs = [
+        ({'lower': '1', 'upper': 2., 'bounds': '[)'},
+         NumericRange(**{'lower': 1., 'upper': 2., 'bounds': '[)'})),
+        ({'lower': 1., 'upper': 2.},
+         NumericRange(**{'lower': 1, 'upper': 2})),
+        ({'lower': 1},
+         NumericRange(**{'lower': 1})),
+        ({'upper': 1},
+         NumericRange(**{'upper': 1})),
+        ({'empty': True},
+         NumericRange(**{'empty': True})),
+        ({}, NumericRange()),
+    ]
+    invalid_inputs = [
+        ({'lower': 'a'}, ['A valid number is required.']),
+        ({'upper': '123456'}, ['Ensure that there are no more than 5 digits in total.']),
+        ({'lower': '9.123'}, ['Ensure that there are no more than 2 decimal places.']),
+        ('not a dict', ['Expected a dictionary of items but got type "str".']),
+    ]
+    outputs = [
+        (NumericRange(**{'lower': '1.1', 'upper': '2'}),
+         {'lower': '1.10', 'upper': '2.00', 'bounds': '[)'}),
+        (NumericRange(**{'empty': True}), {'empty': True}),
+        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+    ]
+
+
+@pytest.mark.skipif(django.VERSION >= (3, 1) or compat.FloatRangeField is None,
+                    reason='FloatRangeField deprecated on django 3.1 ')
 class TestFloatRangeField(FieldValues):
     """
     Values for `ListField` with CharField as child.

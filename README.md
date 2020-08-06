@@ -152,6 +152,21 @@ serializer = RangeSerializer(data={'ranges': {'lower': 0., 'upper': 1.}})
 
 ```
 
+## DecimalRangeField
+
+```python
+from rest_framework import serializers
+from drf_extra_fields.fields import DecimalRangeField
+
+
+class RangeSerializer(serializers.Serializer):
+    ranges = DecimalRangeField()
+
+
+serializer = RangeSerializer(data={'ranges': {'lower': 0., 'upper': 1.}}, )
+
+```
+
 ## DateRangeField
 
 ```python
