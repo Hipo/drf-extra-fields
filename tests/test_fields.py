@@ -26,6 +26,7 @@ from drf_extra_fields.fields import (
     DecimalRangeField,
 )
 from drf_extra_fields.geo_fields import PointField
+from drf_extra_fields import compat
 
 UNDETECTABLE_BY_IMGHDR_SAMPLE = """data:image/jpeg;base64,
 /9j/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD
