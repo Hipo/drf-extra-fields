@@ -1,6 +1,7 @@
 import base64
 import copy
 import datetime
+import django
 import imghdr
 import os
 
@@ -573,6 +574,8 @@ class TestDecimalRangeFieldWithChildAttribute(FieldValues):
     ]
 
 
+@pytest.mark.skipif(django.VERSION >= (3, 1) or compat.FloatRangeField is None,
+                    reason='FloatRangeField deprecated on django 3.1 ')
 class TestFloatRangeField(FieldValues):
     """
     Values for `ListField` with CharField as child.
