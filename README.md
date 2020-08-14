@@ -354,6 +354,31 @@ class HybridImageSerializer(serializers.Serializer):
     image = HybridImageField()
 ```
 
+drf-yasg fix for BASE64 Fields:
+----------------
+The [drf-yasg](https://github.com/axnsan12/drf-yasg) project seems to generate wrong documentation on Base64ImageField or Base64FileField. It marks those fields as readonly. Here is the workaround code for correct the generated document. (More detail on issue [#66](https://github.com/Hipo/drf-extra-fields/issues/66))
+
+```python 
+class PDFBase64FileField(Base64FileField):
+    ALLOWED_TYPES = ['pdf']
+
+    class Meta:
+        swagger_schema_fields = {
+            'type': 'string',
+            'title': 'File Content',
+            'description': 'Content of the file base64 encoded',
+            'read_only': False  # <-- FIX
+        }
+
+    def get_file_extension(self, filename, decoded_file):
+        try:
+            PyPDF2.PdfFileReader(io.BytesIO(decoded_file))
+        except PyPDF2.utils.PdfReadError as e:
+            logger.warning(e)
+        else:
+            return 'pdf'
+```
+
 
 ## LowercaseEmailField
 An enhancement over django-rest-framework's EmailField to allow case-insensitive serialization and deserialization of e-mail addresses.
