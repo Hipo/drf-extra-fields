@@ -51,6 +51,14 @@ class PresentableRelatedFieldMixin(object):
 
         return CustomManyRelatedField(**list_kwargs)
 
+    def get_attribute(self, instance):
+        if self.read_source:
+            self.source_attrs.append("model")
+            self.source_attrs.append(self.read_source)
+            return super().get_attribute(instance).fget(instance)
+
+        return super().get_attribute(instance)
+
     def get_choices(self, cutoff=None):
         queryset = self.get_queryset()
         if queryset is None:
