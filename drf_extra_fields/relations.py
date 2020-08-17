@@ -15,7 +15,7 @@ class CustomManyRelatedField(ManyRelatedField):
                 self.child_relation.read_source
             ).fget(instance)
 
-        return super().get_attribute(self, instance)
+        return super().get_attribute(instance)
 
 
 class PresentableRelatedFieldMixin(object):
