@@ -7,7 +7,7 @@ from rest_framework.relations import (PrimaryKeyRelatedField, SlugRelatedField,
 
 class ReadSourceManyMixin(ManyRelatedField):
     def get_attribute(self, instance):
-        if self.child_relation.read_source:
+        if self.context['request'].method == "GET" and self.child_relation.read_source:
             self.source_attrs = [self.child_relation.read_source]
 
         return super().get_attribute(instance)
