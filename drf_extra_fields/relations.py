@@ -7,8 +7,8 @@ from rest_framework.relations import (PrimaryKeyRelatedField, SlugRelatedField,
 
 class ReadSourceManyMixin(ManyRelatedField):
     def get_attribute(self, instance):
-        if self.context['request'].method == "GET" and self.child_relation.read_source:
-            self.source_attrs =  self.child_relation.read_source.split(".")
+        if self.context['request'] and self.context['request'].method == "GET" and self.child_relation.read_source:
+            self.source_attrs = self.child_relation.read_source.split(".")
 
         return super().get_attribute(instance)
 
@@ -28,7 +28,7 @@ class ReadSourceMixin(object):
         return ReadSourceManyMixin(**list_kwargs)
 
     def get_attribute(self, instance):
-        if self.context['request'].method == "GET" and self.read_source:
+        if self.context['request'] and self.context['request'].method == "GET" and self.read_source:
             self.source_attrs = self.read_source.split(".")
 
         return super().get_attribute(instance)
