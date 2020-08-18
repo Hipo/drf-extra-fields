@@ -25,6 +25,13 @@ class MockObject(object):
             ]
         )
 
+    def foo_function(self):
+        return self.foo_property
+
+    @property
+    def bar_property(self):
+        return MockObject(pk=3, name="foo")
+
 
 class MockQueryset(object):
     def __init__(self, iterable):
