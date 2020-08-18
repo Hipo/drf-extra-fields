@@ -1,26 +1,60 @@
 from collections import OrderedDict
 
+
+from django.utils.functional import cached_property
 from rest_framework.relations import (PrimaryKeyRelatedField, SlugRelatedField,
                                       MANY_RELATION_KWARGS, ManyRelatedField)
 
 
-class CustomManyRelatedField(ManyRelatedField):
-    def __init__(self, child_relation=None, *args, **kwargs):
-        super().__init__(child_relation, *args, **kwargs)
+def get_attribute_result(attribute, instance):
+    "If the attribute is callable or property it calls or if it is attruibte it returns directly."
+    if isinstance(attribute, property) or isinstance(attribute, cached_property):
+        return attribute.__get__(instance)
+
+    if callable(attribute):
+        return attribute(instance)
+
+    return attribute
+
+
+class ReadSourceMixin(object):
+    def __init__(self, **kwargs):
+        self.read_source = kwargs.pop("read_source", None)
+        super().__init__(**kwargs)
+
+    @classmethod
+    def many_init(cls, *args, **kwargs):
+        list_kwargs = {'child_relation': cls(*args, **kwargs)}
+        for key in kwargs:
+            if key in MANY_RELATION_KWARGS:
+                list_kwargs[key] = kwargs[key]
+
+        return ReadSourceManyMixin(**list_kwargs)
 
     def get_attribute(self, instance):
+        if self.read_source:
+            self.source_attrs.append("model")
+            self.source_attrs.append(self.read_source)
+            attribute = super().get_attribute(instance)
+            return get_attribute_result(attribute, instance)
+
+        return super().get_attribute(instance)
+
+
+class ReadSourceManyMixin(ManyRelatedField):
+    def get_attribute(self, instance):
         if self.child_relation.read_source:
-            return getattr(
+            attribute = getattr(
                 self.child_relation.presentation_serializer.Meta.model,
                 self.child_relation.read_source
-            ).fget(instance)
+            )
+            return get_attribute_result(attribute, instance)
 
         return super().get_attribute(instance)
 
 
 class PresentableRelatedFieldMixin(object):
     def __init__(self, **kwargs):
-        self.read_source = kwargs.pop("read_source", None)
         self.presentation_serializer = kwargs.pop("presentation_serializer", None)
         self.presentation_serializer_kwargs = kwargs.pop(
             "presentation_serializer_kwargs", dict()
@@ -42,23 +76,6 @@ class PresentableRelatedFieldMixin(object):
         """
         return False
 
-    @classmethod
-    def many_init(cls, *args, **kwargs):
-        list_kwargs = {'child_relation': cls(*args, **kwargs)}
-        for key in kwargs:
-            if key in MANY_RELATION_KWARGS:
-                list_kwargs[key] = kwargs[key]
-
-        return CustomManyRelatedField(**list_kwargs)
-
-    def get_attribute(self, instance):
-        if self.read_source:
-            self.source_attrs.append("model")
-            self.source_attrs.append(self.read_source)
-            return super().get_attribute(instance).fget(instance)
-
-        return super().get_attribute(instance)
-
     def get_choices(self, cutoff=None):
         queryset = self.get_queryset()
         if queryset is None:
@@ -78,7 +95,7 @@ class PresentableRelatedFieldMixin(object):
 
 
 class PresentablePrimaryKeyRelatedField(
-    PresentableRelatedFieldMixin, PrimaryKeyRelatedField
+        ReadSourceMixin, PresentableRelatedFieldMixin, PrimaryKeyRelatedField
 ):
     """
     Override PrimaryKeyRelatedField to represent serializer data instead of a pk field of the object.
