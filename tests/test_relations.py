@@ -5,7 +5,7 @@ from drf_extra_fields.relations import (
     PresentablePrimaryKeyRelatedField,
     PresentableSlugRelatedField,
 )
-from .utils import MockObject, MockQueryset, MockRequest
+from .utils import MockObject, MockQueryset
 
 
 class PresentationSerializer(serializers.Serializer):
@@ -51,9 +51,7 @@ class TestPresentablePrimaryKeyRelatedField(APISimpleTestCase):
         assert representation == expected_representation
 
     def test_read_source_with_context(self):
-        representation = SerializerWithPresentable(
-            self.instance, context={"request": MockRequest}
-        )
+        representation = SerializerWithPresentable(self.instance)
         expected_representation = [PresentationSerializer(x).data for x in MockObject().foo_property]
         assert representation.data['test_many_field'] == expected_representation
         assert representation.data['test_function_field'] == expected_representation

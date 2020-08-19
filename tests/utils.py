@@ -61,7 +61,3 @@ class MockIterator:
 
         self.index += 1
         return self.items[self.index - 1]
-
-
-class MockRequest(object):
-    method = "GET"
