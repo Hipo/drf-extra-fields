@@ -53,3 +53,36 @@ class TestPresentableSlugRelatedField(APISimpleTestCase):
         representation = self.field.to_representation(self.instance)
         expected_representation = PresentationSerializer(self.instance).data
         assert representation == expected_representation
+
+
+class TestRecursivePresentablePrimaryKeyRelatedField(APISimpleTestCase):
+    class RecursiveSerializer(serializers.Serializer):
+        pk = serializers.CharField()
+        recursive_field = PresentablePrimaryKeyRelatedField(
+            queryset=MockQueryset([]),
+            presentation_serializer="self",
+        )
+
+    def setUp(self):
+        self.related_object = MockObject(
+            pk=3,
+            name="baz",
+            recursive_field=MockObject(
+                pk=4,
+                name="foobar",
+                recursive_field=MockObject(
+                    pk=5,
+                    name="barbaz",
+                    recursive_field=None)
+            ),
+        )
+
+    def test_recursive(self):
+        serializer = self.RecursiveSerializer(self.related_object)
+        assert serializer.data == {
+            'pk': '3', 'recursive_field': {
+                'pk': '4', 'recursive_field': {
+                    'pk': '5', 'recursive_field': None
+                }
+            }
+        }

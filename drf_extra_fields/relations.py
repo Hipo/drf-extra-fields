@@ -43,6 +43,11 @@ class PresentableRelatedFieldMixin(object):
             data, context=self.context, **self.presentation_serializer_kwargs
         ).data
 
+    def bind(self, field_name, parent):
+        if self.presentation_serializer == "self":
+            self.presentation_serializer = parent.__class__
+        super(PresentableRelatedFieldMixin, self).bind(field_name, parent)
+
 
 class PresentablePrimaryKeyRelatedField(
     PresentableRelatedFieldMixin, PrimaryKeyRelatedField
