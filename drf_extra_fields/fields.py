@@ -221,6 +221,10 @@ class RangeField(DictField):
                 'upper': upper,
                 'bounds': value._bounds}
 
+    def get_initial(self):
+        initial = super().get_initial()
+        return self.to_representation(initial)
+
 
 class IntegerRangeField(RangeField):
     child = IntegerField()
