@@ -13,6 +13,14 @@ class PresentationSerializer(serializers.Serializer):
         return {"pk": instance.pk, "name": instance.name}
 
 
+class RecursiveSerializer(serializers.Serializer):
+    pk = serializers.CharField()
+    recursive_field = PresentablePrimaryKeyRelatedField(
+        queryset=MockQueryset([]),
+        presentation_serializer="tests.test_relations.RecursiveSerializer",
+    )
+
+
 class TestPresentablePrimaryKeyRelatedField(APISimpleTestCase):
     def setUp(self):
         self.queryset = MockQueryset(
@@ -56,13 +64,6 @@ class TestPresentableSlugRelatedField(APISimpleTestCase):
 
 
 class TestRecursivePresentablePrimaryKeyRelatedField(APISimpleTestCase):
-    class RecursiveSerializer(serializers.Serializer):
-        pk = serializers.CharField()
-        recursive_field = PresentablePrimaryKeyRelatedField(
-            queryset=MockQueryset([]),
-            presentation_serializer="self",
-        )
-
     def setUp(self):
         self.related_object = MockObject(
             pk=3,
@@ -78,7 +79,7 @@ class TestRecursivePresentablePrimaryKeyRelatedField(APISimpleTestCase):
         )
 
     def test_recursive(self):
-        serializer = self.RecursiveSerializer(self.related_object)
+        serializer = RecursiveSerializer(self.related_object)
         assert serializer.data == {
             'pk': '3', 'recursive_field': {
                 'pk': '4', 'recursive_field': {
