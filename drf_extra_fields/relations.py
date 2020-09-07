@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+from django.utils.module_loading import import_string
 from rest_framework.relations import PrimaryKeyRelatedField, SlugRelatedField
 
 
@@ -39,14 +40,12 @@ class PresentableRelatedFieldMixin(object):
         return OrderedDict([(item.pk, self.display_value(item)) for item in queryset])
 
     def to_representation(self, data):
+        if isinstance(self.presentation_serializer, str):
+            self.presentation_serializer = import_string(self.presentation_serializer)
+
         return self.presentation_serializer(
             data, context=self.context, **self.presentation_serializer_kwargs
         ).data
-
-    def bind(self, field_name, parent):
-        if self.presentation_serializer == "self":
-            self.presentation_serializer = parent.__class__
-        super(PresentableRelatedFieldMixin, self).bind(field_name, parent)
 
 
 class PresentablePrimaryKeyRelatedField(
