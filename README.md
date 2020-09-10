@@ -207,6 +207,8 @@ serializer = RangeSerializer(data={'ranges': {'lower': datetime.datetime(2015, 1
 
 Represents related object with a serializer.
 
+`presentation_serializer` could also be a string that represents a dotted path of a serializer, this is useful when you want to represent a related field with the same serializer.
+
 ```python
 from drf_extra_fields.relations import PresentablePrimaryKeyRelatedField
 
