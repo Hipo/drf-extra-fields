@@ -19,6 +19,11 @@ class RecursiveSerializer(serializers.Serializer):
         queryset=MockQueryset([]),
         presentation_serializer="tests.test_relations.RecursiveSerializer",
     )
+    recursive_fields = PresentablePrimaryKeyRelatedField(
+        queryset=MockQueryset([]),
+        presentation_serializer="tests.test_relations.RecursiveSerializer",
+        many=True
+    )
 
 
 class TestPresentablePrimaryKeyRelatedField(APISimpleTestCase):
@@ -68,22 +73,46 @@ class TestRecursivePresentablePrimaryKeyRelatedField(APISimpleTestCase):
         self.related_object = MockObject(
             pk=3,
             name="baz",
+            recursive_fields=[
+                MockObject(pk=6, name="foo", recursive_fields=[], recursive_field=None),
+                MockObject(pk=7, name="baz", recursive_fields=[], recursive_field=None)
+            ],
             recursive_field=MockObject(
                 pk=4,
                 name="foobar",
+                recursive_fields=[],
                 recursive_field=MockObject(
                     pk=5,
                     name="barbaz",
-                    recursive_field=None)
+                    recursive_fields=[],
+                    recursive_field=None
+                )
             ),
         )
 
     def test_recursive(self):
         serializer = RecursiveSerializer(self.related_object)
         assert serializer.data == {
-            'pk': '3', 'recursive_field': {
-                'pk': '4', 'recursive_field': {
-                    'pk': '5', 'recursive_field': None
+            'pk': '3',
+            'recursive_field': {
+                'pk': '4',
+                'recursive_field': {
+                    'pk': '5',
+                    'recursive_field': None,
+                    'recursive_fields': []
+                },
+                'recursive_fields': []
+            },
+            'recursive_fields': [
+                {
+                    'pk': '6',
+                    'recursive_field': None,
+                    'recursive_fields': []
+                },
+                {
+                    'pk': '7',
+                    'recursive_field': None,
+                    'recursive_fields': []
                 }
-            }
+            ]
         }
