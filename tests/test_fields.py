@@ -418,7 +418,7 @@ class DateTimeRangeSerializer(serializers.Serializer):
 
 class DateRangeSerializer(serializers.Serializer):
 
-    range = DateRangeField()
+    range = DateRangeField(initial=DateRange(None, None))
 
 
 class DecimalRangeSerializer(serializers.Serializer):
@@ -487,6 +487,7 @@ class TestIntegerRangeField(FieldValues):
         ({'lower': 'a'}, ['A valid integer is required.']),
         ('not a dict', ['Expected a dictionary of items but got type "str".']),
         ({'foo': 'bar'}, ['Extra content not allowed "foo".']),
+        ({'lower': 2, 'upper': 1}, ['The start of the range must not exceed the end of the range.']),
     ]
     outputs = [
         (NumericRange(**{'lower': '1', 'upper': '2'}),
@@ -525,6 +526,7 @@ class TestDecimalRangeField(FieldValues):
     invalid_inputs = [
         ({'lower': 'a'}, ['A valid number is required.']),
         ('not a dict', ['Expected a dictionary of items but got type "str".']),
+        ({'lower': 2., 'upper': 1.}, ['The start of the range must not exceed the end of the range.']),
     ]
     outputs = [
         (NumericRange(**{'lower': '1.1', 'upper': '2'}),
@@ -566,6 +568,7 @@ class TestDecimalRangeFieldWithChildAttribute(FieldValues):
         ({'upper': '123456'}, ['Ensure that there are no more than 5 digits in total.']),
         ({'lower': '9.123'}, ['Ensure that there are no more than 2 decimal places.']),
         ('not a dict', ['Expected a dictionary of items but got type "str".']),
+        ({'lower': 2., 'upper': 1.}, ['The start of the range must not exceed the end of the range.']),
     ]
     outputs = [
         (NumericRange(**{'lower': '1.1', 'upper': '2'}),
@@ -599,6 +602,7 @@ class TestFloatRangeField(FieldValues):
     invalid_inputs = [
         ({'lower': 'a'}, ['A valid number is required.']),
         ('not a dict', ['Expected a dictionary of items but got type "str".']),
+        ({'lower': 2., 'upper': 1.}, ['The start of the range must not exceed the end of the range.']),
     ]
     outputs = [
         (NumericRange(**{'lower': '1.1', 'upper': '2'}),
@@ -652,6 +656,9 @@ class TestDateTimeRangeField(TestCase, FieldValues):
                           ' formats instead: '
                           'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].']),
         ('not a dict', ['Expected a dictionary of items but got type "str".']),
+        ({'lower': '2001-02-02T13:00:00Z',
+          'upper': '2001-01-01T13:00:00Z'},
+         ['The start of the range must not exceed the end of the range.']),
     ]
     outputs = [
         (DateTimeTZRange(
@@ -710,6 +717,9 @@ class TestDateRangeField(FieldValues):
                           ' formats instead: '
                           'YYYY-MM-DD.']),
         ('not a dict', ['Expected a dictionary of items but got type "str".']),
+        ({'lower': '2001-02-02',
+          'upper': '2001-01-01'},
+         ['The start of the range must not exceed the end of the range.']),
     ]
     outputs = [
         (DateRange(
@@ -732,6 +742,10 @@ class TestDateRangeField(FieldValues):
             "The `source` argument is not meaningful when applied to a `child=` field. "
             "Remove `source=` from the field declaration."
         )
+
+    def test_initial_value_of_field(self):
+        serializer = DateRangeSerializer()
+        assert serializer.data['range'] == {'lower': None, 'upper': None, 'bounds': '[)'}
 
 
 class EmailSerializer(serializers.Serializer):

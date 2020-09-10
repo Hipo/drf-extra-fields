@@ -5,17 +5,19 @@ Extra Fields for Django Rest Framework
 
 [![Build Status](https://travis-ci.org/Hipo/drf-extra-fields.svg?branch=master)](https://travis-ci.org/Hipo/drf-extra-fields)
 [![codecov](https://codecov.io/gh/Hipo/drf-extra-fields/branch/master/graph/badge.svg)](https://codecov.io/gh/Hipo/drf-extra-fields)
+[![PyPI Version](https://img.shields.io/pypi/v/django-extra-fields.svg)](https://pypi.org/project/django-extra-fields)
+[![Python Versions](https://img.shields.io/pypi/pyversions/django-extra-fields.svg)](https://pypi.org/project/django-extra-fields)
 
 Usage
 ================
- 
+
 Install the package
- 
+
 ```bash
 pip install django-extra-fields
 ```
 
-**Note:** 
+**Note:**
 - Install version 0.1 for Django Rest Framework 2.*
 - Install version 0.3 or greater for Django Rest Framework 3.*
 
@@ -224,10 +226,10 @@ class PostSerializer(serializers.ModelSerializer):
         presentation_serializer=UserSerializer,
         presentation_serializer_kwargs={
             'example': [
-                'of', 
-                'passing', 
-                'kwargs', 
-                'to', 
+                'of',
+                'passing',
+                'kwargs',
+                'to',
                 'serializer',
             ]
         }
@@ -294,10 +296,10 @@ class ProductSerializer(serializers.ModelSerializer):
         presentation_serializer=CategorySerializer,
         presentation_serializer_kwargs={
             'example': [
-                'of', 
-                'passing', 
-                'kwargs', 
-                'to', 
+                'of',
+                'passing',
+                'kwargs',
+                'to',
                 'serializer',
             ]
         }
@@ -342,6 +344,23 @@ class ProductSerializer(serializers.ModelSerializer):
 ```
 
 
+### read_source parameter
+You can also use read_source parameter on `PresentablePrimaryKeyRelatedField` and `PresentableSlugRelatedField`. With this parameter, you can specify the reading operation without any change in the write operation. For instance, if you want to soft delete an object or special sorting on the relation, you can use it. All the write operations will work normally (issue: [#136](https://github.com/Hipo/drf-extra-fields/issues/136)). Usage is the same as drf's [`source` parameter ](https://www.django-rest-framework.org/api-guide/fields/#source).
+
+```python
+class FooModel...:
+    ......
+    @property
+    def very_special_ordering_and_filtering(self):
+          return xxQueryset
+
+class FooSerializer:
+    field = PresentablePrimaryKeyRelatedField(......read_source="very_special_ordering_and_filtering"......)
+
+    class Meta:
+          model = fooModel
+```
+
 ## HybridImageField
 A django-rest-framework field for handling image-uploads through raw post data, with a fallback to multipart form data.
 
@@ -360,7 +379,7 @@ drf-yasg fix for BASE64 Fields:
 ----------------
 The [drf-yasg](https://github.com/axnsan12/drf-yasg) project seems to generate wrong documentation on Base64ImageField or Base64FileField. It marks those fields as readonly. Here is the workaround code for correct the generated document. (More detail on issue [#66](https://github.com/Hipo/drf-extra-fields/issues/66))
 
-```python 
+```python
 class PDFBase64FileField(Base64FileField):
     ALLOWED_TYPES = ['pdf']
 

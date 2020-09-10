@@ -15,6 +15,23 @@ class MockObject(object):
         ])
         return '<MockObject %s>' % kwargs_str
 
+    @property
+    def foo_property(self):
+        return MockQueryset(
+            [
+                MockObject(pk=3, name="foo"),
+                MockObject(pk=1, name="bar"),
+                MockObject(pk=2, name="baz"),
+            ]
+        )
+
+    def foo_function(self):
+        return self.foo_property
+
+    @property
+    def bar_property(self):
+        return MockObject(pk=3, name="foo")
+
 
 class MockQueryset(object):
     def __init__(self, iterable):
@@ -28,3 +45,19 @@ class MockQueryset(object):
             ]):
                 return item
         raise ObjectDoesNotExist()
+
+    def __iter__(self):
+        return MockIterator(self.items)
+
+
+class MockIterator:
+    def __init__(self, items):
+        self.items = items
+        self.index = 0
+
+    def __next__(self):
+        if self.index >= len(self.items):
+            raise StopIteration
+
+        self.index += 1
+        return self.items[self.index - 1]

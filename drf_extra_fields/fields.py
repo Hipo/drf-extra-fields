@@ -174,6 +174,7 @@ class RangeField(DictField):
     default_error_messages = {
         'not_a_dict': _('Expected a dictionary of items but got type "{input_type}".'),
         'too_much_content': _('Extra content not allowed "{extra}".'),
+        'bound_ordering': _('The start of the range must not exceed the end of the range.'),
     }
 
     def to_internal_value(self, data):
@@ -199,6 +200,10 @@ class RangeField(DictField):
 
             validated_dict[str(key)] = self.child.run_validation(value)
 
+        lower, upper = validated_dict.get('lower'), validated_dict.get('upper')
+        if lower is not None and upper is not None and lower > upper:
+            self.fail('bound_ordering')
+
         for key in ('bounds', 'empty'):
             try:
                 value = data[key]
@@ -220,6 +225,10 @@ class RangeField(DictField):
         return {'lower': lower,
                 'upper': upper,
                 'bounds': value._bounds}
+
+    def get_initial(self):
+        initial = super().get_initial()
+        return self.to_representation(initial)
 
 
 class IntegerRangeField(RangeField):

@@ -1,10 +1,52 @@
 from collections import OrderedDict
 
 from django.utils.module_loading import import_string
-from rest_framework.relations import PrimaryKeyRelatedField, SlugRelatedField
+from rest_framework.relations import (
+    PrimaryKeyRelatedField, SlugRelatedField, MANY_RELATION_KWARGS,
+    ManyRelatedField as DRFManyRelatedField
+)
 
 
-class PresentableRelatedFieldMixin(object):
+class ReadSourceMixin(object):
+    """
+    This mixin override get_attribute method and set read_source attribute
+    to source attribute if read_source attribute setted. For the purpose of
+    not want to effect of write operation, we don't override bind method.
+    """
+
+    class ManyRelatedField(DRFManyRelatedField):
+        def get_attribute(self, instance):
+            if self.child_relation.read_source:
+                self.source = self.child_relation.read_source
+                self.bind(self.field_name, self.parent)
+
+            return super().get_attribute(instance)
+
+    def __init__(self, **kwargs):
+        self.read_source = kwargs.pop("read_source", None)
+        super().__init__(**kwargs)
+
+    @classmethod
+    def many_init(cls, *args, **kwargs):
+        if not kwargs.get("read_source", None):
+            return super().many_init(*args, **kwargs)
+
+        list_kwargs = {'child_relation': cls(*args, **kwargs)}
+        for key in kwargs:
+            if key in MANY_RELATION_KWARGS:
+                list_kwargs[key] = kwargs[key]
+
+        return cls.ManyRelatedField(**list_kwargs)
+
+    def get_attribute(self, instance):
+        if self.read_source:
+            self.source = self.read_source
+            self.bind(self.field_name, self.parent)
+
+        return super().get_attribute(instance)
+
+
+class PresentableRelatedFieldMixin(ReadSourceMixin):
     def __init__(self, **kwargs):
         self.presentation_serializer = kwargs.pop("presentation_serializer", None)
         self.presentation_serializer_kwargs = kwargs.pop(
@@ -17,6 +59,7 @@ class PresentableRelatedFieldMixin(object):
         super(PresentableRelatedFieldMixin, self).__init__(**kwargs)
 
     def use_pk_only_optimization(self):
+
         """
         Instead of sending pk only object, return full object. The object already retrieved from db by drf.
         This doesn't cause an extra query.
