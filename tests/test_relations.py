@@ -41,6 +41,7 @@ class SerializerWithPresentable(serializers.Serializer):
         queryset=MockQueryset([MockObject(pk=1, name="foo")]),
         presentation_serializer=PresentationSerializer,
         read_source="bar_property", many=False
+    )
 
 
 class TestPresentablePrimaryKeyRelatedField(APISimpleTestCase):
