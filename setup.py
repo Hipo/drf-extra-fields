@@ -8,8 +8,8 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
-    name='django-extra-fields',
-    version='3.0.1',
+    name='drf-extra-fields',
+    version='3.0.2',
     packages=['drf_extra_fields',
               'drf_extra_fields.runtests'],
     include_package_data=True,

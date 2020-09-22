@@ -5,8 +5,8 @@ Extra Fields for Django Rest Framework
 
 [![Build Status](https://travis-ci.org/Hipo/drf-extra-fields.svg?branch=master)](https://travis-ci.org/Hipo/drf-extra-fields)
 [![codecov](https://codecov.io/gh/Hipo/drf-extra-fields/branch/master/graph/badge.svg)](https://codecov.io/gh/Hipo/drf-extra-fields)
-[![PyPI Version](https://img.shields.io/pypi/v/django-extra-fields.svg)](https://pypi.org/project/django-extra-fields)
-[![Python Versions](https://img.shields.io/pypi/pyversions/django-extra-fields.svg)](https://pypi.org/project/django-extra-fields)
+[![PyPI Version](https://img.shields.io/pypi/v/drf-extra-fields.svg)](https://pypi.org/project/drf-extra-fields)
+[![Python Versions](https://img.shields.io/pypi/pyversions/drf-extra-fields.svg)](https://pypi.org/project/drf-extra-fields)
 
 Usage
 ================
@@ -14,10 +14,11 @@ Usage
 Install the package
 
 ```bash
-pip install django-extra-fields
+pip install drf-extra-fields
 ```
 
 **Note:**
+- **This package renamed as "drf-extra-fields", earlier it was named as django-extra-fields.**
 - Install version 0.1 for Django Rest Framework 2.*
 - Install version 0.3 or greater for Django Rest Framework 3.*
 
