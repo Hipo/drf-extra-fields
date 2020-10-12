@@ -421,6 +421,16 @@ class DateRangeSerializer(serializers.Serializer):
     range = DateRangeField(initial=DateRange(None, None))
 
 
+class DateRangeWithAllowEmptyFalseSerializer(serializers.Serializer):
+
+    range = DateRangeField(allow_empty=False)
+
+
+class DateRangeWithAllowEmptyTrueSerializer(serializers.Serializer):
+
+    range = DateRangeField(allow_empty=True)
+
+
 class DecimalRangeSerializer(serializers.Serializer):
 
     range = DecimalRangeField()
@@ -746,6 +756,15 @@ class TestDateRangeField(FieldValues):
     def test_initial_value_of_field(self):
         serializer = DateRangeSerializer()
         assert serializer.data['range'] == {'lower': None, 'upper': None, 'bounds': '[)'}
+
+    def test_allow_empty(self):
+        serializer = DateRangeWithAllowEmptyFalseSerializer(data={"range": {}})
+        with pytest.raises(serializers.ValidationError) as exc_info:
+            serializer.is_valid(raise_exception=True)
+            assert exc_info.value.detail == ["This dictionary may not be empty."]
+
+        serializer = DateRangeWithAllowEmptyTrueSerializer(data={"range": {}})
+        assert serializer.is_valid()
 
 
 class EmailSerializer(serializers.Serializer):

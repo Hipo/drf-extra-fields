@@ -171,11 +171,11 @@ class RangeField(DictField):
 
     range_type = None
 
-    default_error_messages = {
-        'not_a_dict': _('Expected a dictionary of items but got type "{input_type}".'),
+    default_error_messages = dict(DictField.default_error_messages)
+    default_error_messages.update({
         'too_much_content': _('Extra content not allowed "{extra}".'),
         'bound_ordering': _('The start of the range must not exceed the end of the range.'),
-    }
+    })
 
     def to_internal_value(self, data):
         """
@@ -183,9 +183,12 @@ class RangeField(DictField):
         """
         if html.is_html_input(data):
             data = html.parse_html_dict(data)
-
         if not isinstance(data, dict):
             self.fail('not_a_dict', input_type=type(data).__name__)
+
+        # allow_empty is added to DictField in DRF Version 3.9.3
+        if hasattr(self, "allow_empty") and not self.allow_empty and len(data) == 0:
+            self.fail('empty')
 
         extra_content = list(set(data) - set(["lower", "upper", "bounds", "empty"]))
         if extra_content:
