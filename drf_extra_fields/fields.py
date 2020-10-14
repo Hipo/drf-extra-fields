@@ -4,6 +4,7 @@ import imghdr
 import io
 import uuid
 
+from django.core import checks
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
@@ -27,6 +28,9 @@ try:
     from psycopg2.extras import DateRange, DateTimeTZRange, NumericRange
 except:
     postgres_fields = None
+    DateRange = None
+    DateTimeTZRange = None
+    NumericRange = None
 
 
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
@@ -238,35 +242,50 @@ class RangeField(DictField):
         return self.to_representation(initial)
 
 
+class PostgresDependencyCheckerMixin:
+    """ Mixin to check if postgres is none.
+    """
+    def check(self, **kwargs):
+        errors = super().check(**kwargs)
+        if postgres_fields is None:
+            errors.append(
+                checks.Error(
+                    "'psgl2' is required to use {name}".format(name=self.__class__.__name__),
+                    hint="Install the 'psycopg2' library from 'pip'",
+                    obj=self
+                )
+            )
+        return errors
+
+
+class IntegerRangeField(RangeField, PostgresDependencyCheckerMixin):
+    child = IntegerField()
+    range_type = NumericRange
+
+
+class FloatRangeField(RangeField, PostgresDependencyCheckerMixin):
+    child = FloatField()
+    range_type = NumericRange
+
+
+class DecimalRangeField(RangeField, PostgresDependencyCheckerMixin):
+    child = DecimalField(max_digits=None, decimal_places=None)
+    range_type = NumericRange
+
+
+class DateTimeRangeField(RangeField, PostgresDependencyCheckerMixin):
+    child = DateTimeField()
+    range_type = DateTimeTZRange
+
+
+class DateRangeField(RangeField, PostgresDependencyCheckerMixin):
+    child = DateField()
+    range_type = DateRange
+
+
 if postgres_fields:
-    class IntegerRangeField(RangeField):
-        child = IntegerField()
-        range_type = NumericRange
-
-
-    class FloatRangeField(RangeField):
-        child = FloatField()
-        range_type = NumericRange
-
-
-    class DecimalRangeField(RangeField):
-        child = DecimalField(max_digits=None, decimal_places=None)
-        range_type = NumericRange
-
-
-    class DateTimeRangeField(RangeField):
-        child = DateTimeField()
-        range_type = DateTimeTZRange
-
-
-    class DateRangeField(RangeField):
-        child = DateField()
-        range_type = DateRange
-
-
     # monkey patch modelserializer to map Native django Range fields to
     # drf_extra_fiels's Range fields.
-
     ModelSerializer.serializer_field_mapping[postgres_fields.DateTimeRangeField] = DateTimeRangeField
     ModelSerializer.serializer_field_mapping[postgres_fields.DateRangeField] = DateRangeField
     ModelSerializer.serializer_field_mapping[postgres_fields.IntegerRangeField] = IntegerRangeField
