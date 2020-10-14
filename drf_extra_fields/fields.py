@@ -2,6 +2,7 @@ import base64
 import binascii
 import imghdr
 import io
+import logging
 import uuid
 
 from django.core import checks
@@ -32,6 +33,8 @@ except:
     DateTimeTZRange = None
     NumericRange = None
 
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
@@ -185,6 +188,27 @@ class RangeField(DictField):
         'bound_ordering': _('The start of the range must not exceed the end of the range.'),
     })
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        checks = self.check()
+
+        for check in checks:
+            logger.error(check)
+
+    def check(self, **kwargs):
+        """Check if postgres is none. you can also extend this function to check more things.
+        """
+        errors = []
+        if postgres_fields is None:
+            errors.append(
+                checks.Error(
+                    "'psgl2' is required to use {name}".format(name=self.__class__.__name__),
+                    hint="Install the 'psycopg2' library from 'pip'",
+                    obj=self
+                )
+            )
+        return errors
+
     def to_internal_value(self, data):
         """
         Range instances <- Dicts of primitive datatypes.
@@ -242,43 +266,27 @@ class RangeField(DictField):
         return self.to_representation(initial)
 
 
-class PostgresDependencyCheckerMixin:
-    """ Mixin to check if postgres is none.
-    """
-    def check(self, **kwargs):
-        errors = super().check(**kwargs)
-        if postgres_fields is None:
-            errors.append(
-                checks.Error(
-                    "'psgl2' is required to use {name}".format(name=self.__class__.__name__),
-                    hint="Install the 'psycopg2' library from 'pip'",
-                    obj=self
-                )
-            )
-        return errors
-
-
-class IntegerRangeField(RangeField, PostgresDependencyCheckerMixin):
+class IntegerRangeField(RangeField):
     child = IntegerField()
     range_type = NumericRange
 
 
-class FloatRangeField(RangeField, PostgresDependencyCheckerMixin):
+class FloatRangeField(RangeField):
     child = FloatField()
     range_type = NumericRange
 
 
-class DecimalRangeField(RangeField, PostgresDependencyCheckerMixin):
+class DecimalRangeField(RangeField):
     child = DecimalField(max_digits=None, decimal_places=None)
     range_type = NumericRange
 
 
-class DateTimeRangeField(RangeField, PostgresDependencyCheckerMixin):
+class DateTimeRangeField(RangeField):
     child = DateTimeField()
     range_type = DateTimeTZRange
 
 
-class DateRangeField(RangeField, PostgresDependencyCheckerMixin):
+class DateRangeField(RangeField):
     child = DateField()
     range_type = DateRange
 
