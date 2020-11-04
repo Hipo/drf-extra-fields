@@ -9,7 +9,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='drf-extra-fields',
-    version='3.0.3',
+    version='3.0.4',
     packages=['drf_extra_fields',
               'drf_extra_fields.runtests'],
     include_package_data=True,
