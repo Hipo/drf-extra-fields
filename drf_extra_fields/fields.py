@@ -221,13 +221,23 @@ class RangeField(DictField):
         """
         Range instances -> dicts of primitive datatypes.
         """
-        if value.isempty:
-            return {'empty': True}
-        lower = self.child.to_representation(value.lower) if value.lower is not None else None
-        upper = self.child.to_representation(value.upper) if value.upper is not None else None
+        if isinstance(value, dict):
+            if not value:
+                return value
+
+            lower = self.child.to_representation(value["lower"]) if value.get("lower") is not None else None
+            upper = self.child.to_representation(value["upper"]) if value.get("upper") is not None else None
+            bounds = value.get("bounds")
+        else:
+            if value.isempty:
+                return {'empty': True}
+            lower = self.child.to_representation(value.lower) if value.lower is not None else None
+            upper = self.child.to_representation(value.upper) if value.upper is not None else None
+            bounds = value._bounds
+
         return {'lower': lower,
                 'upper': upper,
-                'bounds': value._bounds}
+                'bounds': bounds}
 
     def get_initial(self):
         initial = super().get_initial()
