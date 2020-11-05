@@ -460,14 +460,6 @@ class FieldValues:
             assert serializer.initial_data == initial_input_value
             assert self.field.run_validation(initial_input_value) == expected_output
 
-    def test_valid_instances(self):
-        """
-        Ensure that valid values return the expected validated data.
-        """
-        for instance, expected_output in get_items(self.valid_instances):
-            serializer = self.serializer_class(instance={"range": instance})
-            assert serializer.data["range"] == expected_output
-
     def test_invalid_inputs(self):
         """
         Ensure that invalid values raise the expected validation error.
@@ -489,17 +481,6 @@ class TestIntegerRangeField(FieldValues):
     Values for `ListField` with CharField as child.
     """
     serializer_class = IntegerRangeSerializer
-    valid_instances = [
-        ({'lower': '1', 'upper': 2, 'bounds': '[)'},
-         {'lower': 1, 'upper': 2, 'bounds': '[)'}),
-        ({'lower': 1, 'upper': 2},
-         {'lower': 1, 'upper': 2, 'bounds': None}),
-        ({'lower': 1},
-         {'lower': 1, 'upper': None, 'bounds': None}),
-        ({'upper': 1},
-         {'lower': None, 'upper': 1, 'bounds': None}),
-        ({}, {}),
-    ]
     valid_inputs = [
         ({'lower': '1', 'upper': 2, 'bounds': '[)'},
          NumericRange(**{'lower': 1, 'upper': 2, 'bounds': '[)'})),
@@ -524,6 +505,15 @@ class TestIntegerRangeField(FieldValues):
          {'lower': 1, 'upper': 2, 'bounds': '[)'}),
         (NumericRange(**{'empty': True}), {'empty': True}),
         (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        ({'lower': '1', 'upper': 2, 'bounds': '[)'},
+         {'lower': 1, 'upper': 2, 'bounds': '[)'}),
+        ({'lower': 1, 'upper': 2},
+         {'lower': 1, 'upper': 2, 'bounds': None}),
+        ({'lower': 1},
+         {'lower': 1, 'upper': None, 'bounds': None}),
+        ({'upper': 1},
+         {'lower': None, 'upper': 1, 'bounds': None}),
+        ({}, {}),
     ]
     field = IntegerRangeField()
 
@@ -540,17 +530,6 @@ class TestIntegerRangeField(FieldValues):
 class TestDecimalRangeField(FieldValues):
     serializer_class = DecimalRangeSerializer
 
-    valid_instances = [
-        ({'lower': Decimal('1.1'), 'upper': "2.3", 'bounds': '[)'},
-         {'lower': "1.1", 'upper': "2.3", 'bounds': '[)'}),
-        ({'lower': Decimal('1.1'), 'upper': "2.3"},
-         {'lower': "1.1", 'upper': "2.3", 'bounds': None}),
-        ({'lower': 1},
-         {'lower': "1", 'upper': None, 'bounds': None}),
-        ({'upper': 1},
-         {'lower': None, 'upper': "1", 'bounds': None}),
-        ({}, {}),
-    ]
     valid_inputs = [
         ({'lower': '1', 'upper': 2., 'bounds': '[)'},
          NumericRange(**{'lower': 1., 'upper': 2., 'bounds': '[)'})),
@@ -574,6 +553,15 @@ class TestDecimalRangeField(FieldValues):
          {'lower': '1.1', 'upper': '2', 'bounds': '[)'}),
         (NumericRange(**{'empty': True}), {'empty': True}),
         (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        ({'lower': Decimal('1.1'), 'upper': "2.3", 'bounds': '[)'},
+         {'lower': "1.1", 'upper': "2.3", 'bounds': '[)'}),
+        ({'lower': Decimal('1.1'), 'upper': "2.3"},
+         {'lower': "1.1", 'upper': "2.3", 'bounds': None}),
+        ({'lower': 1},
+         {'lower': "1", 'upper': None, 'bounds': None}),
+        ({'upper': 1},
+         {'lower': None, 'upper': "1", 'bounds': None}),
+        ({}, {}),
     ]
     field = DecimalRangeField()
 
@@ -591,17 +579,6 @@ class TestDecimalRangeFieldWithChildAttribute(FieldValues):
     serializer_class = DecimalRangeSerializerWithChildAttribute
     field = DecimalRangeField(child=DecimalField(max_digits=5, decimal_places=2))
 
-    valid_instances = [
-        ({'lower': Decimal('1.1'), 'upper': "2.3", 'bounds': '[)'},
-         {'lower': "1.10", 'upper': "2.30", 'bounds': '[)'}),
-        ({'lower': Decimal('1.1'), 'upper': "2.3"},
-         {'lower': "1.10", 'upper': "2.30", 'bounds': None}),
-        ({'lower': 1},
-         {'lower': "1.00", 'upper': None, 'bounds': None}),
-        ({'upper': 1},
-         {'lower': None, 'upper': "1.00", 'bounds': None}),
-        ({}, {}),
-    ]
     valid_inputs = [
         ({'lower': '1', 'upper': 2., 'bounds': '[)'},
          NumericRange(**{'lower': 1., 'upper': 2., 'bounds': '[)'})),
@@ -627,6 +604,15 @@ class TestDecimalRangeFieldWithChildAttribute(FieldValues):
          {'lower': '1.10', 'upper': '2.00', 'bounds': '[)'}),
         (NumericRange(**{'empty': True}), {'empty': True}),
         (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        ({'lower': Decimal('1.1'), 'upper': "2.3", 'bounds': '[)'},
+         {'lower': "1.10", 'upper': "2.30", 'bounds': '[)'}),
+        ({'lower': Decimal('1.1'), 'upper': "2.3"},
+         {'lower': "1.10", 'upper': "2.30", 'bounds': None}),
+        ({'lower': 1},
+         {'lower': "1.00", 'upper': None, 'bounds': None}),
+        ({'upper': 1},
+         {'lower': None, 'upper': "1.00", 'bounds': None}),
+        ({}, {}),
     ]
 
 
@@ -638,17 +624,6 @@ class TestFloatRangeField(FieldValues):
     """
     serializer_class = FloatRangeSerializer
 
-    valid_instances = [
-        ({'lower': '1', 'upper': 2., 'bounds': '[)'},
-         {'lower': 1., 'upper': 2., 'bounds': '[)'}),
-        ({'lower': 1., 'upper': 2.},
-         {'lower': 1, 'upper': 2, 'bounds': None}),
-        ({'lower': 1},
-         {'lower': 1, 'upper': None, 'bounds': None}),
-        ({'upper': 1},
-         {'lower': None, 'upper': 1, 'bounds': None}),
-        ({}, {}),
-    ]
     valid_inputs = [
         ({'lower': '1', 'upper': 2., 'bounds': '[)'},
          NumericRange(**{'lower': 1., 'upper': 2., 'bounds': '[)'})),
@@ -672,6 +647,15 @@ class TestFloatRangeField(FieldValues):
          {'lower': 1.1, 'upper': 2, 'bounds': '[)'}),
         (NumericRange(**{'empty': True}), {'empty': True}),
         (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        ({'lower': '1', 'upper': 2., 'bounds': '[)'},
+         {'lower': 1., 'upper': 2., 'bounds': '[)'}),
+        ({'lower': 1., 'upper': 2.},
+         {'lower': 1, 'upper': 2, 'bounds': None}),
+        ({'lower': 1},
+         {'lower': 1, 'upper': None, 'bounds': None}),
+        ({'upper': 1},
+         {'lower': None, 'upper': 1, 'bounds': None}),
+        ({}, {}),
     ]
     field = FloatRangeField()
 
@@ -692,25 +676,6 @@ class TestDateTimeRangeField(TestCase, FieldValues):
     """
     serializer_class = DateTimeRangeSerializer
 
-    valid_instances = [
-        ({'lower': '2001-01-01T13:00:00Z',
-          'upper': '2001-02-02T13:00:00Z',
-          'bounds': '[)'},
-         {'lower': '2001-01-01T13:00:00Z',
-          'upper': '2001-02-02T13:00:00Z',
-          'bounds': '[)'}),
-        ({'lower': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=pytz.utc),
-          'upper': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=pytz.utc),
-          'bounds': '[)'},
-         {'lower': '2001-01-01T13:00:00Z',
-          'upper': '2001-02-02T13:00:00Z',
-          'bounds': '[)'}),
-        ({'upper': '2001-02-02T13:00:00Z', 'bounds': '[)'},
-         {'lower': None, 'upper': '2001-02-02T13:00:00Z', 'bounds': '[)'}),
-        ({'lower': '2001-01-01T13:00:00Z', 'bounds': '[)'},
-         {'lower': '2001-01-01T13:00:00Z', 'upper': None, 'bounds': '[)'}),
-        ({}, {}),
-    ]
     valid_inputs = [
         ({'lower': '2001-01-01T13:00:00Z',
           'upper': '2001-02-02T13:00:00Z',
@@ -753,6 +718,23 @@ class TestDateTimeRangeField(TestCase, FieldValues):
          {'empty': True}),
         (DateTimeTZRange(),
          {'bounds': '[)', 'lower': None, 'upper': None}),
+        ({'lower': '2001-01-01T13:00:00Z',
+          'upper': '2001-02-02T13:00:00Z',
+          'bounds': '[)'},
+         {'lower': '2001-01-01T13:00:00Z',
+          'upper': '2001-02-02T13:00:00Z',
+          'bounds': '[)'}),
+        ({'lower': datetime.datetime(2001, 1, 1, 13, 00, tzinfo=pytz.utc),
+          'upper': datetime.datetime(2001, 2, 2, 13, 00, tzinfo=pytz.utc),
+          'bounds': '[)'},
+         {'lower': '2001-01-01T13:00:00Z',
+          'upper': '2001-02-02T13:00:00Z',
+          'bounds': '[)'}),
+        ({'upper': '2001-02-02T13:00:00Z', 'bounds': '[)'},
+         {'lower': None, 'upper': '2001-02-02T13:00:00Z', 'bounds': '[)'}),
+        ({'lower': '2001-01-01T13:00:00Z', 'bounds': '[)'},
+         {'lower': '2001-01-01T13:00:00Z', 'upper': None, 'bounds': '[)'}),
+        ({}, {}),
     ]
     field = DateTimeRangeField()
 
@@ -772,25 +754,6 @@ class TestDateRangeField(FieldValues):
     """
     serializer_class = DateRangeSerializer
 
-    valid_instances = [
-        ({'lower': '2001-01-01',
-          'upper': '2001-02-02',
-          'bounds': '[)'},
-         {'lower': '2001-01-01',
-          'upper': '2001-02-02',
-          'bounds': '[)'}),
-        ({'lower': datetime.date(2001, 1, 1),
-          'upper': datetime.date(2001, 2, 2),
-          'bounds': '[)'},
-         {'lower': '2001-01-01',
-          'upper': '2001-02-02',
-          'bounds': '[)'}),
-        ({'upper': '2001-02-02', 'bounds': '[)'},
-         {'lower': None, 'upper': '2001-02-02', 'bounds': '[)'}),
-        ({'lower': '2001-01-01', 'bounds': '[)'},
-         {'lower': '2001-01-01', 'upper': None,  'bounds': '[)'}),
-        ({}, {}),
-    ]
     valid_inputs = [
         ({'lower': '2001-01-01',
           'upper': '2001-02-02',
@@ -832,6 +795,23 @@ class TestDateRangeField(FieldValues):
         (DateRange(**{'empty': True}),
          {'empty': True}),
         (DateRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        ({'lower': '2001-01-01',
+          'upper': '2001-02-02',
+          'bounds': '[)'},
+         {'lower': '2001-01-01',
+          'upper': '2001-02-02',
+          'bounds': '[)'}),
+        ({'lower': datetime.date(2001, 1, 1),
+          'upper': datetime.date(2001, 2, 2),
+          'bounds': '[)'},
+         {'lower': '2001-01-01',
+          'upper': '2001-02-02',
+          'bounds': '[)'}),
+        ({'upper': '2001-02-02', 'bounds': '[)'},
+         {'lower': None, 'upper': '2001-02-02', 'bounds': '[)'}),
+        ({'lower': '2001-01-01', 'bounds': '[)'},
+         {'lower': '2001-01-01', 'upper': None,  'bounds': '[)'}),
+        ({}, {}),
     ]
     field = DateRangeField()
 
