@@ -28,6 +28,10 @@ DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
 
 class Base64FieldMixin(object):
+    trust_provided_content_type = False
+
+    EMPTY_VALUES = (None, "", [], (), {})
+
     @property
     def ALLOWED_TYPES(self):
         raise NotImplementedError
@@ -40,10 +44,8 @@ class Base64FieldMixin(object):
     def INVALID_TYPE_MESSAGE(self):
         raise NotImplementedError
 
-    EMPTY_VALUES = (None, '', [], (), {})
-
     def __init__(self, *args, **kwargs):
-        self.represent_in_base64 = kwargs.pop('represent_in_base64', False)
+        self.represent_in_base64 = kwargs.pop("represent_in_base64", False)
         super(Base64FieldMixin, self).__init__(*args, **kwargs)
 
     def to_internal_value(self, base64_data):
@@ -55,28 +57,36 @@ class Base64FieldMixin(object):
             file_mime_type = None
 
             # Strip base64 header, get mime_type from base64 header.
-            if ';base64,' in base64_data:
-                header, base64_data = base64_data.split(';base64,')
-                file_mime_type = header.replace('data:', '')
+            if ";base64," in base64_data:
+                header, base64_data = base64_data.split(";base64,")
+                if self.trust_provided_content_type:
+                    file_mime_type = header.replace("data:", "")
 
             # Try to decode the file. Return validation error if it fails.
             try:
                 decoded_file = base64.b64decode(base64_data)
             except (TypeError, binascii.Error, ValueError):
                 raise ValidationError(self.INVALID_FILE_MESSAGE)
+
             # Generate file name:
             file_name = self.get_file_name(decoded_file)
+
             # Get the file name extension:
             file_extension = self.get_file_extension(file_name, decoded_file)
+
             if file_extension not in self.ALLOWED_TYPES:
                 raise ValidationError(self.INVALID_TYPE_MESSAGE)
+
             complete_file_name = file_name + "." + file_extension
-            data = SimpleUploadedFile(name=complete_file_name, content=decoded_file,
-                                      content_type=file_mime_type
-                                      )
+            data = SimpleUploadedFile(
+                name=complete_file_name,
+                content=decoded_file,
+                content_type=file_mime_type
+            )
+
             return super(Base64FieldMixin, self).to_internal_value(data)
-        raise ValidationError(_('Invalid type. This is not an base64 string: {}'.format(
-            type(base64_data))))
+
+        raise ValidationError(_("Invalid type. This is not an base64 string: {}".format(type(base64_data))))
 
     def get_file_extension(self, filename, decoded_file):
         raise NotImplementedError
@@ -91,10 +101,10 @@ class Base64FieldMixin(object):
             # empty base64 str rather than let the exception propagate unhandled
             # up into serializers.
             if not file:
-                return ''
+                return ""
 
             try:
-                with open(file.path, 'rb') as f:
+                with open(file.path, "rb") as f:
                     return base64.b64encode(f.read()).decode()
             except Exception:
                 raise IOError("Error encoding file")
