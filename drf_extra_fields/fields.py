@@ -28,8 +28,6 @@ DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
 
 class Base64FieldMixin(object):
-    trust_provided_content_type = False
-
     EMPTY_VALUES = (None, "", [], (), {})
 
     @property
@@ -45,6 +43,7 @@ class Base64FieldMixin(object):
         raise NotImplementedError
 
     def __init__(self, *args, **kwargs):
+        self.trust_provided_content_type = kwargs.pop("trust_provided_content_type", False)
         self.represent_in_base64 = kwargs.pop("represent_in_base64", False)
         super(Base64FieldMixin, self).__init__(*args, **kwargs)
 
