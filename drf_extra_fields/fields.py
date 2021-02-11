@@ -190,6 +190,11 @@ class RangeField(DictField):
         'bound_ordering': _('The start of the range must not exceed the end of the range.'),
     })
 
+    def __init__(self, **kwargs):
+        self.child_attrs = kwargs.pop("child_attrs", {})
+        self.child = self.child_class(**self.default_child_attrs, **self.child_attrs)
+        super(RangeField, self).__init__(**kwargs)
+
     def to_internal_value(self, data):
         """
         Range instances <- Dicts of primitive datatypes.
@@ -258,27 +263,32 @@ class RangeField(DictField):
 
 
 class IntegerRangeField(RangeField):
-    child = IntegerField()
+    child_class = IntegerField
+    default_child_attrs = {}
     range_type = NumericRange
 
 
 class FloatRangeField(RangeField):
-    child = FloatField()
+    child_class = FloatField
+    default_child_attrs = {}
     range_type = NumericRange
 
 
 class DecimalRangeField(RangeField):
-    child = DecimalField(max_digits=None, decimal_places=None)
+    child_class = DecimalField
+    default_child_attrs = {"max_digits": None, "decimal_places": None}
     range_type = NumericRange
 
 
 class DateTimeRangeField(RangeField):
-    child = DateTimeField()
+    child_class = DateTimeField
+    default_child_attrs = {}
     range_type = DateTimeTZRange
 
 
 class DateRangeField(RangeField):
-    child = DateField()
+    child_class = DateField
+    default_child_attrs = {}
     range_type = DateRange
 
 
