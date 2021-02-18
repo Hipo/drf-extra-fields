@@ -127,6 +127,28 @@ point = {
 serializer = PointFieldSerializer(data={'created': now, 'point': point})
 ```
 
+
+# RangeField
+
+The Range Fields map to Django's PostgreSQL specific [Range Fields](https://docs.djangoproject.com/en/stable/ref/contrib/postgres/fields/#range-fields).
+
+Each accepts an optional parameter `child_attrs`, which allows passing parameters to the child field.
+
+For example, calling `IntegerRangeField(child_attrs={"allow_null": True})` allows deserializing data with a null value for `lower` and/or `upper`:
+
+```python
+from rest_framework import serializers
+from drf_extra_fields.fields import IntegerRangeField
+
+
+class RangeSerializer(serializers.Serializer):
+    ranges = IntegerRangeField(child_attrs={"allow_null": True})
+
+
+serializer = RangeSerializer(data={'ranges': {'lower': 0, 'upper': None}})
+
+```
+
 ## IntegerRangeField
 
 ```python
