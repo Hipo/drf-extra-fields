@@ -124,6 +124,64 @@ point = {
     }
 serializer = PointFieldSerializer(data={'created': now, 'point': point})
 ```
+## PolygonField
+
+Polygon field for GeoDjango
+
+**Signature:** `PolygonField()`
+ - It takes a list of orderly pair arrays, representing points which all together are supposed to make a polygon. example:
+
+    [
+        [
+            51.778564453125,
+            35.59925232772949
+        ],
+        [
+            50.1470947265625,
+            34.80929324176267
+        ],
+        [
+            52.6080322265625,
+            34.492975402501536
+        ],
+        [
+            51.778564453125,
+            35.59925232772949
+        ]
+    ]
+
+**Example:**
+
+```python
+# serializer
+
+from drf_extra_fields.geo_fields import PolygonField
+
+class PolygonFieldSerializer(serializers.Serializer):
+    polygon = PolygonField(required=False)
+    created = serializers.DateTimeField()
+
+# use the serializer
+polygon = [
+        [
+            51.778564453125,
+            35.59925232772949
+        ],
+        [
+            50.1470947265625,
+            34.80929324176267
+        ],
+        [
+            52.6080322265625,
+            34.492975402501536
+        ],
+        [
+            51.778564453125,
+            35.59925232772949
+        ]
+    ]
+serializer = PolygonFieldSerializer(data={'created': now, 'polygon': polygon})
+```
 
 ## IntegerRangeField
 

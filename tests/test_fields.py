@@ -26,7 +26,7 @@ from drf_extra_fields.fields import (
     LowercaseEmailField,
     DecimalRangeField,
 )
-from drf_extra_fields.geo_fields import PointField
+from drf_extra_fields.geo_fields import PointField, PolygonField
 from drf_extra_fields import compat
 
 UNDETECTABLE_BY_IMGHDR_SAMPLE = """data:image/jpeg;base64,
@@ -269,12 +269,173 @@ class Base64FileSerializerTests(TestCase):
         finally:
             os.remove('im.jpg')
 
+class SavePolygon(object):
+    def __init__(self, polygon=None, created=None):
+        self.polygon = polygon
+        self.created = created or datetime.datetime.now()
+
+class PolygonSerializer(serializers.Serializer):
+    polygon = PolygonField(required=False)
+    created = serializers.DateTimeField()
+
+    def update(self, instance, validated_data):
+        instance.polygon = validated_data['polygon']
+        return instance
+
+    def create(self, validated_data):
+        return SavePolygon(**validated_data)
+
+
+class StringPolygonSerializer(PolygonSerializer):
+    polygon = PolygonField(required=False)
+
+
+class PolygonSerializerTest(TestCase):
+    def test_create(self):
+        """
+        Test for creating Polygon field in the server side
+        """
+        now = datetime.datetime.now()
+        polygon =  [
+                [
+                    51.778564453125,
+                    35.59925232772949
+                ],
+                [
+                    50.1470947265625,
+                    34.80929324176267
+                ],
+                [
+                    52.6080322265625,
+                    34.492975402501536
+                ],
+                [
+                    51.778564453125,
+                    35.59925232772949
+                ]
+            ]
+        serializer = PolygonSerializer(data={'created': now, 'polygon': polygon})
+        saved_polygon = SavePolygon(polygon=polygon, created=now)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['created'], saved_polygon.created)
+        self.assertIsNone(serializer.validated_data['polygon'].srid)
+
+    def test_remove_with_empty_string(self):
+        """
+        Passing empty string as data should cause polygon to be removed
+        """
+        now = datetime.datetime.now()
+        polygon =  [
+                [
+                    51.778564453125,
+                    35.59925232772949
+                ],
+                [
+                    50.1470947265625,
+                    34.80929324176267
+                ],
+                [
+                    52.6080322265625,
+                    34.492975402501536
+                ],
+                [
+                    51.778564453125,
+                    35.59925232772949
+                ]
+            ]
+        saved_polygon = SavePolygon(polygon=polygon, created=now)
+        serializer = PolygonSerializer(data={'created': now, 'polygon': ''})
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['created'], saved_polygon.created)
+        self.assertIsNone(serializer.validated_data['polygon'])
+
+    def test_validation_error_with_wrong_format(self):
+        """
+        Passing data with the wrong format should cause validation error
+        """
+        now = datetime.datetime.now()
+        serializer = PolygonSerializer(data={'created': now, 'polygon': '{[22,30], [23,31]}'})
+        self.assertFalse(serializer.is_valid())
+
+    def test_validation_error_with_none_closing_polygon(self):
+        """
+        Passing data which the last point is not equal to the first point (causing an open polygon) should cause validation error
+        """
+        polygon = [
+                [
+                    51.778564453125,
+                    35.59925232772949
+                ],
+                [
+                    50.1470947265625,
+                    34.80929324176267
+                ],
+                [
+                    52.6080322265625,
+                    34.492975402501536
+                ]
+        ]
+        now = datetime.datetime.now()
+        serializer = PolygonSerializer(data={'created': now, 'polygon': polygon})
+        self.assertFalse(serializer.is_valid())
+        
+        def test_serialization(self):
+            """
+            Regular JSON serialization should output float values
+            """
+            from django.contrib.gis.geos import Polygon
+            now = datetime.datetime.now()
+            polygon = Polygon(
+                [
+                    [
+                        51.778564453125,
+                        35.59925232772949
+                    ],
+                    [
+                        50.1470947265625,
+                        34.80929324176267
+                    ],
+                    [
+                        52.6080322265625,
+                        34.492975402501536
+                    ],
+                    [
+                        51.778564453125,
+                        35.59925232772949
+                    ]
+                ]
+            )
+
+            saved_polygon = SavePolygon(polygon=polygon, created=now)
+            serializer = PolygonSerializer(saved_polygon)
+        
+            self.assertEqual(
+                serializer.data['polygon'], 
+                [
+                    [
+                        51.778564453125,
+                        35.59925232772949
+                    ],
+                    [
+                        50.1470947265625,
+                        34.80929324176267
+                    ],
+                    [
+                        52.6080322265625,
+                        34.492975402501536
+                    ],
+                    [
+                        51.778564453125,
+                        35.59925232772949
+                    ]
+                ]
+            )
+
 
 class SavePoint(object):
     def __init__(self, point=None, created=None):
         self.point = point
         self.created = created or datetime.datetime.now()
-
 
 class PointSerializer(serializers.Serializer):
     point = PointField(required=False)
