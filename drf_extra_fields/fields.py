@@ -5,7 +5,6 @@ import io
 import logging
 import uuid
 
-from django.core import checks
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
@@ -27,7 +26,7 @@ from drf_extra_fields import compat
 try:
     from django.contrib.postgres import fields as postgres_fields
     from psycopg2.extras import DateRange, DateTimeTZRange, NumericRange
-except:
+except ImportError:
     postgres_fields = None
     DateRange = None
     DateTimeTZRange = None
@@ -190,24 +189,11 @@ class RangeField(DictField):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        checks = self.check()
 
-        for check in checks:
-            logger.error(check)
-
-    def check(self, **kwargs):
-        """Check if postgres is none. you can also extend this function to check more things.
-        """
-        errors = []
         if postgres_fields is None:
-            errors.append(
-                checks.Error(
-                    "'psgl2' is required to use {name}".format(name=self.__class__.__name__),
-                    hint="Install the 'psycopg2' library from 'pip'",
-                    obj=self
-                )
+            assert False, "'psgl2' is required to use {name}. Please install the  'psycopg2' library from 'pip'".format(
+                name=self.__class__.__name__
             )
-        return errors
 
     def to_internal_value(self, data):
         """
