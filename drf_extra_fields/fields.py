@@ -6,7 +6,8 @@ import logging
 import uuid
 
 from django.core.exceptions import ValidationError
-from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.contrib.postgres import fields as postgres_fields
 from django.utils.translation import gettext_lazy as _
 from rest_framework.fields import (
     DateField,
@@ -39,6 +40,8 @@ DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
 
 class Base64FieldMixin(object):
+    EMPTY_VALUES = (None, "", [], (), {})
+
     @property
     def ALLOWED_TYPES(self):
         raise NotImplementedError
@@ -51,10 +54,9 @@ class Base64FieldMixin(object):
     def INVALID_TYPE_MESSAGE(self):
         raise NotImplementedError
 
-    EMPTY_VALUES = (None, '', [], (), {})
-
     def __init__(self, *args, **kwargs):
-        self.represent_in_base64 = kwargs.pop('represent_in_base64', False)
+        self.trust_provided_content_type = kwargs.pop("trust_provided_content_type", False)
+        self.represent_in_base64 = kwargs.pop("represent_in_base64", False)
         super(Base64FieldMixin, self).__init__(*args, **kwargs)
 
     def to_internal_value(self, base64_data):
@@ -63,26 +65,39 @@ class Base64FieldMixin(object):
             return None
 
         if isinstance(base64_data, str):
-            # Strip base64 header.
-            if ';base64,' in base64_data:
-                header, base64_data = base64_data.split(';base64,')
+            file_mime_type = None
+
+            # Strip base64 header, get mime_type from base64 header.
+            if ";base64," in base64_data:
+                header, base64_data = base64_data.split(";base64,")
+                if self.trust_provided_content_type:
+                    file_mime_type = header.replace("data:", "")
 
             # Try to decode the file. Return validation error if it fails.
             try:
                 decoded_file = base64.b64decode(base64_data)
             except (TypeError, binascii.Error, ValueError):
                 raise ValidationError(self.INVALID_FILE_MESSAGE)
+
             # Generate file name:
             file_name = self.get_file_name(decoded_file)
+
             # Get the file name extension:
             file_extension = self.get_file_extension(file_name, decoded_file)
+
             if file_extension not in self.ALLOWED_TYPES:
                 raise ValidationError(self.INVALID_TYPE_MESSAGE)
+
             complete_file_name = file_name + "." + file_extension
-            data = ContentFile(decoded_file, name=complete_file_name)
+            data = SimpleUploadedFile(
+                name=complete_file_name,
+                content=decoded_file,
+                content_type=file_mime_type
+            )
+
             return super(Base64FieldMixin, self).to_internal_value(data)
-        raise ValidationError(_('Invalid type. This is not an base64 string: {}'.format(
-            type(base64_data))))
+
+        raise ValidationError(_("Invalid type. This is not an base64 string: {}".format(type(base64_data))))
 
     def get_file_extension(self, filename, decoded_file):
         raise NotImplementedError
@@ -97,10 +112,10 @@ class Base64FieldMixin(object):
             # empty base64 str rather than let the exception propagate unhandled
             # up into serializers.
             if not file:
-                return ''
+                return ""
 
             try:
-                with open(file.path, 'rb') as f:
+                with open(file.path, "rb") as f:
                     return base64.b64encode(f.read()).decode()
             except Exception:
                 raise IOError("Error encoding file")
@@ -166,6 +181,7 @@ class Base64FileField(Base64FieldMixin, FileField):
     A django-rest-framework field for handling file-uploads through raw post data.
     It uses base64 for en-/decoding the contents of the file.
     """
+
     @property
     def ALLOWED_TYPES(self):
         raise NotImplementedError('List allowed file extensions')
@@ -178,7 +194,6 @@ class Base64FileField(Base64FieldMixin, FileField):
 
 
 class RangeField(DictField):
-
     range_type = None
 
     default_error_messages = dict(DictField.default_error_messages)
@@ -187,13 +202,14 @@ class RangeField(DictField):
         'bound_ordering': _('The start of the range must not exceed the end of the range.'),
     })
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+    def __init__(self, **kwargs):
         if postgres_fields is None:
             assert False, "'psgl2' is required to use {name}. Please install the  'psycopg2' library from 'pip'".format(
                 name=self.__class__.__name__
-            )
+
+        self.child_attrs = kwargs.pop("child_attrs", {})
+        self.child = self.child_class(**self.default_child_attrs, **self.child_attrs)
+        super(RangeField, self).__init__(**kwargs)
 
     def to_internal_value(self, data):
         """
@@ -239,13 +255,23 @@ class RangeField(DictField):
         """
         Range instances -> dicts of primitive datatypes.
         """
-        if value.isempty:
-            return {'empty': True}
-        lower = self.child.to_representation(value.lower) if value.lower is not None else None
-        upper = self.child.to_representation(value.upper) if value.upper is not None else None
-        return {'lower': lower,
-                'upper': upper,
-                'bounds': value._bounds}
+        if isinstance(value, dict):
+            if not value:
+                return value
+
+            lower = value.get("lower")
+            upper = value.get("upper")
+            bounds = value.get("bounds")
+        else:
+            if value.isempty:
+                return {'empty': True}
+            lower = value.lower
+            upper = value.upper
+            bounds = value._bounds
+
+        return {'lower': self.child.to_representation(lower) if lower is not None else None,
+                'upper': self.child.to_representation(upper) if upper is not None else None,
+                'bounds': bounds}
 
     def get_initial(self):
         initial = super().get_initial()
@@ -253,27 +279,32 @@ class RangeField(DictField):
 
 
 class IntegerRangeField(RangeField):
-    child = IntegerField()
+    child_class = IntegerField
+    default_child_attrs = {}
     range_type = NumericRange
 
 
 class FloatRangeField(RangeField):
-    child = FloatField()
+    child_class = FloatField
+    default_child_attrs = {}
     range_type = NumericRange
 
 
 class DecimalRangeField(RangeField):
-    child = DecimalField(max_digits=None, decimal_places=None)
+    child_class = DecimalField
+    default_child_attrs = {"max_digits": None, "decimal_places": None}
     range_type = NumericRange
 
 
 class DateTimeRangeField(RangeField):
-    child = DateTimeField()
+    child_class = DateTimeField
+    default_child_attrs = {}
     range_type = DateTimeTZRange
 
 
 class DateRangeField(RangeField):
-    child = DateField()
+    child_class = DateField
+    default_child_attrs = {}
     range_type = DateRange
 
 
