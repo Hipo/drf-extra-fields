@@ -2,12 +2,10 @@ import base64
 import binascii
 import imghdr
 import io
-import logging
 import uuid
 
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.contrib.postgres import fields as postgres_fields
 from django.utils.translation import gettext_lazy as _
 from rest_framework.fields import (
     DateField,
@@ -33,8 +31,6 @@ except ImportError:
     DateTimeTZRange = None
     NumericRange = None
 
-
-logger = logging.getLogger(__name__)
 
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
@@ -205,7 +201,8 @@ class RangeField(DictField):
     def __init__(self, **kwargs):
         if postgres_fields is None:
             assert False, "'psgl2' is required to use {name}. Please install the  'psycopg2' library from 'pip'".format(
-                name=self.__class__.__name__)
+                name=self.__class__.__name__
+            )
 
         self.child_attrs = kwargs.pop("child_attrs", {})
         self.child = self.child_class(**self.default_child_attrs, **self.child_attrs)
