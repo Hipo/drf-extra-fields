@@ -205,7 +205,7 @@ class RangeField(DictField):
     def __init__(self, **kwargs):
         if postgres_fields is None:
             assert False, "'psgl2' is required to use {name}. Please install the  'psycopg2' library from 'pip'".format(
-                name=self.__class__.__name__
+                name=self.__class__.__name__)
 
         self.child_attrs = kwargs.pop("child_attrs", {})
         self.child = self.child_class(**self.default_child_attrs, **self.child_attrs)
