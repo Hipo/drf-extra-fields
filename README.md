@@ -426,6 +426,41 @@ class EmailSerializer(serializers.Serializer):
 
 ```
 
+
+## ConsciousChoiceField
+An enhanced field with an empty choice. It uses Django's BLANK_CHOICE_DASH so we can stay consistent with it.
+`allow_blank` attribute is responsible for allowing a blank pick.
+
+```python
+from rest_framework import serializers
+from drf_extra_fields.fields import ConsciousChoiceField
+
+
+class ConsciousDecisionSerializer(serializers.Serializer):
+    optional_decision = ConsciousChoiceField(choices=[(1, 'foo'), (2, 'bar')])
+    conscious_decision = ConsciousChoiceField(allow_blank=False, choices=[(1, 'foo'), (2, 'bar')])
+
+```
+
+
+## LazyChoiceField
+A ChoiceField that supports lazy choices.
+
+```python
+from rest_framework import serializers
+from drf_extra_fields.fields import LazyChoiceField
+
+
+def get_choices():
+    return [(1, 'foo'), (2, 'bar')]
+
+
+class FooSerializer(serializers.Serializer):
+    optional_decision = LazyChoiceField(choices=get_choices, allow_blank=True)
+    required_decision = LazyChoiceField(choices=get_choices, allow_blank=False)
+
+```
+
 CONTRIBUTION
 =================
 

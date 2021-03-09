@@ -9,6 +9,7 @@ from decimal import Decimal
 import pytest
 import pytz
 from django.core.exceptions import ValidationError
+from django.db.models.fields import BLANK_CHOICE_DASH
 from django.test import TestCase, override_settings
 from mock import patch
 from psycopg2._range import NumericRange, DateTimeTZRange, DateRange
@@ -18,16 +19,20 @@ from rest_framework.fields import DecimalField
 from drf_extra_fields.fields import (
     Base64ImageField,
     Base64FileField,
+    ConsciousChoiceField,
     DateRangeField,
     DateTimeRangeField,
     FloatRangeField,
     HybridImageField,
     IntegerRangeField,
+    LazyChoiceField,
     LowercaseEmailField,
     DecimalRangeField,
 )
 from drf_extra_fields.geo_fields import PointField
 from drf_extra_fields import compat
+
+from .utils import MockObject
 
 UNDETECTABLE_BY_IMGHDR_SAMPLE = """data:image/jpeg;base64,
 /9j/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD
@@ -901,3 +906,192 @@ class LowercaseEmailFieldTest(TestCase):
         serializer.is_valid()
         self.assertTrue(serializer.is_valid())
         self.assertEqual(serializer.validated_data['email'], email.lower())
+
+
+class ConsciousChoiceFieldTestCase(TestCase):
+    """TestCase for ConsciousChoiceField."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.blank = BLANK_CHOICE_DASH[0]
+        cls.choices = [(1, 'foo'), (2, 'bar')]
+        cls.field_class = ConsciousChoiceField
+
+    def test_returns_choices_with_blank_choice(self):
+        """Check if a blank choice is an option in this field's choices.
+
+        This is a situation when the choices were passed in a normal list.
+        """
+        expected_choices = {
+            **{'': self.blank[1]},
+            **{key: value for key, value in self.choices},
+        }
+
+        field = self.field_class(choices=self.choices)
+
+        self.assertEqual(field.choices, expected_choices)
+
+    def test_should_not_raise_error_when_a_blank_choice_is_acceptable(self):
+        """Check if user does not get an error when he chooses a blank choice.
+
+        This is a situation when a blank choice is acceptable.
+        We deepcopy the field because this is what a serializer does.
+        """
+        data = ''
+        field = self.field_class(allow_blank=True, choices=self.choices)
+
+        result = field.run_validation(data)
+
+        self.assertEqual(result, data)
+
+    def test_should_not_raise_error_when_a_valid_choice_was_picked(self):
+        """Check if user does not get an error when he chooses a good choice.
+
+        This is a situation when the User chooses a option from the acceptable
+        choices. We deepcopy the field because this is what a serializer does.
+        """
+        data = self.choices[0][0]
+        field = self.field_class(choices=self.choices)
+
+        result = field.run_validation(data)
+
+        self.assertEqual(result, data)
+
+    def test_should_raise_error_when_a_blank_choice_is_unacceptable(self):
+        """Check if an error will be raised when blank choice isn't valid.
+
+        This is a situation when the User should make a conscious decision.
+        """
+        field = self.field_class(choices=self.choices)
+        expected_message = 'You must choose an option.'
+
+        with self.assertRaisesMessage(serializers.ValidationError, expected_message):
+            field.run_validation('')
+
+    def test_should_raise_error_when_user_picks_an_invalid_choice(self):
+        """Check if user gets an error when he chooses an invalid choice.
+
+        This is a situation when the User tries to force a choice which is not
+        in the acceptable choices.
+        """
+        invalid_choice = 'foobar'
+        field = self.field_class(choices=self.choices)
+        expected_message = '"{}" is not a valid choice.'.format(invalid_choice)
+
+        with self.assertRaisesMessage(serializers.ValidationError, expected_message):
+            field.run_validation(invalid_choice)
+
+
+class LazyChoiceFieldTestCase(TestCase):
+    """TestCase for LazyChoiceField."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.blank = BLANK_CHOICE_DASH[0]
+        cls.field_class = LazyChoiceField
+
+    @staticmethod
+    def _get_choices():
+        """Return choices for test."""
+        return [(1, 'fizz'), (2, 'buzz')]
+
+    @staticmethod
+    def _get_choices_with_args(person):
+        """Return choices for test."""
+        sex_based_choices = {
+            'M': [(1, 'fizz'), (2, 'buzz')],
+            'F': [(1, 'fizz'), (3, 'bazinga')],
+        }
+        return sex_based_choices.get(person.sex)
+
+    def test_returns_no_choices_before_deepcopy(self):
+        """Check if the field's choices are empty before deepcopy operation.
+
+        While initializing a field instance the function should not be called.
+        It should be called on __deepcopy__, when copying the field by a serializer.
+        """
+        expected_choices = {}
+
+        field = self.field_class(choices=self._get_choices)
+
+        self.assertEqual(field.choices, expected_choices)
+
+    def test_returns_dynamic_choices_with_blank_choice(self):
+        """Check if a blank choice is an option in this field's choices.
+
+        While passing a callable to the field's initialization
+        we still want to have a optional choice. To accomplish
+        this we set the 'allow_blank' to True. We call the
+        serializer's __deepcopy__ so we can load our choices.
+        """
+        field = self.field_class(
+            choices=self._get_choices,
+            allow_blank=True,
+        )
+        expected_choices = {
+            **{'': self.blank[1]},
+            **{1: 'fizz', 2: 'buzz'},
+        }
+
+        loaded_field = copy.deepcopy(field)
+
+        self.assertEqual(loaded_field.choices, expected_choices)
+
+    def test_passed_validation_when_choosing_a_valid_choice_from_the_callable(self):
+        """Check if the validation was correct when a good choice was picked.
+
+        This is a situation when we choose a option from the acceptable
+        choices returned from a callable. We deepcopy the field so we can load
+        the values from the callable. Deepcopy is also done by the serializer
+        so we are working in a normal DRF flow.
+        """
+        data = self._get_choices()[0][0]
+        field = self.field_class(choices=self._get_choices)
+        loaded_field = copy.deepcopy(field)
+
+        result = loaded_field.run_validation(data)
+
+        self.assertEqual(result, data)
+
+    def test_should_raise_error_when_user_picks_an_invalid_choice(self):
+        """Check if the validation returned an error when an invalid choice as picked.
+
+        This is a situation when we try to force a choice which is not
+        in the acceptable choices.
+        """
+        invalid_choice = 'foobar'
+        field = self.field_class(choices=self._get_choices)
+        loaded_field = copy.deepcopy(field)
+        expected_message = '"{}" is not a valid choice.'.format(invalid_choice)
+
+        with self.assertRaisesMessage(serializers.ValidationError, expected_message):
+            loaded_field.run_validation(invalid_choice)
+
+    def test_returns_dynamic_choices_that_required_args(self):
+        """Check if choices were loaded from a callable with arguments.
+
+        This is a situation that we pass a callable to the field's
+        initialization and we passed the context through a serializer.
+        """
+        class SampleSerializer(serializers.Serializer):
+            field = self.field_class(choices=self._get_choices_with_args, allow_blank=True)
+
+            def __init__(self, instance=None, data=serializers.empty, **kwargs):
+                super(SampleSerializer, self).__init__(instance, data, **kwargs)
+                self._declared_fields['field'].lazy_kwargs = {
+                    'person': self.context['person'],
+                }
+
+        person = MockObject(sex='F', name='Jenifer', last_name='Doe')
+        serializer = SampleSerializer(
+            context={'person': person},
+        )
+        expected_choices = {
+            **{'': self.blank[1]},
+            **{1: 'fizz', 3: 'bazinga'},
+        }
+
+        # this calls field's __deepcopy__
+        fields = serializer.fields
+
+        self.assertEqual(fields['field'].choices, expected_choices)

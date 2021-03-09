@@ -4,10 +4,12 @@ import imghdr
 import io
 import uuid
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils.translation import gettext_lazy as _
 from rest_framework.fields import (
+    ChoiceField,
     DateField,
     DateTimeField,
     DictField,
@@ -328,3 +330,126 @@ class LowercaseEmailField(EmailField):
     def to_representation(self, value):
         value = super(LowercaseEmailField, self).to_representation(value)
         return value.lower()
+
+
+class ConsciousChoiceField(ChoiceField):
+    """
+    An enhanced field with an empty choice.
+
+    It uses Django's BLANK_CHOICE_DASH so we can stay consistent with it.
+    `allow_blank` attribute is responsible for allowing a blank pick.
+
+    When to use?
+        1. When we want to force a conscious decision about a pick.
+        2. When we want to show a blank choice because a field is optional.
+            If a ModelField has an default then DRF3
+            does not add a blank choice to the select box. In this situation
+            we want to add it back for backward UX experience.
+            ModelField's default will be set anyways.
+        3. When we want to dynamically set the choices based on a filtered
+            queryset.
+        4. When we want to use a callable to pass some lazy choices.
+
+    Errors:
+        conscious_decision: the User must pick an option, blank is not allowed
+        invalid_choice: the User tried to force a choice that is not acceptable
+
+    Examples:
+        foo_field = ConsciousChoiceField(
+            choices=[(1, 'foo'),(2, 'bar')],
+        )
+        conscious_decision = ConsciousChoiceField(
+            allow_blank=False,
+            choices=CHOICES_FROM_VARIABLE,
+        )
+        optional_decision = ConsciousChoiceField(
+            allow_blank=True,
+            choices=CHOICES_FROM_VARIABLE,
+        )
+    """
+
+    default_error_messages = {
+        'conscious_decision': _('You must choose an option.'),
+    }
+
+    def __init__(self, choices, **kwargs):
+        passed_choices = choices
+        super().__init__(choices, **kwargs)
+        self.choices = BLANK_CHOICE_DASH + passed_choices
+
+    def to_internal_value(self, data):
+        if data == '' and not self.allow_blank:
+            self.fail('conscious_decision')
+        return super().to_internal_value(data)
+
+
+class LazyChoiceField(ChoiceField):
+    """
+    A ChoiceField that supports lazy choices.
+
+    When to use?
+        1. When we want to dynamically set the choices based on a filtered
+            queryset.
+        2. When we want to use a callable to pass some lazy choices.
+
+    Errors:
+        invalid_choice: the we tried to force a choice that is not acceptable
+
+    Examples:
+        currencies = LazyChoiceField(
+            required=False,
+            allow_blank=True,
+            choices=get_active_currencies,
+        )
+
+    To use this field with a callable that requires arguments you need:
+        1. Create the field the normal way passing the callable:
+            interests = LazyChoiceField(
+                allow_blank=False,
+                choices=get_interests,
+            )
+        2. Pass the arguments in the __init__ of the serializer:
+            self._declared_fields['interests'].lazy_kwargs = {
+                'user': self.context['user'],
+            }
+        Please use '_declared_fields' so your callable won't be called before
+        it's necessary. You need to pass the lazy_kwargs in the serializer's
+        __init__ because on class instantiation you don't know anything about
+        the arguments.
+    """
+
+    def __init__(self, choices, **kwargs):
+        if not callable(choices):
+            raise ImproperlyConfigured(
+                'Choices passed to LazyChoiceField should be a callable. '
+                'Please pass a callable or use the default ChoiceField instead.'
+            )
+
+        self._lazy_choices = choices
+        self.initial_choices = []
+        if kwargs.get('allow_blank', False):
+            self.initial_choices = BLANK_CHOICE_DASH
+
+        super().__init__(self.initial_choices, **kwargs)
+
+    def __deepcopy__(self, memo):
+        result = super().__deepcopy__(memo)
+        # we need to recreate the field's choices like in __init__
+        result.choices = self.initial_choices + self._lazy_choices(**self.lazy_kwargs)
+        return result
+
+    @property
+    def lazy_kwargs(self):
+        if hasattr(self, '_lazy_kwargs'):
+            return self._lazy_kwargs
+        self._lazy_kwargs = {}
+        return self._lazy_kwargs
+
+    @lazy_kwargs.setter
+    def lazy_kwargs(self, value):
+        if not isinstance(value, dict):
+            raise TypeError('Setting lazy_kwargs requires a dictionary!')
+        if hasattr(self, '_lazy_kwargs'):
+            self._lazy_kwargs.update(**value)
+        else:
+            self._lazy_kwargs = value
