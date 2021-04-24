@@ -425,6 +425,55 @@ class EmailSerializer(serializers.Serializer):
     email = LowercaseEmailField()
 
 ```
+## CryptoField Package
+A set of generic common Djano Fields that automatically encrypt data for database amd encrypt for the purpose of usage in Django.
+* *CryptoFieldMixin* - Mixin that implement encrypt/decrypt methods.
+    Example of how to use to create custom CryptoTextField
+    
+.. code-block:: python
+    # models.py
+
+    from django.db import models
+
+    from django_extensions.db.fields.crypto_field import *
+
+    class CustomCryptoTextField(CryptoFieldMixin, models.TextField):
+        pass
+
+* *CryptoTextField* - TextField inheriting Field
+* *CryptoCharField* - CharField inheriting Field
+* *CryptoEmailField* - EmailField inheriting Field
+* *CryptoIntegerField* - IntegerField inheriting Field
+* *CryptoDateField* - DateField inheriting Field
+* *CryptoDateTimeField* - DateTimeField inheriting Field
+* *CryptoBigIntegerField* - BigIntegerField inheriting Field
+* *CryptoPositiveIntegerField* - PositiveIntegerField inheriting Field
+* *CryptoPositiveSmallIntegerField* - PositiveSmallIntegerField inheriting Field
+* *CryptoSmallIntegerField* - SmallIntegerField inheriting Field
+
+**Settings.**
+each CryptoField has 2 kwargs *salt_settings_env* and *password_field_name*.
+* *salt_settings_env* - name of variable stored in settings.py file, which will be used as cryptographic salt. default = 'SECRET_KEY'
+* *password_field_name* - name of the field or property in the parent model which store value to be use as password in encryption process. Due to support of property, you can pass full dynamic keys. default = 'password'
+
+**Example.**
+
+.. code-block:: python
+
+    # models.py
+
+    from django.db import models
+
+    from django_extensions.db.fields.crypto_field import CryptoEmailField
+
+    class TestCryptoEmail(models.Model):
+        @property
+        def new_password(self):
+            return str("password_to_be_used_as_key")
+
+        value = CryptoEmailField(salt_settings_env='NEW_SECRET_KEY', password_field_name='new_password')
+
+
 
 CONTRIBUTION
 =================
