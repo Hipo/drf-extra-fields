@@ -107,7 +107,9 @@ INSTALLED_APPS = (
     # 'rest_framework.tests.users',
 )
 
-STATIC_URL = '/static/'
+CRYPTO_SALT = "CryptoSalt123!!!"
+
+STATIC_URL = "/static/"
 
 PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.SHA1PasswordHasher',

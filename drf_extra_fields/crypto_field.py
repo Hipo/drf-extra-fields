@@ -1,17 +1,18 @@
-import pickle
-from functools import cached_property
-
-from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured, FieldDoesNotExist
-from django.core.checks import Error
-from django.db import models
-from django.utils.encoding import force_bytes
-
+try:
+    from functools import cached_property as property_decorator
+except ImportError:
+    from builtins import property as property_decorator
 import base64
-
+import pickle
+from django.utils.translation import gettext_lazy as _
+from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.fernet import Fernet
+from django.conf import settings
+from django.core.checks import Error
+from django.core.exceptions import ImproperlyConfigured
+from django.db import models
+from django.utils.encoding import force_bytes
 
 __all__ = [
     "CryptoFieldMixin",
@@ -46,72 +47,59 @@ class CryptoFieldMixin(models.Field):
     Cryptography protocol used in mixin: Fernet (symmetric encryption) provided by Cryptography (pyca/cryptography)
     """
 
-    def __init__(
-        self, salt_settings_env=None, password_field_name=None, *args, **kwargs
-    ):
+    def __init__(self, salt_settings_env=None, password=None, *args, **kwargs):
 
         if salt_settings_env and not isinstance(salt_settings_env, str):
             raise ImproperlyConfigured("'salt_settings_env' must be a string")
         self.salt_settings_env = salt_settings_env
+        self.password = "Password123!!!"
 
-        if password_field_name and not isinstance(password_field_name, str):
-            raise ImproperlyConfigured("'password_field_name' must be a string")
-        self.password_field_name = password_field_name
+        if password and not isinstance(password, (str, int)):
+            raise ImproperlyConfigured("'password' must be a string or int")
+
+        if password:
+            self.password = password
 
         if kwargs.get("primary_key"):
-            raise ImproperlyConfigured(
-                f"{self.__class__.__name__} does not support primary_key=True."
+            raise ImproperlyConfigured(_(
+                "{} does not support primary_key=True.".format(self.__class__.__name__))
             )
         if kwargs.get("unique"):
-            raise ImproperlyConfigured(
-                f"{self.__class__.__name__} does not support unique=True."
+            raise ImproperlyConfigured(_(
+                "{} does not support unique=True.".format(self.__class__.__name__))
             )
         if kwargs.get("db_index"):
-            raise ImproperlyConfigured(
-                f"{self.__class__.__name__} does not support db_index=True."
+            raise ImproperlyConfigured(_(
+                "{} does not support db_index=True.".format(self.__class__.__name__))
             )
         kwargs["null"] = True  # should be nullable, in case data field is nullable.
         kwargs["blank"] = True
 
-        self.password = "password"
-        self.salt = getattr(settings, "SECRET_KEY", "Salt")
+        self.salt = "Salt123!!!"
 
-        self.get_passwords()
+        self.get_salt()
 
         self._internal_type = "BinaryField"
         super().__init__(*args, **kwargs)
 
-    def get_passwords(self):
+    def get_salt(self):
         if self.salt_settings_env:
             try:
                 self.salt = getattr(settings, self.salt_settings_env)
-            except ImproperlyConfigured:
-                raise Error(
-                    f"salt_settings_env {self.salt_settings_env} is not set in settings file"
+            except AttributeError:
+                raise Error(_(
+                    "salt_settings_env {} is not set in settings file".format(self.salt_settings_env))
                 )
         else:
             pass
-
-        if self.password_field_name:
-            try:
-                self.password = self.model._meta.get_field(self.password_field_name)
-            except FieldDoesNotExist:
-                raise Error(
-                    f"password_field_name {self.password_field_name} doesn't exist."
-                )
-        else:
-            try:
-                self.password = self.model._meta.get_field("password")
-            except ImproperlyConfigured:
-                pass
 
     def deconstruct(self):
         name, path, args, kwargs = super().deconstruct()
         # Only include kwarg if it's not the default (None)
         if self.salt_settings_env:
             kwargs["salt_settings_env"] = self.salt_settings_env
-        if self.password_field_name:
-            kwargs["password_field_name"] = self.password_field_name
+        if self.password:
+            kwargs["password"] = self.password
         return name, path, args, kwargs
 
     def generate_password_key(self, password, salt):
@@ -126,7 +114,7 @@ class CryptoFieldMixin(models.Field):
         key = base64.urlsafe_b64encode(kdf.derive(to_bytes(password)))
         return key
 
-    @cached_property
+    @property_decorator
     def fernet_key(self):
         key = self.generate_password_key(self.password, self.salt)
         return Fernet(key)
@@ -144,20 +132,21 @@ class CryptoFieldMixin(models.Field):
     def get_internal_type(self):
         return self._internal_type
 
-    def get_db_prep_save(self, value, connection):
+    def get_db_prep_save(self, value, connection, prepared=False):
         if self.empty_strings_allowed and value == bytes():
             value = ""
-        value = super().get_db_prep_save(value, connection)
+        value = super().get_db_prep_value(value, connection, prepared=False)
         if value is not None:
             encrypted_value = self.encrypt(value)
-            return connection.Database.Binary(encrypted_value)
+            return encrypted_value
+            # return connection.Database.Binary(encrypted_value)
 
     def from_db_value(self, value, expression, connection):
         if value is not None:
             data = self.decrypt(value)
             return pickle.loads(data)
 
-    @cached_property
+    @property_decorator
     def validators(self):
         # For IntegerField (and subclasses) we must pretend to be that
         # field type to get proper validators.
@@ -195,6 +184,18 @@ class CryptoPositiveSmallIntegerField(
 
 
 class CryptoSmallIntegerField(CryptoFieldMixin, models.SmallIntegerField):
+    pass
+
+
+class CryptoBigIntegerField(CryptoFieldMixin, models.BigIntegerField):
+    pass
+
+
+class CryptoDateField(CryptoFieldMixin, models.DateField):
+    pass
+
+
+class CryptoDateTimeField(CryptoFieldMixin, models.DateTimeField):
     pass
 
 
