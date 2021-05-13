@@ -32,8 +32,10 @@ def _to_bytes(v):
         return v
 
     raise TypeError(
-        _("SALT & PASSWORD must be specified as strings that convert nicely to "
-          "bytes.")
+        _(
+            "SALT & PASSWORD must be specified as strings that convert nicely to "
+            "bytes."
+        )
     )
 
 
@@ -51,7 +53,8 @@ def _decrypt(key, encrypted_message, ttl=None):
 
 class CryptoBinaryField(serializers.Field):
     """
-    A django-rest-framework field for handling encryption through serialisation, where input are string and internal python representation is Binary object
+    A django-rest-framework field for handling encryption through serialisation, where input are string
+    and internal python representation is Binary object.
     """
 
     type_name = "CryptoBinaryField"
@@ -106,9 +109,9 @@ class CryptoBinaryField(serializers.Field):
 
 class CryptoCharField(CryptoBinaryField):
     """
-   A django-rest-framework field for handling encryption through serialisation, where input are string and internal python representation is String object
-   """
-
+    A django-rest-framework field for handling encryption through serialisation, where input are string
+    and internal python representation is String object.
+    """
 
     type_name = "CryptoBinaryField"
 

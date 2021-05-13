@@ -1,9 +1,14 @@
 import time
 
 from rest_framework import serializers
-from drf_extra_fields.crypto_field import CryptoBinaryField, CryptoCharField, _generate_password_key, _encrypt, _decrypt
+from drf_extra_fields.crypto_field import (
+    CryptoBinaryField,
+    CryptoCharField,
+    _generate_password_key,
+    _encrypt,
+)
 import datetime
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.conf import settings
 from cryptography.fernet import Fernet
 
