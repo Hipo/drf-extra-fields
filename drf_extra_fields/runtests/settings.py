@@ -107,7 +107,6 @@ INSTALLED_APPS = (
     # 'rest_framework.tests.users',
 )
 
-CRYPTO_SALT = "CryptoSalt123!!!"
 
 STATIC_URL = "/static/"
 

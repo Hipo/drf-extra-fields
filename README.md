@@ -3,7 +3,10 @@ DRF-EXTRA-FIELDS
 
 Extra Fields for Django Rest Framework
 
-**Possible breaking change in v3.1.0**: In this version we have changed file class used in `Base64FileField` from `ContentFile` to `SimpleUploadedFile` (you may see the change [here](https://github.com/Hipo/drf-extra-fields/pull/149/files#diff-5f77bcb61083cd9c026f6dfb3b77bf8fa824c45e620cdb7826ad713bde7b65f8L72-R85)).
+**Possible breaking change in v3.1.0**: In this version we have changed file class used in `Base64FileField`
+from `ContentFile` to `SimpleUploadedFile` (you may see the
+change [here](https://github.com/Hipo/drf-extra-fields/pull/149/files#diff-5f77bcb61083cd9c026f6dfb3b77bf8fa824c45e620cdb7826ad713bde7b65f8L72-R85))
+.
 
 [![Build Status](https://travis-ci.org/Hipo/drf-extra-fields.svg?branch=master)](https://travis-ci.org/Hipo/drf-extra-fields)
 [![codecov](https://codecov.io/gh/Hipo/drf-extra-fields/branch/master/graph/badge.svg)](https://codecov.io/gh/Hipo/drf-extra-fields)
@@ -20,6 +23,7 @@ pip install drf-extra-fields
 ```
 
 **Note:**
+
 - **This package renamed as "drf-extra-fields", earlier it was named as django-extra-fields.**
 - Install version 0.1 for Django Rest Framework 2.*
 - Install version 0.3 or greater for Django Rest Framework 3.*
@@ -27,22 +31,22 @@ pip install drf-extra-fields
 Fields:
 ----------------
 
-
 ## Base64ImageField
 
 An image representation for Base64ImageField
 
 Inherited from `ImageField`
 
-
 **Signature:** `Base64ImageField()`
 
- - It takes a base64 image as a string.
- - A base64 image:  `data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7`
- - Base64ImageField accepts the entire string or just the part after base64, `R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7`
- - It takes the optional parameter `represent_in_base64` (`False` by default), if set to `True` it will allow for base64-encoded downloads of an `ImageField`.
- - You can inherit the `Base64ImageField` class and set allowed extensions (`ALLOWED_TYPES` list), or customize the validation messages (`INVALID_FILE_MESSAGE`, `INVALID_TYPE_MESSAGE`)
-
+- It takes a base64 image as a string.
+- A base64 image:  `data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7`
+- Base64ImageField accepts the entire string or just the part after
+  base64, `R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7`
+- It takes the optional parameter `represent_in_base64` (`False` by default), if set to `True` it will allow for
+  base64-encoded downloads of an `ImageField`.
+- You can inherit the `Base64ImageField` class and set allowed extensions (`ALLOWED_TYPES` list), or customize the
+  validation messages (`INVALID_FILE_MESSAGE`, `INVALID_TYPE_MESSAGE`)
 
 **Example:**
 
@@ -51,15 +55,16 @@ Inherited from `ImageField`
 
 from drf_extra_fields.fields import Base64ImageField
 
+
 class UploadedBase64ImageSerializer(serializers.Serializer):
     file = Base64ImageField(required=False)
     created = serializers.DateTimeField()
+
 
 # use the serializer
 file = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
 serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
 ```
-
 
 ## Base64FileField
 
@@ -67,13 +72,12 @@ A file representation for Base64FileField
 
 Inherited from `FileField`
 
-
 **Signature:** `Base64FileField()`
 
- - It takes a base64 file as a string.
- - Other options like for Base64ImageField
- - You have to provide your own full implementation of this class. You have to implement file validation in `get_file_extension` method and set `ALLOWED_TYPES` list.
-
+- It takes a base64 file as a string.
+- Other options like for Base64ImageField
+- You have to provide your own full implementation of this class. You have to implement file validation
+  in `get_file_extension` method and set `ALLOWED_TYPES` list.
 
 **Example:**
 
@@ -90,23 +94,21 @@ class PDFBase64File(Base64FileField):
             return 'pdf'
 ```
 
-
 ## PointField
 
 Point field for GeoDjango
 
-
 **Signature:** `PointField()`
 
- - It takes a dictionary contains latitude and longitude keys like below
+- It takes a dictionary contains latitude and longitude keys like below
 
-    {
-     "latitude": 49.8782482189424,
-     "longitude": 24.452545489
-    }
- - It takes the optional parameter `str_points` (False by default), if set to True it serializes the longitude/latitude
- values as strings
- - It takes the optional parameter `srid` (None by default), if set the Point created object will have its srid attribute set to the same value.
+  {
+  "latitude": 49.8782482189424,
+  "longitude": 24.452545489 }
+- It takes the optional parameter `str_points` (False by default), if set to True it serializes the longitude/latitude
+  values as strings
+- It takes the optional parameter `srid` (None by default), if set the Point created object will have its srid attribute
+  set to the same value.
 
 **Example:**
 
@@ -115,26 +117,29 @@ Point field for GeoDjango
 
 from drf_extra_fields.geo_fields import PointField
 
+
 class PointFieldSerializer(serializers.Serializer):
     point = PointField(required=False)
     created = serializers.DateTimeField()
+
 
 # use the serializer
 point = {
     "latitude": 49.8782482189424,
     "longitude": 24.452545489
-    }
+}
 serializer = PointFieldSerializer(data={'created': now, 'point': point})
 ```
 
-
 # RangeField
 
-The Range Fields map to Django's PostgreSQL specific [Range Fields](https://docs.djangoproject.com/en/stable/ref/contrib/postgres/fields/#range-fields).
+The Range Fields map to Django's PostgreSQL
+specific [Range Fields](https://docs.djangoproject.com/en/stable/ref/contrib/postgres/fields/#range-fields).
 
 Each accepts an optional parameter `child_attrs`, which allows passing parameters to the child field.
 
-For example, calling `IntegerRangeField(child_attrs={"allow_null": True})` allows deserializing data with a null value for `lower` and/or `upper`:
+For example, calling `IntegerRangeField(child_attrs={"allow_null": True})` allows deserializing data with a null value
+for `lower` and/or `upper`:
 
 ```python
 from rest_framework import serializers
@@ -224,7 +229,8 @@ class RangeSerializer(serializers.Serializer):
     ranges = DateTimeRangeField()
 
 
-serializer = RangeSerializer(data={'ranges': {'lower': datetime.datetime(2015, 1, 1, 0), 'upper': datetime.datetime(2015, 2, 1, 0)}})
+serializer = RangeSerializer(
+    data={'ranges': {'lower': datetime.datetime(2015, 1, 1, 0), 'upper': datetime.datetime(2015, 2, 1, 0)}})
 
 ```
 
@@ -232,10 +238,12 @@ serializer = RangeSerializer(data={'ranges': {'lower': datetime.datetime(2015, 1
 
 Represents related object with a serializer.
 
-`presentation_serializer` could also be a string that represents a dotted path of a serializer, this is useful when you want to represent a related field with the same serializer.
+`presentation_serializer` could also be a string that represents a dotted path of a serializer, this is useful when you
+want to represent a related field with the same serializer.
 
 ```python
 from drf_extra_fields.relations import PresentablePrimaryKeyRelatedField
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -244,6 +252,7 @@ class UserSerializer(serializers.ModelSerializer):
             'id',
             "username",
         )
+
 
 class PostSerializer(serializers.ModelSerializer):
     user = PresentablePrimaryKeyRelatedField(
@@ -260,6 +269,7 @@ class PostSerializer(serializers.ModelSerializer):
         },
         read_source=None
     )
+
     class Meta:
         model = Post
         fields = (
@@ -270,6 +280,7 @@ class PostSerializer(serializers.ModelSerializer):
 ```
 
 **Serializer data:**
+
 ```
 {
     "user": 1,
@@ -278,6 +289,7 @@ class PostSerializer(serializers.ModelSerializer):
 ```
 
 **Serialized data with PrimaryKeyRelatedField:**
+
 ```
 {
     "id":1,
@@ -287,6 +299,7 @@ class PostSerializer(serializers.ModelSerializer):
 ```
 
 **Serialized data with PresentablePrimaryKeyRelatedField:**
+
 ```
 {
     "id":1,
@@ -298,13 +311,13 @@ class PostSerializer(serializers.ModelSerializer):
 }
 ```
 
-
 ## PresentableSlugRelatedField
 
 Represents related object retrieved using slug with a serializer.
 
 ```python
 from drf_extra_fields.relations import PresentableSlugRelatedField
+
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -314,6 +327,7 @@ class CategorySerializer(serializers.ModelSerializer):
             "slug",
             "name"
         )
+
 
 class ProductSerializer(serializers.ModelSerializer):
     category = PresentableSlugRelatedField(
@@ -331,6 +345,7 @@ class ProductSerializer(serializers.ModelSerializer):
         },
         read_source=None
     )
+
     class Meta:
         model = Product
         fields = (
@@ -341,6 +356,7 @@ class ProductSerializer(serializers.ModelSerializer):
 ```
 
 **Serializer data:**
+
 ```
 {
     "category": "vegetables",
@@ -349,6 +365,7 @@ class ProductSerializer(serializers.ModelSerializer):
 ```
 
 **Serialized data with SlugRelatedField:**
+
 ```
 {
     "id": 1,
@@ -358,6 +375,7 @@ class ProductSerializer(serializers.ModelSerializer):
 ```
 
 **Serialized data with PresentableSlugRelatedField:**
+
 ```
 {
     "id": 1,
@@ -371,9 +389,12 @@ class ProductSerializer(serializers.ModelSerializer):
 ```
 
 ### read_source parameter
-This parameter allows you to use different `source` for read operations and doesn't change field name for write operations. This is only used while representing the data. 
+
+This parameter allows you to use different `source` for read operations and doesn't change field name for write
+operations. This is only used while representing the data.
 
 ## HybridImageField
+
 A django-rest-framework field for handling image-uploads through raw post data, with a fallback to multipart form data.
 
 It first tries Base64ImageField. if it fails then tries ImageField.
@@ -389,7 +410,9 @@ class HybridImageSerializer(serializers.Serializer):
 
 drf-yasg fix for BASE64 Fields:
 ----------------
-The [drf-yasg](https://github.com/axnsan12/drf-yasg) project seems to generate wrong documentation on Base64ImageField or Base64FileField. It marks those fields as readonly. Here is the workaround code for correct the generated document. (More detail on issue [#66](https://github.com/Hipo/drf-extra-fields/issues/66))
+The [drf-yasg](https://github.com/axnsan12/drf-yasg) project seems to generate wrong documentation on Base64ImageField
+or Base64FileField. It marks those fields as readonly. Here is the workaround code for correct the generated document. (
+More detail on issue [#66](https://github.com/Hipo/drf-extra-fields/issues/66))
 
 ```python
 class PDFBase64FileField(Base64FileField):
@@ -412,9 +435,10 @@ class PDFBase64FileField(Base64FileField):
             return 'pdf'
 ```
 
-
 ## LowercaseEmailField
-An enhancement over django-rest-framework's EmailField to allow case-insensitive serialization and deserialization of e-mail addresses.
+
+An enhancement over django-rest-framework's EmailField to allow case-insensitive serialization and deserialization of
+e-mail addresses.
 
 ```python
 from rest_framework import serializers
@@ -425,58 +449,51 @@ class EmailSerializer(serializers.Serializer):
     email = LowercaseEmailField()
 
 ```
-## CryptoField Package
-A set of generic common Djano Fields that automatically encrypt data for database amd encrypt for the purpose of usage in Django.
-* *CryptoFieldMixin* - Mixin that implement encrypt/decrypt methods.
-    Example of how to use to create custom CryptoTextField
-    
-```python
-    # models.py
 
-    from django.db import models
+## CryptoBinaryField and CryptoCharField
 
-    from drf_extra_fields.crypto_field import *
+A django-rest-framework fields for handling encryption through serialisation. Inputs are String object and internal
+python representation is Binary object for CryptoBinaryField and String object for CryptoCharField
 
-    class CustomCryptoTextField(CryptoFieldMixin, models.TextField):
-        pass
-```
- -  CryptoTextField - TextField inheriting Field
- -  CryptoCharField - CharField inheriting Field
- -  CryptoEmailField - EmailField inheriting Field 
- -  CryptoIntegerField - IntegerField inheriting Field
- -  CryptoDateField - DateField inheriting Field
- -  CryptoDateTimeField - DateTimeField inheriting Field
- -  CryptoBigIntegerField - BigIntegerField inheriting Field
- -  CryptoPositiveIntegerField - PositiveIntegerField inheriting Field
- -  CryptoPositiveSmallIntegerField - PositiveSmallIntegerField inheriting Field
- -  CryptoSmallIntegerField - SmallIntegerField inheriting Field
+- It takes the optional parameter `salt` (Django SECRET_KEY imported from setting as default). If set it use custom
+  cryptographic salt
+- It takes the optional parameter `password` ("Non_nobis1solum?nati!sumus" as default). If set it use a custom password
+  in encryption. **It is highly recommended to use custom one!!**
+- It takes the optional parameter `ttl` (None as default). If set it manage the number of seconds old a message may be
+  for it to be valid. If the message is older than ttl seconds (from the time it was originally created) field will
+  return None and encrypted message will not be enabled for decryption.
 
-**Settings.**
-each CryptoField has 2 kwargs *salt_settings_env* and *password*.
-* *salt_settings_env* - name of variable stored in settings.py file, which will be used as cryptographic salt. default: salt_settings_env = 'SECRET_KEY' if settings not set or no SECRET_KEY in setting default: salt = "Salt123!!!"
-* *password* - password to be used in encryption process of given field (together with salt set globally) default = 'password'
-
-**Example.**
+***Example***
 
 ```python
-    # models.py
+from rest_framework import serializers
+from drf_extra_fields.crypto_field import CryptoCharField
 
-    from django.db import models
 
-    from drf_extra_fields.crypto_field import *
+class CryptoSerializer(serializers.Serializer):
+    crypto_char = CryptoCharField()
 
-    class TestCryptoEmail(models.Model):
-
-            value = CryptoEmailField(salt_settings_env='NEW_SECRET_KEY', password='new_password')
 ```
+***Example with parameters***
+It takes custom salt and password. Once saved it will be aviable for decryption for 1000 seconds.
 
+```python
+from rest_framework import serializers
+from drf_extra_fields.crypto_field import CryptoCharField
+
+
+class CryptoSerializer(serializers.Serializer):
+    crypto_char = CryptoCharField(salt="custom salt", password="custom password", ttl=1000)
+
+```
 
 CONTRIBUTION
 =================
 
 **TESTS**
-- Make sure that you add the test for contributed field to test/test_fields.py
-and run with command before sending a pull request:
+
+- Make sure that you add the test for contributed field to test/test_fields.py and run with command before sending a
+  pull request:
 
 ```bash
 $ pip install tox  # if not already installed
@@ -492,22 +509,19 @@ tox
 ```
 
 **README**
-- Make sure that you add the documentation for the field added to README.md
 
+- Make sure that you add the documentation for the field added to README.md
 
 LICENSE
 ====================
 
 Copyright DRF EXTRA FIELDS HIPO
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
+License. You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "
+AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
+language governing permissions and limitations under the License.

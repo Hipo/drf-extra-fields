@@ -1,211 +1,119 @@
-try:
-    from functools import cached_property as property_decorator
-except ImportError:
-    from builtins import property as property_decorator
 import base64
-import pickle
-from django.utils.translation import gettext_lazy as _
-from cryptography.fernet import Fernet
+
+from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from django.conf import settings
-from django.core.checks import Error
-from django.core.exceptions import ImproperlyConfigured
-from django.db import models
-from django.utils.encoding import force_bytes
+from django.utils.translation import gettext_lazy as _
+from rest_framework import serializers
 
-__all__ = [
-    "CryptoFieldMixin",
-    "CryptoTextField",
-    "CryptoCharField",
-    "CryptoEmailField",
-    "CryptoIntegerField",
-    "CryptoDateField",
-    "CryptoDateTimeField",
-    "CryptoBigIntegerField",
-    "CryptoPositiveIntegerField",
-    "CryptoPositiveSmallIntegerField",
-    "CryptoSmallIntegerField",
-]
+EMPTY_VALUES = (None, "", [], (), {})
+DEFAULT_PASSWORD = b"Non_nobis1solum?nati!sumus"
+DEFAULT_SALT = settings.SECRET_KEY
 
 
-def to_bytes(_obj):
-    if isinstance(_obj, bytes):
-        return _obj
-    elif isinstance(_obj, (bytearray, memoryview)):
-        return force_bytes(_obj)
-    else:
-        return pickle.dumps(_obj)
+def _generate_password_key(salt=DEFAULT_SALT, password=DEFAULT_PASSWORD):
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=_to_bytes(salt),
+        iterations=100000,
+    )
+
+    key = base64.urlsafe_b64encode(kdf.derive(_to_bytes(password)))
+    return key
 
 
-class CryptoFieldMixin(models.Field):
+def _to_bytes(v):
+    if isinstance(v, str):
+        return v.encode("utf-8")
+
+    if isinstance(v, bytes):
+        return v
+
+    raise TypeError(
+        _("SALT & PASSWORD must be specified as strings that convert nicely to "
+          "bytes.")
+    )
+
+
+def _encrypt(key, message):
+    b_message = message.encode("utf-8")
+    encrypted_message = key.encrypt(b_message)
+    return encrypted_message
+
+
+def _decrypt(key, encrypted_message, ttl=None):
+    ttl = int(ttl) if ttl else None
+    decrypted_message = key.decrypt(encrypted_message, ttl)
+    return decrypted_message.decode("utf-8")
+
+
+class CryptoBinaryField(serializers.Field):
     """
-    A Mixin that can be ued to convert standard django model field to encrypted binary. Fields are fully encrypted in
-    data base, but automatically readable in Django. Therefore there is no need for additional description of data,
-    it will be handheld automatically.
-
-    Cryptography protocol used in mixin: Fernet (symmetric encryption) provided by Cryptography (pyca/cryptography)
+    A django-rest-framework field for handling encryption through serialisation, where input are string and internal python representation is Binary object
     """
 
-    def __init__(self, salt_settings_env=None, password=None, *args, **kwargs):
+    type_name = "CryptoBinaryField"
+    type_label = "crypto"
 
-        if salt_settings_env and not isinstance(salt_settings_env, str):
-            raise ImproperlyConfigured("'salt_settings_env' must be a string")
-        self.salt_settings_env = salt_settings_env
-        self.password = "Password123!!!"
+    default_error_messages = {
+        "invalid": _("Input a valid data"),
+    }
 
-        if password and not isinstance(password, (str, int)):
-            raise ImproperlyConfigured("'password' must be a string or int")
+    def __init__(self, *args, **kwargs):
+        self.salt = kwargs.pop("salt", DEFAULT_SALT)
+        self.password = kwargs.pop("password", DEFAULT_PASSWORD)
+        self.ttl = kwargs.pop("ttl", None)
+        super(CryptoBinaryField, self).__init__(*args, **kwargs)
 
-        if password:
-            self.password = password
+    def to_internal_value(self, value):
+        """
+        Parse json data and return a point object
+        """
+        if value in EMPTY_VALUES and not self.required:
+            return None
 
-        if kwargs.get("primary_key"):
-            raise ImproperlyConfigured(_(
-                "{} does not support primary_key=True.".format(self.__class__.__name__))
-            )
-        if kwargs.get("unique"):
-            raise ImproperlyConfigured(_(
-                "{} does not support unique=True.".format(self.__class__.__name__))
-            )
-        if kwargs.get("db_index"):
-            raise ImproperlyConfigured(_(
-                "{} does not support db_index=True.".format(self.__class__.__name__))
-            )
-        kwargs["null"] = True  # should be nullable, in case data field is nullable.
-        kwargs["blank"] = True
+        if isinstance(value, str):
+            key = _generate_password_key(self.salt, self.password)
+            token = Fernet(key)
+            encrypted_message = _encrypt(token, value)
+            return encrypted_message
 
-        self.salt = "Salt123!!!"
+        self.fail("invalid")
 
-        self.get_salt()
-
-        self._internal_type = "BinaryField"
-        super().__init__(*args, **kwargs)
-
-    def get_salt(self):
-        if self.salt_settings_env:
+    def to_representation(self, value):
+        """
+        Transform POINT object to json.
+        """
+        if value is None:
+            return value
+        if isinstance(value, str):
+            value = value.encode("utf-8")
+        elif isinstance(value, (bytearray, memoryview)):
+            value = bytes(value)
+        if isinstance(value, bytes):
+            key = _generate_password_key(self.salt, self.password)
+            token = Fernet(key)
             try:
-                self.salt = getattr(settings, self.salt_settings_env)
-            except AttributeError:
-                raise Error(_(
-                    "salt_settings_env {} is not set in settings file".format(self.salt_settings_env))
-                )
-        else:
-            pass
+                decrypted_message = _decrypt(token, value, self.ttl)
+                return decrypted_message
+            except InvalidToken:
+                return None
 
-    def deconstruct(self):
-        name, path, args, kwargs = super().deconstruct()
-        # Only include kwarg if it's not the default (None)
-        if self.salt_settings_env:
-            kwargs["salt_settings_env"] = self.salt_settings_env
-        if self.password:
-            kwargs["password"] = self.password
-        return name, path, args, kwargs
-
-    def generate_password_key(self, password, salt):
-        # password = b"password"
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=to_bytes(salt),
-            iterations=100000,
-        )
-
-        key = base64.urlsafe_b64encode(kdf.derive(to_bytes(password)))
-        return key
-
-    @property_decorator
-    def fernet_key(self):
-        key = self.generate_password_key(self.password, self.salt)
-        return Fernet(key)
-
-    def encrypt(self, message):
-        b_message = to_bytes(message)
-        encrypted_message = self.fernet_key.encrypt(b_message)
-        return encrypted_message
-
-    def decrypt(self, encrypted_message):
-        b_message = to_bytes(encrypted_message)
-        decrypted_message = self.fernet_key.decrypt(b_message)
-        return decrypted_message
-
-    def get_internal_type(self):
-        return self._internal_type
-
-    def get_db_prep_save(self, value, connection, prepared=False):
-        if self.empty_strings_allowed and value == bytes():
-            value = ""
-        value = super().get_db_prep_value(value, connection, prepared=False)
-        if value is not None:
-            encrypted_value = self.encrypt(value)
-            return encrypted_value
-            # return connection.Database.Binary(encrypted_value)
-
-    def from_db_value(self, value, expression, connection):
-        if value is not None:
-            data = self.decrypt(value)
-            return pickle.loads(data)
-
-    @property_decorator
-    def validators(self):
-        # For IntegerField (and subclasses) we must pretend to be that
-        # field type to get proper validators.
-        self._internal_type = super().get_internal_type()
-        try:
-            return super().validators
-        finally:
-            self._internal_type = "BinaryField"
+        self.fail("invalid")
 
 
-class CryptoTextField(CryptoFieldMixin, models.TextField):
-    pass
+class CryptoCharField(CryptoBinaryField):
+    """
+   A django-rest-framework field for handling encryption through serialisation, where input are string and internal python representation is String object
+   """
 
 
-class CryptoCharField(CryptoFieldMixin, models.CharField):
-    pass
+    type_name = "CryptoBinaryField"
 
-
-class CryptoEmailField(CryptoFieldMixin, models.EmailField):
-    pass
-
-
-class CryptoIntegerField(CryptoFieldMixin, models.IntegerField):
-    pass
-
-
-class CryptoPositiveIntegerField(CryptoFieldMixin, models.PositiveIntegerField):
-    pass
-
-
-class CryptoPositiveSmallIntegerField(
-    CryptoFieldMixin, models.PositiveSmallIntegerField
-):
-    pass
-
-
-class CryptoSmallIntegerField(CryptoFieldMixin, models.SmallIntegerField):
-    pass
-
-
-class CryptoBigIntegerField(CryptoFieldMixin, models.BigIntegerField):
-    pass
-
-
-class CryptoDateField(CryptoFieldMixin, models.DateField):
-    pass
-
-
-class CryptoDateTimeField(CryptoFieldMixin, models.DateTimeField):
-    pass
-
-
-class CryptoBigIntegerField(CryptoFieldMixin, models.BigIntegerField):
-    pass
-
-
-class CryptoDateField(CryptoFieldMixin, models.DateField):
-    pass
-
-
-class CryptoDateTimeField(CryptoFieldMixin, models.DateTimeField):
-    pass
+    def to_internal_value(self, value):
+        value = super(CryptoCharField, self).to_internal_value(value)
+        if value:
+            return value.decode("utf-8")
+        self.fail("invalid")
