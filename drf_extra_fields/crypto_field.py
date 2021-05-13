@@ -39,15 +39,15 @@ def _to_bytes(v):
     )
 
 
-def _encrypt(key, message):
-    b_message = message.encode("utf-8")
-    encrypted_message = key.encrypt(b_message)
+def _encrypt(token, value_in_str):
+    b_message = value_in_str.encode("utf-8")
+    encrypted_message = token.encrypt(b_message)
     return encrypted_message
 
 
-def _decrypt(key, encrypted_message, ttl=None):
+def _decrypt(token, value, ttl=None):
     ttl = int(ttl) if ttl else None
-    decrypted_message = key.decrypt(encrypted_message, ttl)
+    decrypted_message = token.decrypt(_to_bytes(value), ttl)
     return decrypted_message.decode("utf-8")
 
 
