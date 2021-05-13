@@ -1,7 +1,7 @@
 import time
 
 from rest_framework import serializers
-from drf_extra_fields.crypto_field import (
+from drf_extra_fields.crypto_fields import (
     CryptoBinaryField,
     CryptoCharField,
     _generate_password_key,
