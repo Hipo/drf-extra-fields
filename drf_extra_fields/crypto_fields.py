@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+import time
 
 EMPTY_VALUES = (None, "", [], (), {})
 DEFAULT_PASSWORD = b"Non_nobis1solum?nati!sumus"
@@ -51,6 +52,11 @@ def _decrypt(token, value, ttl=None):
     return decrypted_message.decode("utf-8")
 
 
+def _get_timestamp(token, value):
+    timestamp = token.extract_timestamp(_to_bytes(value))
+    return int(timestamp)
+
+
 class CryptoBinaryField(serializers.Field):
     """
     A django-rest-framework field for handling encryption through serialisation, where input are string
@@ -72,7 +78,7 @@ class CryptoBinaryField(serializers.Field):
 
     def to_internal_value(self, value):
         """
-        Parse json data and return a point object
+        Parse input data to encrypted binary data
         """
         if value in EMPTY_VALUES and not self.required:
             return None
@@ -87,7 +93,7 @@ class CryptoBinaryField(serializers.Field):
 
     def to_representation(self, value):
         """
-        Transform POINT object to json.
+        Transform encrypted data to encrypted string.
         """
         if value is None:
             return value
@@ -102,7 +108,17 @@ class CryptoBinaryField(serializers.Field):
                 decrypted_message = _decrypt(token, value, self.ttl)
                 return decrypted_message
             except InvalidToken:
-                return None
+
+                if self.ttl is not None:
+                    # timestamp, data = Fernet._get_unverified_token_data(token)
+                    # timestamp = Fernet.extract_timestamp(token)
+                    # timestamp = token.extract_timestamp(token)
+                    timestamp = _get_timestamp(token, value)
+                    current_time = int(time.time())
+                    if timestamp + self.ttl < current_time:
+                        raise InvalidToken(_("The Token ttl has expired"))
+
+                raise InvalidToken(_("Valid Token could not be created"))
 
         self.fail("invalid")
 
@@ -117,6 +133,8 @@ class CryptoCharField(CryptoBinaryField):
 
     def to_internal_value(self, value):
         value = super(CryptoCharField, self).to_internal_value(value)
-        if value:
+        if value is None:
+            return value
+        elif value:
             return value.decode("utf-8")
         self.fail("invalid")

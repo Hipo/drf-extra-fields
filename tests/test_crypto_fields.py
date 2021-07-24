@@ -10,7 +10,8 @@ from drf_extra_fields.crypto_fields import (
 import datetime
 from django.test import TestCase
 from django.conf import settings
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
+from django.utils.translation import gettext_lazy as _
 
 DEFAULT_PASSWORD = b"Non_nobis1solum?nati!sumus"
 DEFAULT_SALT = settings.SECRET_KEY
@@ -127,4 +128,5 @@ class PointSerializerTest(TestCase):
         model_data = SaveCrypto(message=encrypted_message, created=now)
         serializer = TtlCryptoSerializerSerializer(model_data)
         time.sleep(3)
-        self.assertEqual(serializer.data["message"], None)
+        with self.assertRaises(InvalidToken):
+            return serializer.data["message"]
