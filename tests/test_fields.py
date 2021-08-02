@@ -568,6 +568,11 @@ class IntegerRangeSerializer(serializers.Serializer):
     range = IntegerRangeField()
 
 
+class IntegerRangeChildAllowNullSerializer(serializers.Serializer):
+
+    range = IntegerRangeField(child_attrs={"allow_null": True})
+
+
 class FloatRangeSerializer(serializers.Serializer):
 
     range = FloatRangeField()
@@ -660,6 +665,8 @@ class TestIntegerRangeField(FieldValues):
         ('not a dict', ['Expected a dictionary of items but got type "str".']),
         ({'foo': 'bar'}, ['Extra content not allowed "foo".']),
         ({'lower': 2, 'upper': 1}, ['The start of the range must not exceed the end of the range.']),
+        ({'lower': 1, 'upper': None, 'bounds': '[)'}, ['This field may not be null.']),
+        ({'lower': None, 'upper': 1, 'bounds': '[)'}, ['This field may not be null.']),
     ]
     outputs = [
         (NumericRange(**{'lower': '1', 'upper': '2'}),
@@ -686,6 +693,50 @@ class TestIntegerRangeField(FieldValues):
             "The `source` argument is not meaningful when applied to a `child=` field. "
             "Remove `source=` from the field declaration."
         )
+
+
+class TestIntegerRangeChildAllowNullField(FieldValues):
+    serializer_class = IntegerRangeChildAllowNullSerializer
+
+    valid_inputs = [
+        ({'lower': '1', 'upper': 2, 'bounds': '[)'},
+         NumericRange(**{'lower': 1, 'upper': 2, 'bounds': '[)'})),
+        ({'lower': 1, 'upper': 2},
+         NumericRange(**{'lower': 1, 'upper': 2})),
+        ({'lower': 1},
+         NumericRange(**{'lower': 1})),
+        ({'upper': 1},
+         NumericRange(**{'upper': 1})),
+        ({'empty': True},
+         NumericRange(**{'empty': True})),
+        ({}, NumericRange()),
+        ({'lower': 1, 'upper': None, 'bounds': '[)'},
+         NumericRange(**{'lower': 1, 'upper': None, 'bounds': '[)'})),
+        ({'lower': None, 'upper': 1, 'bounds': '[)'},
+         NumericRange(**{'lower': None, 'upper': 1, 'bounds': '[)'})),
+    ]
+    invalid_inputs = [
+        ({'lower': 'a'}, ['A valid integer is required.']),
+        ('not a dict', ['Expected a dictionary of items but got type "str".']),
+        ({'foo': 'bar'}, ['Extra content not allowed "foo".']),
+        ({'lower': 2, 'upper': 1}, ['The start of the range must not exceed the end of the range.']),
+    ]
+    outputs = [
+        (NumericRange(**{'lower': '1', 'upper': '2'}),
+         {'lower': 1, 'upper': 2, 'bounds': '[)'}),
+        (NumericRange(**{'empty': True}), {'empty': True}),
+        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        ({'lower': '1', 'upper': 2, 'bounds': '[)'},
+         {'lower': 1, 'upper': 2, 'bounds': '[)'}),
+        ({'lower': 1, 'upper': 2},
+         {'lower': 1, 'upper': 2, 'bounds': None}),
+        ({'lower': 1},
+         {'lower': 1, 'upper': None, 'bounds': None}),
+        ({'upper': 1},
+         {'lower': None, 'upper': 1, 'bounds': None}),
+        ({}, {}),
+    ]
+    field = IntegerRangeField(child_attrs={"allow_null": True})
 
 
 class TestDecimalRangeField(FieldValues):

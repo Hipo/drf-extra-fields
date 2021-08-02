@@ -4,16 +4,18 @@ from setuptools import setup
 with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
     README = readme.read()
 
+with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as requirements_txt:
+    requirements = requirements_txt.read().strip().splitlines()
+
 # allow setup.py to be run from any path
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='drf-extra-fields',
-    version='3.0.4',
+    version='3.1.1',
     packages=['drf_extra_fields',
               'drf_extra_fields.runtests'],
     include_package_data=True,
-    install_requires=['Django >= 2.2', 'djangorestframework >= 3.9.1'],
     extras_require={
         "Base64ImageField": ["Pillow >= 6.2.1"],
     },
@@ -26,6 +28,7 @@ setup(
     author_email='pypi@hipolabs.com',
     url='https://github.com/Hipo/drf-extra-fields',
     python_requires=">=3.5",
+    install_requires=requirements,
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',
