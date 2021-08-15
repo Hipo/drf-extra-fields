@@ -291,12 +291,46 @@ class StringPolygonSerializer(PolygonSerializer):
 
 
 class PolygonSerializerTest(TestCase):
-    def test_create(self):
+    def test_create_simple_polygon_2d_array(self):
         """
         Test for creating Polygon field in the server side
+        The feeded array is 2-d
+        The polygon does not have inner ring
         """
         now = datetime.datetime.now()
-        polygon =  [
+        polygon =   [
+            [
+                51.778564453125,
+                35.59925232772949
+            ],
+            [
+                50.1470947265625,
+                34.80929324176267
+            ],
+            [
+                52.6080322265625,
+                34.492975402501536
+            ],
+            [
+                51.778564453125,
+                35.59925232772949
+            ]
+        ]
+        serializer = PolygonSerializer(data={'created': now, 'polygon': polygon})
+        saved_polygon = SavePolygon(polygon=polygon, created=now)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['created'], saved_polygon.created)
+        self.assertIsNone(serializer.validated_data['polygon'].srid)
+
+    def test_create_simple_polygon_3d_array(self):
+        """
+        Test for creating Polygon field in the server side
+        The feeded array is 3-d
+        The polygon does not have inner ring
+        """
+        now = datetime.datetime.now()
+        polygon =   [ 
+            [
                 [
                     51.778564453125,
                     35.59925232772949
@@ -314,6 +348,23 @@ class PolygonSerializerTest(TestCase):
                     35.59925232772949
                 ]
             ]
+        ]
+        serializer = PolygonSerializer(data={'created': now, 'polygon': polygon})
+        saved_polygon = SavePolygon(polygon=polygon, created=now)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['created'], saved_polygon.created)
+        self.assertIsNone(serializer.validated_data['polygon'].srid)
+
+    def test_create_polygon_with_inner_ring(self):
+        """
+        Test for creating Polygon field in the server side
+        The polygon does have inner ring
+        """
+        now = datetime.datetime.now()
+        polygon =   [
+            [ [ 0 , 0 ] , [ 3 , 6 ] , [ 6 , 1 ] , [ 0 , 0 ] ], 
+            [ [ 2 , 2 ] , [ 3 , 3 ] , [ 4 , 2 ] , [ 2 , 2 ] ]
+        ]
         serializer = PolygonSerializer(data={'created': now, 'polygon': polygon})
         saved_polygon = SavePolygon(polygon=polygon, created=now)
         self.assertTrue(serializer.is_valid())
@@ -326,23 +377,23 @@ class PolygonSerializerTest(TestCase):
         """
         now = datetime.datetime.now()
         polygon =  [
-                [
-                    51.778564453125,
-                    35.59925232772949
-                ],
-                [
-                    50.1470947265625,
-                    34.80929324176267
-                ],
-                [
-                    52.6080322265625,
-                    34.492975402501536
-                ],
-                [
-                    51.778564453125,
-                    35.59925232772949
-                ]
+            [
+                51.778564453125,
+                35.59925232772949
+            ],
+            [
+                50.1470947265625,
+                34.80929324176267
+            ],
+            [
+                52.6080322265625,
+                34.492975402501536
+            ],
+            [
+                51.778564453125,
+                35.59925232772949
             ]
+        ]
         saved_polygon = SavePolygon(polygon=polygon, created=now)
         serializer = PolygonSerializer(data={'created': now, 'polygon': ''})
         self.assertTrue(serializer.is_valid())
@@ -378,39 +429,39 @@ class PolygonSerializerTest(TestCase):
         now = datetime.datetime.now()
         serializer = PolygonSerializer(data={'created': now, 'polygon': polygon})
         self.assertFalse(serializer.is_valid())
-        
-        def test_serialization(self):
-            """
-            Regular JSON serialization should output float values
-            """
-            from django.contrib.gis.geos import Polygon
-            now = datetime.datetime.now()
-            polygon = Polygon(
+    
+    def test_serialization(self):
+        """
+        Regular JSON serialization should output float values
+        """
+        from django.contrib.gis.geos import Polygon
+        now = datetime.datetime.now()
+        polygon = Polygon(
+            [
                 [
-                    [
-                        51.778564453125,
-                        35.59925232772949
-                    ],
-                    [
-                        50.1470947265625,
-                        34.80929324176267
-                    ],
-                    [
-                        52.6080322265625,
-                        34.492975402501536
-                    ],
-                    [
-                        51.778564453125,
-                        35.59925232772949
-                    ]
+                    51.778564453125,
+                    35.59925232772949
+                ],
+                [
+                    50.1470947265625,
+                    34.80929324176267
+                ],
+                [
+                    52.6080322265625,
+                    34.492975402501536
+                ],
+                [
+                    51.778564453125,
+                    35.59925232772949
                 ]
-            )
+            ]
+        )
 
-            saved_polygon = SavePolygon(polygon=polygon, created=now)
-            serializer = PolygonSerializer(saved_polygon)
-        
-            self.assertEqual(
-                serializer.data['polygon'], 
+        saved_polygon = SavePolygon(polygon=polygon, created=now)
+        serializer = PolygonSerializer(saved_polygon)
+        self.assertEqual(
+            serializer.data['polygon']['coordinates'], 
+            [
                 [
                     [
                         51.778564453125,
@@ -429,7 +480,8 @@ class PolygonSerializerTest(TestCase):
                         35.59925232772949
                     ]
                 ]
-            )
+            ]
+        )
 
 
 class SavePoint(object):
