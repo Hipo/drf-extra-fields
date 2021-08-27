@@ -55,7 +55,7 @@ class TtlCryptoSerializerSerializer(CryptoSerializer):
     created = serializers.DateTimeField()
 
 
-class PointSerializerTest(TestCase):
+class CryptoFieldsTest(TestCase):
     def test_create(self):
         """
         Test for creating CryptoBinaryField
