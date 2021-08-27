@@ -455,8 +455,7 @@ class EmailSerializer(serializers.Serializer):
 + These are django-rest-framework fields for handling encryption through serialisation. Inputs are `String` objects and internal
 python representation is `Binary` object for `CryptoBinaryField` and `String` object for `CryptoCharField`
 
-+ It takes the optional parameter `salt` (Django SECRET_KEY imported from setting as default). If set it use custom
-  cryptographic salt
++ They take the optional parameter `salt` (Django's `SECRET_KEY` imported from setting as default). If set the value will be used as the cryptographic salt.
 + They take the optional parameter `password` (`"Non_nobis1solum?nati!sumus"` as default). If set the value will be used as the password for encryption. **It is highly recommended to use custom one!!**
 + It takes the optional parameter `ttl` (None as default). If set it manage the number of seconds old a message may be
   for it to be valid. If the message is older than ttl seconds (from the time it was originally created) field will
