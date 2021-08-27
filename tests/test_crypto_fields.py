@@ -17,7 +17,7 @@ DEFAULT_PASSWORD = b"Non_nobis1solum?nati!sumus"
 DEFAULT_SALT = settings.SECRET_KEY
 
 
-class SaveCrypto(object):
+class Message(object):
     def __init__(self, message=None, created=None):
         self.message = message
         self.created = created or datetime.datetime.now()
