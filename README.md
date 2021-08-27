@@ -457,9 +457,7 @@ python representation is `Binary` object for `CryptoBinaryField` and `String` ob
 
 + They take the optional parameter `salt` (Django's `SECRET_KEY` imported from setting as default). If set the value will be used as the cryptographic salt.
 + They take the optional parameter `password` (`"Non_nobis1solum?nati!sumus"` as default). If set the value will be used as the password for encryption. **It is highly recommended to use custom one!!**
-+ It takes the optional parameter `ttl` (None as default). If set it manage the number of seconds old a message may be
-  for it to be valid. If the message is older than ttl seconds (from the time it was originally created) field will
-  return None and encrypted message will not be enabled for decryption.
++ They take the optional parameter `ttl` (`None` as default). If set the value will be used to manage the number of seconds that a message is valid. If the message is older than `ttl` seconds (from the time it was originally created) the field will return `None` and the encrypted message will not be able to be decrypted.
 
  **Example**
 
