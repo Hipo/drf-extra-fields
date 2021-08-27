@@ -93,7 +93,7 @@ class CryptoBinaryField(serializers.Field):
 
     def to_representation(self, value):
         """
-        Transform encrypted data to encrypted string.
+        Transform encrypted data to decrypted string.
         """
         if value is None:
             return value
