@@ -452,8 +452,8 @@ class EmailSerializer(serializers.Serializer):
 
 ## CryptoBinaryField and CryptoCharField
 
-+ A django-rest-framework fields for handling encryption through serialisation. Inputs are String object and internal
-python representation is Binary object for CryptoBinaryField and String object for CryptoCharField
++ These are django-rest-framework fields for handling encryption through serialisation. Inputs are `String` objects and internal
+python representation is `Binary` object for `CryptoBinaryField` and `String` object for `CryptoCharField`
 
 + It takes the optional parameter `salt` (Django SECRET_KEY imported from setting as default). If set it use custom
   cryptographic salt
