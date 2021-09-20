@@ -107,7 +107,8 @@ INSTALLED_APPS = (
     # 'rest_framework.tests.users',
 )
 
-STATIC_URL = '/static/'
+
+STATIC_URL = "/static/"
 
 PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.SHA1PasswordHasher',
