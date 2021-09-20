@@ -59,8 +59,8 @@ def _get_timestamp(token, value):
 
 class CryptoBinaryField(serializers.Field):
     """
-    A django-rest-framework field for handling encryption through serialisation, where input are string
-    and internal python representation is Binary object.
+    A django-rest-framework field for handling encryption through serialisation, where inputs are string
+    and internal python representations are Binary objects.
     """
 
     type_name = "CryptoBinaryField"
