@@ -14,7 +14,7 @@ DEFAULT_SALT = settings.SECRET_KEY
 
 
 def _generate_password_key(salt=DEFAULT_SALT, password=DEFAULT_PASSWORD):
-    kdf = PBKDF2HMAC(
+    key_derivation_function = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
         salt=_to_bytes(salt),
