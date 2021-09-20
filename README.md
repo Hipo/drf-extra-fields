@@ -471,7 +471,7 @@ class CryptoSerializer(serializers.Serializer):
 
 ```
  **Example with parameters**
-+ It takes custom salt and password. Once saved it will be aviable for decryption for 1000 seconds.
++ It takes custom `salt` and `password` parameters. Once saved it will be available for 1000 seconds, after that it won't be decrypted and will return `None` .
 
 ```python
 from rest_framework import serializers
