@@ -5,7 +5,7 @@ Extra Fields for Django Rest Framework
 
 **Possible breaking change in v3.1.0**: In this version we have changed file class used in `Base64FileField` from `ContentFile` to `SimpleUploadedFile` (you may see the change [here](https://github.com/Hipo/drf-extra-fields/pull/149/files#diff-5f77bcb61083cd9c026f6dfb3b77bf8fa824c45e620cdb7826ad713bde7b65f8L72-R85)).
 
-[![Build Status](https://github.com/Hipo/drf-extra-fields/workflows/tests/badge.svg?branch=master)](https://github.com/Hipo/drf-extra-fields/actions)
+[![Build Status](https://github.com/Hipo/drf-extra-fields/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/Hipo/drf-extra-fields/actions)
 [![codecov](https://codecov.io/gh/Hipo/drf-extra-fields/branch/master/graph/badge.svg)](https://codecov.io/gh/Hipo/drf-extra-fields)
 [![PyPI Version](https://img.shields.io/pypi/v/drf-extra-fields.svg)](https://pypi.org/project/drf-extra-fields)
 [![Python Versions](https://img.shields.io/pypi/pyversions/drf-extra-fields.svg)](https://pypi.org/project/drf-extra-fields)
