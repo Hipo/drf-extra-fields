@@ -452,8 +452,7 @@ $ tox
 Or, if you prefer using Docker (recommended):
 
 ```bash
-docker build -t drf_extra_fields .
-docker run -v $(pwd):/app -it drf_extra_fields /bin/bash
+source tools/run_development.sh
 tox
 ```
 
