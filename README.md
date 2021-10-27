@@ -71,7 +71,7 @@ Inherited from `FileField`
 **Signature:** `Base64FileField()`
 
  - It takes a base64 file as a string.
- - Other options like for Base64ImageField
+ - Other options like for `Base64ImageField`
  - You have to provide your own full implementation of this class. You have to implement file validation in `get_file_extension` method and set `ALLOWED_TYPES` list.
 
 
