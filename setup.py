@@ -12,7 +12,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='drf-extra-fields',
-    version='3.1.1',
+    version='3.2.0',
     packages=['drf_extra_fields',
               'drf_extra_fields.runtests'],
     include_package_data=True,
@@ -27,7 +27,7 @@ setup(
     author='hipo',
     author_email='pypi@hipolabs.com',
     url='https://github.com/Hipo/drf-extra-fields',
-    python_requires=">=3.5",
+    python_requires=">3.6",
     install_requires=requirements,
     classifiers=[
         'Environment :: Web Environment',
@@ -37,10 +37,11 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
     ],
