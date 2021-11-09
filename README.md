@@ -11,6 +11,8 @@ Extra Fields for Django Rest Framework
 Latest Changes
 ==============
 
+- **v3.2.1**
+  - A typo in the `python_requires` argument of `setup.py` that prevents installation for Python 3.6 is fixed.
 - **v3.2.0**
   - Support for Python 3.5 is ended.
   - Python 3.9 and 3.10 are now supported.

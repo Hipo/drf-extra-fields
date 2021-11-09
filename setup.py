@@ -12,7 +12,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='drf-extra-fields',
-    version='3.2.0',
+    version='3.2.1',
     packages=['drf_extra_fields',
               'drf_extra_fields.runtests'],
     include_package_data=True,
@@ -27,7 +27,7 @@ setup(
     author='hipo',
     author_email='pypi@hipolabs.com',
     url='https://github.com/Hipo/drf-extra-fields',
-    python_requires=">3.6",
+    python_requires=">=3.6",
     install_requires=requirements,
     classifiers=[
         'Environment :: Web Environment',
