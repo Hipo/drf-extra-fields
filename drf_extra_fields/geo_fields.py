@@ -49,7 +49,7 @@ class PointField(serializers.Field):
             try:
                 latitude = value.get("latitude")
                 longitude = value.get("longitude")
-                return GEOSGeometry('POINT(%(longitude)s %(latitude)s)' % {
+                return GEOSGeometry('POINT(%(latitude)s %(longitude)s)' % {
                     "longitude": longitude,
                     "latitude": latitude},
                                     srid=self.srid
