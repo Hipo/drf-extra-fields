@@ -11,12 +11,16 @@ Extra Fields for Django Rest Framework
 Latest Changes
 ==============
 
+- **v3.3.0**
+  - :warning: **BACKWARD INCOMPATIBLE** :warning:
+    - Support for `Python 3.6` is ended.
 - **v3.2.1**
-  - A typo in the `python_requires` argument of `setup.py` that prevents installation for Python 3.6 is fixed.
+  - A typo in the `python_requires` argument of `setup.py` that prevents installation for `Python 3.6` is fixed.
 - **v3.2.0**
-  - Support for Python 3.5 is ended.
-  - Python 3.9 and 3.10 are now supported.
-  - Django 3.2 is now supported.
+  - :warning: **BACKWARD INCOMPATIBLE** :warning:
+    - Support for `Python 3.5` is ended.
+  - `Python 3.9` and `Python 3.10` are now supported.
+  - `Django 3.2` is now supported.
 - **v3.1.1**
   - `psycopg2` dependency is made optional.
 - **v3.1.0**
