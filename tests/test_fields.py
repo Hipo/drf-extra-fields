@@ -48,23 +48,37 @@ class UploadedBase64Image(object):
 class UploadedBase64File(UploadedBase64Image):
     pass
 
+class FieldFile(object):
+    def __init__(self, path):
+        self._path = path
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        self.close()
+
+    def open(self, mode=None):
+        if self._path and os.path.exists(self._path):
+            self.file = open(self._path, mode)
+        else:
+            raise ValueError("The file cannot be reopened.")
+        return self
+
+    def close(self):
+        self.file.close()
+      
+    def read(self):
+        return self.file.read()
 
 class DownloadableBase64Image(object):
-    class ImageFieldFile(object):
-        def __init__(self, path):
-            self.path = path
-
     def __init__(self, image_path):
-        self.image = self.ImageFieldFile(path=image_path)
+        self.image = FieldFile(path=image_path)
 
 
 class DownloadableBase64File(object):
-    class FieldFile(object):
-        def __init__(self, path):
-            self.path = path
-
     def __init__(self, file_path):
-        self.file = self.FieldFile(path=file_path)
+        self.file = FieldFile(path=file_path)
 
 
 class UploadedBase64ImageSerializer(serializers.Serializer):
