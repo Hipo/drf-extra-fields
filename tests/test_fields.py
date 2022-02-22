@@ -184,9 +184,9 @@ class Base64ImageSerializerTests(TestCase):
         serializer = DownloadableBase64ImageSerializer(image)
 
         try:
-                self.assertEqual(serializer.data['image'], encoded_source)
+            self.assertEqual(serializer.data['image'], encoded_source)
         finally:
-                os.remove('im.jpg')
+            os.remove('im.jpg')
         
     def test_not_found(self):
         image = DownloadableBase64Image('file_does_not_exist.jpg')
@@ -289,9 +289,9 @@ class Base64FileSerializerTests(TestCase):
         serializer = DownloadableBase64FileSerializer(file)
 
         try:
-                self.assertEqual(serializer.data['file'], encoded_source)
+            self.assertEqual(serializer.data['file'], encoded_source)
         finally:
-                    os.remove('im.jpg')
+            os.remove('im.jpg')
                 
     def test_not_found(self):
         image = DownloadableBase64Image('file_does_not_exist.jpg')
