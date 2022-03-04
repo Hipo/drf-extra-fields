@@ -10,7 +10,10 @@ Extra Fields for Django Rest Framework
 
 Latest Changes
 ==============
-
+- **v3.4.0**
+  - :warning: **BACKWARD INCOMPATIBLE** :warning:
+    - Support for `Django 3.0` and `Django 3.1` is ended.
+  - `Django 4.0` is now supported.
 - **v3.3.0**
   - :warning: **BACKWARD INCOMPATIBLE** :warning:
     - Support for `Python 3.6` is ended.
