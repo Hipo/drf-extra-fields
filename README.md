@@ -29,6 +29,7 @@ Latest Changes
 - **v3.1.0**
   - **Possible Breaking Change**:
     -  In this version we have changed file class used in `Base64FileField` from `ContentFile` to `SimpleUploadedFile` (you may see the change [here](https://github.com/Hipo/drf-extra-fields/pull/149/files#diff-5f77bcb61083cd9c026f6dfb3b77bf8fa824c45e620cdb7826ad713bde7b65f8L72-R85)).
+  - `child_attrs` property is added to [RangeFields](https://github.com/Hipo/drf-extra-fields#rangefield).
 
 Usage
 ================
