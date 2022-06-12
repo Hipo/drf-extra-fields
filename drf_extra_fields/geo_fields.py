@@ -49,11 +49,9 @@ class PointField(serializers.Field):
             try:
                 latitude = value.get("latitude")
                 longitude = value.get("longitude")
-                return GEOSGeometry('POINT({longitude} {latitude})'.format(
-                    longitude=longitude,
-                    latitude=latitude),
-                                    srid=self.srid
-                )
+
+                return GEOSGeometry(f"POINT({longitude} {latitude})", srid=self.srid)
+
             except (GEOSException, ValueError):
                 self.fail('invalid')
         self.fail('invalid')
