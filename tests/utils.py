@@ -2,7 +2,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 
 
-class MockObject(object):
+class MockObject:
     def __init__(self, **kwargs):
         self._kwargs = kwargs
         for key, val in kwargs.items():
@@ -10,7 +10,7 @@ class MockObject(object):
 
     def __str__(self):
         kwargs_str = ', '.join([
-            '%s=%s' % (key, value)
+            f'{key}={value}'
             for key, value in sorted(self._kwargs.items())
         ])
         return '<MockObject %s>' % kwargs_str
@@ -33,7 +33,7 @@ class MockObject(object):
         return MockObject(pk=3, name="foo")
 
 
-class MockQueryset(object):
+class MockQueryset:
     def __init__(self, iterable):
         self.items = iterable
 
