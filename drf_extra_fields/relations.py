@@ -7,7 +7,7 @@ from rest_framework.relations import (
 )
 
 
-class ReadSourceMixin(object):
+class ReadSourceMixin:
     """
     This mixin override get_attribute method and set read_source attribute
     to source attribute if read_source attribute setted. For the purpose of
@@ -56,7 +56,7 @@ class PresentableRelatedFieldMixin(ReadSourceMixin):
             self.__class__.__name__
             + " must provide a `presentation_serializer` argument"
         )
-        super(PresentableRelatedFieldMixin, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def use_pk_only_optimization(self):
 

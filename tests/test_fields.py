@@ -10,7 +10,7 @@ import pytest
 import pytz
 from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
-from mock import patch
+from unittest.mock import patch
 from psycopg2._range import NumericRange, DateTimeTZRange, DateRange
 from rest_framework import serializers
 from rest_framework.fields import DecimalField
@@ -39,7 +39,7 @@ UNDETECTABLE_BY_IMGHDR_SAMPLE = """data:image/jpeg;base64,
 /rs8AuA8VAe0vdl7VOYn+27flGAUgmITjbhSmCg3BYlyeWDkMolvw4KOp1KM6iCNvngZHwetf//Z """
 
 
-class UploadedBase64Image(object):
+class UploadedBase64Image:
     def __init__(self, file=None, created=None):
         self.file = file
         self.created = created or datetime.datetime.now()
@@ -49,8 +49,8 @@ class UploadedBase64File(UploadedBase64Image):
     pass
 
 
-class DownloadableBase64Image(object):
-    class ImageFieldFile(object):
+class DownloadableBase64Image:
+    class ImageFieldFile:
         def __init__(self, path):
             self.path = path
 
@@ -58,8 +58,8 @@ class DownloadableBase64Image(object):
         self.image = self.ImageFieldFile(path=image_path)
 
 
-class DownloadableBase64File(object):
-    class FieldFile(object):
+class DownloadableBase64File:
+    class FieldFile:
         def __init__(self, path):
             self.path = path
 
@@ -270,7 +270,7 @@ class Base64FileSerializerTests(TestCase):
             os.remove('im.jpg')
 
 
-class SavePoint(object):
+class SavePoint:
     def __init__(self, point=None, created=None):
         self.point = point
         self.created = created or datetime.datetime.now()

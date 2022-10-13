@@ -29,7 +29,7 @@ class PointField(serializers.Field):
     def __init__(self, *args, **kwargs):
         self.str_points = kwargs.pop('str_points', False)
         self.srid = kwargs.pop('srid', None)
-        super(PointField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def to_internal_value(self, value):
         """
@@ -49,11 +49,9 @@ class PointField(serializers.Field):
             try:
                 latitude = value.get("latitude")
                 longitude = value.get("longitude")
-                return GEOSGeometry('POINT(%(longitude)s %(latitude)s)' % {
-                    "longitude": longitude,
-                    "latitude": latitude},
-                                    srid=self.srid
-                )
+
+                return GEOSGeometry(f"POINT({longitude} {latitude})", srid=self.srid)
+
             except (GEOSException, ValueError):
                 self.fail('invalid')
         self.fail('invalid')

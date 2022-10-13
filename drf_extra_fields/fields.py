@@ -35,7 +35,7 @@ except ImportError:
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
 
-class Base64FieldMixin(object):
+class Base64FieldMixin:
     EMPTY_VALUES = (None, "", [], (), {})
 
     @property
@@ -53,7 +53,7 @@ class Base64FieldMixin(object):
     def __init__(self, *args, **kwargs):
         self.trust_provided_content_type = kwargs.pop("trust_provided_content_type", False)
         self.represent_in_base64 = kwargs.pop("represent_in_base64", False)
-        super(Base64FieldMixin, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def to_internal_value(self, base64_data):
         # Check if this is a base64 string
@@ -91,9 +91,9 @@ class Base64FieldMixin(object):
                 content_type=file_mime_type
             )
 
-            return super(Base64FieldMixin, self).to_internal_value(data)
+            return super().to_internal_value(data)
 
-        raise ValidationError(_("Invalid type. This is not an base64 string: {}".format(type(base64_data))))
+        raise ValidationError(_(f"Invalid type. This is not an base64 string: {type(base64_data)}"))
 
     def get_file_extension(self, filename, decoded_file):
         raise NotImplementedError
@@ -114,9 +114,9 @@ class Base64FieldMixin(object):
                 with open(file.path, "rb") as f:
                     return base64.b64encode(f.read()).decode()
             except Exception:
-                raise IOError("Error encoding file")
+                raise OSError("Error encoding file")
         else:
-            return super(Base64FieldMixin, self).to_representation(file)
+            return super().to_representation(file)
 
 
 class Base64ImageField(Base64FieldMixin, ImageField):
@@ -145,7 +145,7 @@ class Base64ImageField(Base64FieldMixin, ImageField):
         if extension is None:
             try:
                 image = Image.open(io.BytesIO(decoded_file))
-            except (OSError, IOError):
+            except OSError:
                 raise ValidationError(self.INVALID_FILE_MESSAGE)
 
             extension = image.format.lower()
@@ -206,7 +206,7 @@ class RangeField(DictField):
 
         self.child_attrs = kwargs.pop("child_attrs", {})
         self.child = self.child_class(**self.default_child_attrs, **self.child_attrs)
-        super(RangeField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def to_internal_value(self, data):
         """
@@ -221,7 +221,7 @@ class RangeField(DictField):
         if hasattr(self, "allow_empty") and not self.allow_empty and len(data) == 0:
             self.fail('empty')
 
-        extra_content = list(set(data) - set(["lower", "upper", "bounds", "empty"]))
+        extra_content = list(set(data) - {"lower", "upper", "bounds", "empty"})
         if extra_content:
             self.fail('too_much_content', extra=', '.join(map(str, extra_content)))
 
@@ -322,9 +322,9 @@ class LowercaseEmailField(EmailField):
     case-insensitive serialization and deserialization of e-mail addresses.
     """
     def to_internal_value(self, data):
-        data = super(LowercaseEmailField, self).to_internal_value(data)
+        data = super().to_internal_value(data)
         return data.lower()
 
     def to_representation(self, value):
-        value = super(LowercaseEmailField, self).to_representation(value)
+        value = super().to_representation(value)
         return value.lower()
