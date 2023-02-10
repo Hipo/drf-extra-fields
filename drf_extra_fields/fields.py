@@ -1,6 +1,6 @@
 import base64
 import binascii
-import imghdr
+import filetype
 import io
 import uuid
 
@@ -138,10 +138,10 @@ class Base64ImageField(Base64FieldMixin, ImageField):
             from PIL import Image
         except ImportError:
             raise ImportError("Pillow is not installed.")
-        extension = imghdr.what(filename, decoded_file)
+        extension = filetype.guess_extension(decoded_file)
 
-        # Try with PIL as fallback if format not detected due
-        # to bug in imghdr https://bugs.python.org/issue16512
+        # Try with PIL as fallback if format not detected
+        # with `filetype` module
         if extension is None:
             try:
                 image = Image.open(io.BytesIO(decoded_file))
