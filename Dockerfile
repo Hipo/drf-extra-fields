@@ -9,9 +9,13 @@ RUN apt-get update && apt-get install -y \
 	python3.8 \
 	python3.9 \
 	python3.10 \
-        python3.11 \
+	python3.11 \
 	gdal-bin \
 	python3-pip
+
+# Fix for test suite on Python 3.7 found in
+# https://github.com/pypa/get-pip/issues/124#issuecomment-1153162025
+RUN apt-get install -y --reinstall python3.7-distutils
 
 WORKDIR /app
 
