@@ -12,6 +12,10 @@ RUN apt-get update && apt-get install -y \
 	gdal-bin \
 	python3-pip
 
+# Resolve distutils failing to import on Python 3.7
+# https://github.com/pypa/get-pip/issues/124#issuecomment-1153162025
+RUN apt-get install -y --reinstall python3.7-distutils
+
 WORKDIR /app
 
 RUN pip3 install --upgrade pip
