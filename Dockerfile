@@ -4,6 +4,8 @@ FROM ubuntu:latest
 RUN apt-get update && apt-get install -y software-properties-common
 RUN add-apt-repository ppa:deadsnakes/ppa
 
+ARG DEBIAN_FRONTEND=noninteractive  # to prevent tzdata from asking for input and hanging #193
+
 RUN apt-get update && apt-get install -y \
 	python3.7 \
 	python3.8 \

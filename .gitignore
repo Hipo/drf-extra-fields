@@ -10,6 +10,7 @@ dist/
 .tox/
 .cache/
 venv/
+.venv
 .vscode/
 .coverage
 coverage.xml
