@@ -464,7 +464,7 @@ $ tox
 Or, if you prefer using Docker (recommended):
 
 ```bash
-source tools/run_development.sh
+tools/run_development.sh
 tox
 ```
 
