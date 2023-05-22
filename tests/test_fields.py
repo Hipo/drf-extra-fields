@@ -185,6 +185,20 @@ class Base64ImageSerializerTests(TestCase):
                 self.assertTrue(mixin_patch.to_internal_value.called)
                 self.assertTrue(image_patch.to_internal_value.called)
 
+    def test_create_with_webp_image(self):
+        """
+        Test for creating Base64 image with webp format in the server side
+        """
+        now = datetime.datetime.now()
+        
+        file = "data:image/webp;base64,UklGRkAAAABXRUJQVlA4IDQAAADwAQCdASoBAAEAAQAc" \
+               "JaACdLoB+AAETAAA/vW4f/6aR40jxpHxcP/ugT90CfugT/3NoAAA"
+        serializer = UploadedBase64ImageSerializer(data={'created': now, 'file': file})
+        uploaded_image = UploadedBase64Image(file=file, created=now)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['created'], uploaded_image.created)
+        self.assertFalse(serializer.validated_data is uploaded_image)
+
 
 class PDFBase64FileField(Base64FileField):
     ALLOWED_TYPES = ('pdf',)
