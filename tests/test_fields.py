@@ -2,7 +2,7 @@ import base64
 import copy
 import datetime
 import django
-import imghdr
+import filetype
 import os
 from decimal import Decimal
 
@@ -29,7 +29,7 @@ from drf_extra_fields.fields import (
 from drf_extra_fields.geo_fields import PointField
 from drf_extra_fields import compat
 
-UNDETECTABLE_BY_IMGHDR_SAMPLE = """data:image/jpeg;base64,
+UNDETECTABLE_BY_FILETYPE_SAMPLE = """data:image/jpeg;base64,
 /9j/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD
 /2wBDAQMDAwQDBAgEBAgQCwkLEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/wAARCAAQABADASIAAhEBAxEB
 /8QAFgABAQEAAAAAAAAAAAAAAAAABwQF/8QAJBAAAQQBBAICAwAAAAAAAAAAAQIDBAYFBwgSExEiABQJMTL/xAAVAQEBAAAAAAAAAAAAAAAAAAAABv
@@ -142,16 +142,16 @@ class Base64ImageSerializerTests(TestCase):
         self.assertEqual(serializer.validated_data['created'], uploaded_image.created)
         self.assertIsNone(serializer.validated_data['file'])
 
-    def test_fallback_to_pil_if_not_detected_by_imghdr(self):
+    def test_fallback_to_pil_if_not_detected_by_filetype(self):
         """
-        Passing a sample image which goes undetected by imghdr should
+        Passing a sample image which goes undetected by filetype should
         still be detected by PIL.
         """
         now = datetime.datetime.now()
-        file = UNDETECTABLE_BY_IMGHDR_SAMPLE
+        file = UNDETECTABLE_BY_FILETYPE_SAMPLE
 
-        # check image is undetectable by imghdr
-        self.assertIsNone(imghdr.what('test.jpeg', base64.b64decode(file)))
+        # check image is undetectable by filetype
+        self.assertIsNone(filetype.guess_extension(base64.b64decode(file)))
 
         uploaded_image = UploadedBase64Image(file=file, created=now)
         serializer = UploadedBase64ImageSerializer(instance=uploaded_image, data={'created': now, 'file': file})
