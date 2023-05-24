@@ -10,8 +10,12 @@ Extra Fields for Django Rest Framework
 
 Latest Changes
 ==============
-- **v3.4.1**
-  - Modernize the code for `Python 3.7`.
+- **v3.5.0**
+  - Development environment fixes & improvements.
+  - Since `Python 3.6` support is ended, the codebase is refactored/modernized for `Python 3.7`.
+  - `WebP` is added to default `ALLOWED_TYPES` of the `Base64ImageField`.
+  - Deprecated `imghdr` library is replaced with `filetype`.
+  - Unintended `Pillow` dependency is removed.
 - **v3.4.0**
   - :warning: **BACKWARD INCOMPATIBLE** :warning:
     - Support for `Django 3.0` and `Django 3.1` is ended.
