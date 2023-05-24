@@ -135,24 +135,19 @@ class Base64ImageField(Base64FieldMixin, ImageField):
     INVALID_TYPE_MESSAGE = _("The type of the image couldn't be determined.")
 
     def get_file_extension(self, filename, decoded_file):
-        try:
-            from PIL import Image
-        except ImportError:
-            raise ImportError("Pillow is not installed.")
         extension = filetype.guess_extension(decoded_file)
-
-        # Try with PIL as fallback if format not detected
-        # with `filetype` module
         if extension is None:
             try:
+                # Try with PIL as fallback if format not detected
+                # with `filetype` module
+                from PIL import Image
                 image = Image.open(io.BytesIO(decoded_file))
-            except OSError:
+            except (ImportError, OSError):
                 raise ValidationError(self.INVALID_FILE_MESSAGE)
+            else:
+                extension = image.format.lower()
 
-            extension = image.format.lower()
-
-        extension = "jpg" if extension == "jpeg" else extension
-        return extension
+        return "jpg" if extension == "jpeg" else extension
 
 
 class HybridImageField(Base64ImageField):
