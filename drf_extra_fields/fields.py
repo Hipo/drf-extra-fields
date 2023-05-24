@@ -142,9 +142,7 @@ class Base64ImageField(Base64FieldMixin, ImageField):
                 # with `filetype` module
                 from PIL import Image
                 image = Image.open(io.BytesIO(decoded_file))
-            except ImportError:
-                raise ImportError("Pillow is not installed.")
-            except OSError:
+            except (ImportError, OSError):
                 raise ValidationError(self.INVALID_FILE_MESSAGE)
             else:
                 extension = image.format.lower()
