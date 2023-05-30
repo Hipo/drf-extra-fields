@@ -1,32 +1,32 @@
 import base64
 import copy
 import datetime
-import django
 import os
 from decimal import Decimal
+from unittest.mock import patch
 
+import django
 import pytest
 import pytz
 from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
-from unittest.mock import patch
-from psycopg2._range import NumericRange, DateTimeTZRange, DateRange
 from rest_framework import serializers
 from rest_framework.fields import DecimalField
 
+from drf_extra_fields import compat
+from drf_extra_fields.compat import DateRange, DateTimeTZRange, NumericRange
 from drf_extra_fields.fields import (
-    Base64ImageField,
     Base64FileField,
+    Base64ImageField,
     DateRangeField,
     DateTimeRangeField,
+    DecimalRangeField,
     FloatRangeField,
     HybridImageField,
     IntegerRangeField,
     LowercaseEmailField,
-    DecimalRangeField,
 )
 from drf_extra_fields.geo_fields import PointField
-from drf_extra_fields import compat
 
 
 class UploadedBase64Image:

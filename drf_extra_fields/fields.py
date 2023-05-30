@@ -1,35 +1,33 @@
 import base64
 import binascii
-import filetype
 import io
 import uuid
 
+import filetype
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.translation import gettext_lazy as _
 from rest_framework.fields import (
     DateField,
     DateTimeField,
+    DecimalField,
     DictField,
     EmailField,
     FileField,
     FloatField,
     ImageField,
     IntegerField,
-    DecimalField,
 )
 from rest_framework.serializers import ModelSerializer
 from rest_framework.utils import html
+
 from drf_extra_fields import compat
+from drf_extra_fields.compat import DateRange, DateTimeTZRange, NumericRange
 
 try:
     from django.contrib.postgres import fields as postgres_fields
-    from psycopg2.extras import DateRange, DateTimeTZRange, NumericRange
 except ImportError:
     postgres_fields = None
-    DateRange = None
-    DateTimeTZRange = None
-    NumericRange = None
 
 
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
