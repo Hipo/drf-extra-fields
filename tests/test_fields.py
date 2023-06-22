@@ -504,7 +504,7 @@ class TestIntegerRangeField(FieldValues):
         (NumericRange(**{'lower': '1', 'upper': '2'}),
          {'lower': 1, 'upper': 2, 'bounds': '[)'}),
         (NumericRange(**{'empty': True}), {'empty': True}),
-        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        (NumericRange(), {'bounds': '()', 'lower': None, 'upper': None}),
         ({'lower': '1', 'upper': 2, 'bounds': '[)'},
          {'lower': 1, 'upper': 2, 'bounds': '[)'}),
         ({'lower': 1, 'upper': 2},
@@ -557,7 +557,7 @@ class TestIntegerRangeChildAllowNullField(FieldValues):
         (NumericRange(**{'lower': '1', 'upper': '2'}),
          {'lower': 1, 'upper': 2, 'bounds': '[)'}),
         (NumericRange(**{'empty': True}), {'empty': True}),
-        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        (NumericRange(), {'bounds': '()', 'lower': None, 'upper': None}),
         ({'lower': '1', 'upper': 2, 'bounds': '[)'},
          {'lower': 1, 'upper': 2, 'bounds': '[)'}),
         ({'lower': 1, 'upper': 2},
@@ -596,7 +596,7 @@ class TestDecimalRangeField(FieldValues):
         (NumericRange(**{'lower': '1.1', 'upper': '2'}),
          {'lower': '1.1', 'upper': '2', 'bounds': '[)'}),
         (NumericRange(**{'empty': True}), {'empty': True}),
-        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        (NumericRange(), {'bounds': '()', 'lower': None, 'upper': None}),
         ({'lower': Decimal('1.1'), 'upper': "2.3", 'bounds': '[)'},
          {'lower': "1.1", 'upper': "2.3", 'bounds': '[)'}),
         ({'lower': Decimal('1.1'), 'upper': "2.3"},
@@ -647,7 +647,7 @@ class TestDecimalRangeFieldWithChildAttribute(FieldValues):
         (NumericRange(**{'lower': '1.1', 'upper': '2'}),
          {'lower': '1.10', 'upper': '2.00', 'bounds': '[)'}),
         (NumericRange(**{'empty': True}), {'empty': True}),
-        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        (NumericRange(), {'bounds': '()', 'lower': None, 'upper': None}),
         ({'lower': Decimal('1.1'), 'upper': "2.3", 'bounds': '[)'},
          {'lower': "1.10", 'upper': "2.30", 'bounds': '[)'}),
         ({'lower': Decimal('1.1'), 'upper': "2.3"},
@@ -690,7 +690,7 @@ class TestFloatRangeField(FieldValues):
         (NumericRange(**{'lower': '1.1', 'upper': '2'}),
          {'lower': 1.1, 'upper': 2, 'bounds': '[)'}),
         (NumericRange(**{'empty': True}), {'empty': True}),
-        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        (NumericRange(), {'bounds': '()', 'lower': None, 'upper': None}),
         ({'lower': '1', 'upper': 2., 'bounds': '[)'},
          {'lower': 1., 'upper': 2., 'bounds': '[)'}),
         ({'lower': 1., 'upper': 2.},
@@ -761,7 +761,7 @@ class TestDateTimeRangeField(TestCase, FieldValues):
         (DateTimeTZRange(**{'empty': True}),
          {'empty': True}),
         (DateTimeTZRange(),
-         {'bounds': '[)', 'lower': None, 'upper': None}),
+         {'bounds': '()', 'lower': None, 'upper': None}),
         ({'lower': '2001-01-01T13:00:00Z',
           'upper': '2001-02-02T13:00:00Z',
           'bounds': '[)'},
@@ -775,7 +775,7 @@ class TestDateTimeRangeField(TestCase, FieldValues):
           'upper': '2001-02-02T13:00:00Z',
           'bounds': '[)'}),
         ({'upper': '2001-02-02T13:00:00Z', 'bounds': '[)'},
-         {'lower': None, 'upper': '2001-02-02T13:00:00Z', 'bounds': '[)'}),
+         {'lower': None, 'upper': '2001-02-02T13:00:00Z', 'bounds': '()'}),
         ({'lower': '2001-01-01T13:00:00Z', 'bounds': '[)'},
          {'lower': '2001-01-01T13:00:00Z', 'upper': None, 'bounds': '[)'}),
         ({}, {}),
@@ -838,7 +838,7 @@ class TestDateRangeField(FieldValues):
              'bounds': '[)'}),
         (DateRange(**{'empty': True}),
          {'empty': True}),
-        (DateRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        (DateRange(), {'bounds': '()', 'lower': None, 'upper': None}),
         ({'lower': '2001-01-01',
           'upper': '2001-02-02',
           'bounds': '[)'},
@@ -852,9 +852,9 @@ class TestDateRangeField(FieldValues):
           'upper': '2001-02-02',
           'bounds': '[)'}),
         ({'upper': '2001-02-02', 'bounds': '[)'},
-         {'lower': None, 'upper': '2001-02-02', 'bounds': '[)'}),
+         {'lower': None, 'upper': '2001-02-02', 'bounds': '()'}),
         ({'lower': '2001-01-01', 'bounds': '[)'},
-         {'lower': '2001-01-01', 'upper': None,  'bounds': '[)'}),
+         {'lower': '2001-01-01', 'upper': None, 'bounds': '[)'}),
         ({}, {}),
     ]
     field = DateRangeField()
@@ -870,7 +870,7 @@ class TestDateRangeField(FieldValues):
 
     def test_initial_value_of_field(self):
         serializer = DateRangeSerializer()
-        assert serializer.data['range'] == {'lower': None, 'upper': None, 'bounds': '[)'}
+        assert serializer.data['range'] == {'lower': None, 'upper': None, 'bounds': '()'}
 
     def test_allow_empty(self):
         serializer = DateRangeWithAllowEmptyFalseSerializer(data={"range": {}})
