@@ -111,7 +111,7 @@ class Base64FieldMixin:
                 return ""
 
             try:
-                with open(file.path, "rb") as f:
+                with file.open() as f:
                     return base64.b64encode(f.read()).decode()
             except Exception:
                 raise OSError("Error encoding file")
