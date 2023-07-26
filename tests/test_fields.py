@@ -44,6 +44,9 @@ class DownloadableBase64Image:
         def __init__(self, path):
             self.path = path
 
+        def open(self):
+            return open(self.path, "rb")
+
     def __init__(self, image_path):
         self.image = self.ImageFieldFile(path=image_path)
 
@@ -52,6 +55,9 @@ class DownloadableBase64File:
     class FieldFile:
         def __init__(self, path):
             self.path = path
+
+        def open(self):
+            return open(self.path, "rb")
 
     def __init__(self, file_path):
         self.file = self.FieldFile(path=file_path)
