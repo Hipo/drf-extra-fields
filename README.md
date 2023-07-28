@@ -10,6 +10,8 @@ Extra Fields for Django Rest Framework
 
 Latest Changes
 ==============
+- **v3.6.0**
+  - File objects without an actual file-system path can now be used in `Base64ImageField`, `Base64FileField` and `HybridImageField`
 - **v3.5.0**
   - Development environment fixes & improvements.
   - Since `Python 3.6` support is ended, the codebase is refactored/modernized for `Python 3.7`.
