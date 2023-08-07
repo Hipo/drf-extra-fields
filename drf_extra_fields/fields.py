@@ -254,12 +254,6 @@ class RangeField(DictField):
             upper = value.upper
             bounds = value._bounds
 
-        if bounds:
-            if lower is None and bounds[0] == "[":
-                bounds = "(" + bounds[1]
-            if upper is None and bounds[1] == "]":
-                bounds = bounds[0] + ")"
-
         return {'lower': self.child.to_representation(lower) if lower is not None else None,
                 'upper': self.child.to_representation(upper) if upper is not None else None,
                 'bounds': bounds}
