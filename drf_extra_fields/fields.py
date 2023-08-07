@@ -188,7 +188,7 @@ class RangeField(DictField):
 
     def __init__(self, **kwargs):
         if compat.postgres_fields is None:
-            assert False, "'psgl2' is required to use {name}. Please install the  'psycopg2' library from 'pip'".format(
+            assert False, "'psycopg' is required to use {name}. Please install the 'psycopg2' (or 'psycopg' if you are using Django>=4.2) library from 'pip'".format(
                 name=self.__class__.__name__
             )
 
