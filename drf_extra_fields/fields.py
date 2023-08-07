@@ -24,12 +24,6 @@ from rest_framework.utils import html
 from drf_extra_fields import compat
 from drf_extra_fields.compat import DateRange, DateTimeTZRange, NumericRange
 
-try:
-    from django.contrib.postgres import fields as postgres_fields
-except ImportError:
-    postgres_fields = None
-
-
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
 
@@ -193,7 +187,7 @@ class RangeField(DictField):
     })
 
     def __init__(self, **kwargs):
-        if postgres_fields is None:
+        if compat.postgres_fields is None:
             assert False, "'psgl2' is required to use {name}. Please install the  'psycopg2' library from 'pip'".format(
                 name=self.__class__.__name__
             )
@@ -305,15 +299,15 @@ class DateRangeField(RangeField):
     range_type = DateRange
 
 
-if postgres_fields:
+if compat.postgres_fields:
     # monkey patch modelserializer to map Native django Range fields to
     # drf_extra_fiels's Range fields.
-    ModelSerializer.serializer_field_mapping[postgres_fields.DateTimeRangeField] = DateTimeRangeField
-    ModelSerializer.serializer_field_mapping[postgres_fields.DateRangeField] = DateRangeField
-    ModelSerializer.serializer_field_mapping[postgres_fields.IntegerRangeField] = IntegerRangeField
-    ModelSerializer.serializer_field_mapping[postgres_fields.DecimalRangeField] = DecimalRangeField
-    if compat.FloatRangeField:
-        ModelSerializer.serializer_field_mapping[compat.FloatRangeField] = FloatRangeField
+    ModelSerializer.serializer_field_mapping[compat.postgres_fields.DateTimeRangeField] = DateTimeRangeField
+    ModelSerializer.serializer_field_mapping[compat.postgres_fields.DateRangeField] = DateRangeField
+    ModelSerializer.serializer_field_mapping[compat.postgres_fields.IntegerRangeField] = IntegerRangeField
+    ModelSerializer.serializer_field_mapping[compat.postgres_fields.DecimalRangeField] = DecimalRangeField
+    if hasattr(compat.postgres_fields, "FloatRangeField"):
+        ModelSerializer.serializer_field_mapping[compat.postgres_fields.FloatRangeField] = FloatRangeField
 
 
 class LowercaseEmailField(EmailField):

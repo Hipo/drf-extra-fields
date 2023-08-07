@@ -1,9 +1,9 @@
 import django
 
 try:
-    from django.contrib.postgres.fields import FloatRangeField
+    from django.contrib.postgres import fields as postgres_fields
 except ImportError:
-    FloatRangeField = None
+    postgres_fields = None
 
 try:
     if django.VERSION >= (4, 2):

@@ -660,7 +660,7 @@ class TestDecimalRangeFieldWithChildAttribute(FieldValues):
     ]
 
 
-@pytest.mark.skipif(django.VERSION >= (3, 1) or compat.FloatRangeField is None,
+@pytest.mark.skipif(django.VERSION >= (3, 1) or not hasattr(compat.postgres_fields, "FloatRangeField"),
                     reason='FloatRangeField deprecated on django 3.1 ')
 class TestFloatRangeField(FieldValues):
     """
