@@ -10,6 +10,8 @@ Extra Fields for Django Rest Framework
 
 Latest Changes
 ==============
+- **v3.7.0**
+  - `psycopg` (psycopg 3) is now supported and it's used automatically instead of `psycopg2` if available.
 - **v3.6.0**
   - File objects without an actual file-system path can now be used in `Base64ImageField`, `Base64FileField` and `HybridImageField`
 - **v3.5.0**
