@@ -1,36 +1,28 @@
 import base64
 import binascii
-import filetype
 import io
 import uuid
 
+import filetype
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.translation import gettext_lazy as _
 from rest_framework.fields import (
     DateField,
     DateTimeField,
+    DecimalField,
     DictField,
     EmailField,
     FileField,
     FloatField,
     ImageField,
     IntegerField,
-    DecimalField,
 )
 from rest_framework.serializers import ModelSerializer
 from rest_framework.utils import html
+
 from drf_extra_fields import compat
-
-try:
-    from django.contrib.postgres import fields as postgres_fields
-    from psycopg2.extras import DateRange, DateTimeTZRange, NumericRange
-except ImportError:
-    postgres_fields = None
-    DateRange = None
-    DateTimeTZRange = None
-    NumericRange = None
-
+from drf_extra_fields.compat import DateRange, DateTimeTZRange, NumericRange
 
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
@@ -195,8 +187,8 @@ class RangeField(DictField):
     })
 
     def __init__(self, **kwargs):
-        if postgres_fields is None:
-            assert False, "'psgl2' is required to use {name}. Please install the  'psycopg2' library from 'pip'".format(
+        if compat.postgres_fields is None:
+            assert False, "'psycopg' is required to use {name}. Please install the 'psycopg2' (or 'psycopg' if you are using Django>=4.2) library from 'pip'".format(
                 name=self.__class__.__name__
             )
 
@@ -301,15 +293,15 @@ class DateRangeField(RangeField):
     range_type = DateRange
 
 
-if postgres_fields:
+if compat.postgres_fields:
     # monkey patch modelserializer to map Native django Range fields to
     # drf_extra_fiels's Range fields.
-    ModelSerializer.serializer_field_mapping[postgres_fields.DateTimeRangeField] = DateTimeRangeField
-    ModelSerializer.serializer_field_mapping[postgres_fields.DateRangeField] = DateRangeField
-    ModelSerializer.serializer_field_mapping[postgres_fields.IntegerRangeField] = IntegerRangeField
-    ModelSerializer.serializer_field_mapping[postgres_fields.DecimalRangeField] = DecimalRangeField
-    if compat.FloatRangeField:
-        ModelSerializer.serializer_field_mapping[compat.FloatRangeField] = FloatRangeField
+    ModelSerializer.serializer_field_mapping[compat.postgres_fields.DateTimeRangeField] = DateTimeRangeField
+    ModelSerializer.serializer_field_mapping[compat.postgres_fields.DateRangeField] = DateRangeField
+    ModelSerializer.serializer_field_mapping[compat.postgres_fields.IntegerRangeField] = IntegerRangeField
+    ModelSerializer.serializer_field_mapping[compat.postgres_fields.DecimalRangeField] = DecimalRangeField
+    if hasattr(compat.postgres_fields, "FloatRangeField"):
+        ModelSerializer.serializer_field_mapping[compat.postgres_fields.FloatRangeField] = FloatRangeField
 
 
 class LowercaseEmailField(EmailField):

@@ -1,32 +1,32 @@
 import base64
 import copy
 import datetime
-import django
 import os
 from decimal import Decimal
+from unittest.mock import patch
 
+import django
 import pytest
 import pytz
 from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
-from unittest.mock import patch
-from psycopg2._range import NumericRange, DateTimeTZRange, DateRange
 from rest_framework import serializers
 from rest_framework.fields import DecimalField
 
+from drf_extra_fields import compat
+from drf_extra_fields.compat import DateRange, DateTimeTZRange, NumericRange
 from drf_extra_fields.fields import (
-    Base64ImageField,
     Base64FileField,
+    Base64ImageField,
     DateRangeField,
     DateTimeRangeField,
+    DecimalRangeField,
     FloatRangeField,
     HybridImageField,
     IntegerRangeField,
     LowercaseEmailField,
-    DecimalRangeField,
 )
 from drf_extra_fields.geo_fields import PointField
-from drf_extra_fields import compat
 
 
 class UploadedBase64Image:
@@ -417,7 +417,7 @@ class DateTimeRangeSerializer(serializers.Serializer):
 
 class DateRangeSerializer(serializers.Serializer):
 
-    range = DateRangeField(initial=DateRange(None, None))
+    range = DateRangeField(initial=DateRange(None, None, '()'))
 
 
 class DateRangeWithAllowEmptyFalseSerializer(serializers.Serializer):
@@ -504,7 +504,7 @@ class TestIntegerRangeField(FieldValues):
         (NumericRange(**{'lower': '1', 'upper': '2'}),
          {'lower': 1, 'upper': 2, 'bounds': '[)'}),
         (NumericRange(**{'empty': True}), {'empty': True}),
-        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        (NumericRange(bounds='()'), {'bounds': '()', 'lower': None, 'upper': None}),
         ({'lower': '1', 'upper': 2, 'bounds': '[)'},
          {'lower': 1, 'upper': 2, 'bounds': '[)'}),
         ({'lower': 1, 'upper': 2},
@@ -557,7 +557,7 @@ class TestIntegerRangeChildAllowNullField(FieldValues):
         (NumericRange(**{'lower': '1', 'upper': '2'}),
          {'lower': 1, 'upper': 2, 'bounds': '[)'}),
         (NumericRange(**{'empty': True}), {'empty': True}),
-        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        (NumericRange(bounds='()'), {'bounds': '()', 'lower': None, 'upper': None}),
         ({'lower': '1', 'upper': 2, 'bounds': '[)'},
          {'lower': 1, 'upper': 2, 'bounds': '[)'}),
         ({'lower': 1, 'upper': 2},
@@ -596,7 +596,7 @@ class TestDecimalRangeField(FieldValues):
         (NumericRange(**{'lower': '1.1', 'upper': '2'}),
          {'lower': '1.1', 'upper': '2', 'bounds': '[)'}),
         (NumericRange(**{'empty': True}), {'empty': True}),
-        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        (NumericRange(bounds='()'), {'bounds': '()', 'lower': None, 'upper': None}),
         ({'lower': Decimal('1.1'), 'upper': "2.3", 'bounds': '[)'},
          {'lower': "1.1", 'upper': "2.3", 'bounds': '[)'}),
         ({'lower': Decimal('1.1'), 'upper': "2.3"},
@@ -647,7 +647,7 @@ class TestDecimalRangeFieldWithChildAttribute(FieldValues):
         (NumericRange(**{'lower': '1.1', 'upper': '2'}),
          {'lower': '1.10', 'upper': '2.00', 'bounds': '[)'}),
         (NumericRange(**{'empty': True}), {'empty': True}),
-        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        (NumericRange(bounds='()'), {'bounds': '()', 'lower': None, 'upper': None}),
         ({'lower': Decimal('1.1'), 'upper': "2.3", 'bounds': '[)'},
          {'lower': "1.10", 'upper': "2.30", 'bounds': '[)'}),
         ({'lower': Decimal('1.1'), 'upper': "2.3"},
@@ -660,7 +660,7 @@ class TestDecimalRangeFieldWithChildAttribute(FieldValues):
     ]
 
 
-@pytest.mark.skipif(django.VERSION >= (3, 1) or compat.FloatRangeField is None,
+@pytest.mark.skipif(django.VERSION >= (3, 1) or not hasattr(compat.postgres_fields, "FloatRangeField"),
                     reason='FloatRangeField deprecated on django 3.1 ')
 class TestFloatRangeField(FieldValues):
     """
@@ -690,7 +690,7 @@ class TestFloatRangeField(FieldValues):
         (NumericRange(**{'lower': '1.1', 'upper': '2'}),
          {'lower': 1.1, 'upper': 2, 'bounds': '[)'}),
         (NumericRange(**{'empty': True}), {'empty': True}),
-        (NumericRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        (NumericRange(bounds='()'), {'bounds': '()', 'lower': None, 'upper': None}),
         ({'lower': '1', 'upper': 2., 'bounds': '[)'},
          {'lower': 1., 'upper': 2., 'bounds': '[)'}),
         ({'lower': 1., 'upper': 2.},
@@ -760,8 +760,8 @@ class TestDateTimeRangeField(TestCase, FieldValues):
              'bounds': '[)'}),
         (DateTimeTZRange(**{'empty': True}),
          {'empty': True}),
-        (DateTimeTZRange(),
-         {'bounds': '[)', 'lower': None, 'upper': None}),
+        (DateTimeTZRange(bounds='()'),
+         {'bounds': '()', 'lower': None, 'upper': None}),
         ({'lower': '2001-01-01T13:00:00Z',
           'upper': '2001-02-02T13:00:00Z',
           'bounds': '[)'},
@@ -838,7 +838,7 @@ class TestDateRangeField(FieldValues):
              'bounds': '[)'}),
         (DateRange(**{'empty': True}),
          {'empty': True}),
-        (DateRange(), {'bounds': '[)', 'lower': None, 'upper': None}),
+        (DateRange(bounds='()'), {'bounds': '()', 'lower': None, 'upper': None}),
         ({'lower': '2001-01-01',
           'upper': '2001-02-02',
           'bounds': '[)'},
@@ -870,7 +870,7 @@ class TestDateRangeField(FieldValues):
 
     def test_initial_value_of_field(self):
         serializer = DateRangeSerializer()
-        assert serializer.data['range'] == {'lower': None, 'upper': None, 'bounds': '[)'}
+        assert serializer.data['range'] == {'lower': None, 'upper': None, 'bounds': '()'}
 
     def test_allow_empty(self):
         serializer = DateRangeWithAllowEmptyFalseSerializer(data={"range": {}})
