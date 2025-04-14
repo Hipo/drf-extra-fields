@@ -10,6 +10,10 @@ Extra Fields for Django Rest Framework
 
 Latest Changes
 ==============
+- **Unreleased**
+  - `Python 3.7` is no longer supported.
+  - `Python 3.12` is now supported.
+  - `Django 5.1` and `5.2` are now supported.
 - **v3.7.0**
   - `psycopg` (psycopg 3) is now supported and it's used automatically instead of `psycopg2` if available.
 - **v3.6.0**
