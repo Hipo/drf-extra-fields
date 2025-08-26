@@ -402,7 +402,7 @@ class ProductSerializer(serializers.ModelSerializer):
 ```
 
 ### read_source parameter
-This parameter allows you to use different `source` for read operations and doesn't change field name for write operations. This is only used while representing the data. 
+This parameter allows you to use different `source` for read operations and doesn't change field name for write operations. This is only used while representing the data.
 
 ## HybridImageField
 A django-rest-framework field for handling image-uploads through raw post data, with a fallback to multipart form data.
