@@ -124,7 +124,7 @@ class Base64ImageField(Base64FieldMixin, ImageField):
         "webp"
     )
     INVALID_FILE_MESSAGE = _("Please upload a valid image.")
-    INVALID_TYPE_MESSAGE = _("The type of the image couldn't be determined.")
+    INVALID_TYPE_MESSAGE = _("The type of the image is not allowed.")
 
     def get_file_extension(self, filename, decoded_file):
         extension = filetype.guess_extension(decoded_file)
