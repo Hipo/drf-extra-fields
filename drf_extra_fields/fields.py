@@ -160,6 +160,28 @@ class HybridImageField(Base64ImageField):
             return ImageField.to_internal_value(self, data)
 
 
+class Base64AudioField(Base64FieldMixin, FileField):
+    """
+    A django-rest-framework field for handling audio-uploads through raw post data.
+    It uses base64 for en-/decoding the contents of the file.
+    """
+    ALLOWED_TYPES = (
+        "mp3",
+        "m4a",
+        "wav",
+        "ogg",
+        "flac",
+        "aac",
+        "amr",
+        "aiff",
+    )
+    INVALID_FILE_MESSAGE = _("Please upload a valid audio file.")
+    INVALID_TYPE_MESSAGE = _("The type of the audio file couldn't be determined.")
+
+    def get_file_extension(self, filename, decoded_file):
+        return filetype.guess_extension(decoded_file)
+
+
 class Base64FileField(Base64FieldMixin, FileField):
     """
     A django-rest-framework field for handling file-uploads through raw post data.
