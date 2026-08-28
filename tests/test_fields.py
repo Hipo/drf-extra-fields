@@ -16,6 +16,7 @@ from rest_framework.fields import DecimalField
 from drf_extra_fields import compat
 from drf_extra_fields.compat import DateRange, DateTimeTZRange, NumericRange
 from drf_extra_fields.fields import (
+    Base64AudioField,
     Base64FileField,
     Base64ImageField,
     DateRangeField,
@@ -200,6 +201,60 @@ class UploadedBase64FileSerializer(serializers.Serializer):
 
 class DownloadableBase64FileSerializer(serializers.Serializer):
     file = PDFBase64FileField(represent_in_base64=True)
+
+
+class UploadedBase64AudioSerializer(serializers.Serializer):
+    file = Base64AudioField(required=False)
+    created = serializers.DateTimeField()
+
+    def update(self, instance, validated_data):
+        instance.file = validated_data['file']
+        return instance
+
+    def create(self, validated_data):
+        return UploadedBase64Image(**validated_data)
+
+
+class Base64AudioSerializerTests(TestCase):
+    WAV_BASE64 = "UklGRiQAAABXQVZFZm10IBAAAAABAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+
+    def test_create(self):
+        """
+        Test for creating a Base64 audio file in the server side
+        """
+        now = datetime.datetime.now()
+        serializer = UploadedBase64AudioSerializer(data={'created': now, 'file': self.WAV_BASE64})
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['created'], now)
+        self.assertTrue(serializer.validated_data['file'].name.endswith('.wav'))
+
+    def test_create_with_base64_prefix(self):
+        """
+        Test for creating a Base64 audio file sent with a data-uri prefix
+        """
+        now = datetime.datetime.now()
+        file = 'data:audio/wav;base64,' + self.WAV_BASE64
+        serializer = UploadedBase64AudioSerializer(data={'created': now, 'file': file})
+        self.assertTrue(serializer.is_valid())
+
+    def test_create_with_invalid_base64(self):
+        """
+        Test for creating a Base64 audio file with an invalid Base64 string
+        """
+        now = datetime.datetime.now()
+        serializer = UploadedBase64AudioSerializer(data={'created': now, 'file': 'this_is_not_a_base64'})
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors, {'file': [Base64AudioField.INVALID_FILE_MESSAGE]})
+
+    def test_create_with_undetectable_type(self):
+        """
+        Valid base64 that does not decode to a known audio format is refused
+        """
+        now = datetime.datetime.now()
+        file = base64.b64encode(b'definitely not audio bytes').decode()
+        serializer = UploadedBase64AudioSerializer(data={'created': now, 'file': file})
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors, {'file': [Base64AudioField.INVALID_TYPE_MESSAGE]})
 
 
 class Base64FileSerializerTests(TestCase):

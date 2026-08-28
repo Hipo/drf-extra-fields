@@ -59,6 +59,22 @@ Fields:
 ----------------
 
 
+## Base64AudioField
+
+An audio-file representation for Base64AudioField
+
+Inherited from `FileField`
+
+
+**Signature:** `Base64AudioField()`
+
+ - It takes a base64 audio file as a string.
+ - A base64 audio file:  `data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEA…`
+ - Base64AudioField accepts the entire string or just the part after base64.
+ - The audio format (`mp3`, `m4a`, `wav`, `ogg`, `flac`, `aac`, `amr`, `aiff`) is detected from the decoded bytes, so the stored file carries the right extension.
+ - You can inherit the `Base64AudioField` class and set allowed extensions (`ALLOWED_TYPES` list), or customize the validation messages (`INVALID_FILE_MESSAGE`, `INVALID_TYPE_MESSAGE`)
+
+
 ## Base64ImageField
 
 An image representation for Base64ImageField
