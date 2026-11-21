@@ -19,7 +19,6 @@ from rest_framework.fields import (
     IntegerField,
 )
 from rest_framework.serializers import ModelSerializer
-from rest_framework.utils import html
 
 from drf_extra_fields import compat
 from drf_extra_fields.compat import DateRange, DateTimeTZRange, NumericRange
@@ -200,8 +199,7 @@ class RangeField(DictField):
         """
         Range instances <- Dicts of primitive datatypes.
         """
-        if html.is_html_input(data):
-            data = html.parse_html_dict(data)
+        # DictField.get_value() has already extracted the keys from HTML forms.
         if not isinstance(data, dict):
             self.fail('not_a_dict', input_type=type(data).__name__)
 
