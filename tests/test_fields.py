@@ -9,6 +9,7 @@ import django
 import pytest
 import pytz
 from django.core.exceptions import ValidationError
+from django.http import QueryDict
 from django.test import TestCase, override_settings
 from rest_framework import serializers
 from rest_framework.fields import DecimalField
@@ -871,6 +872,22 @@ class TestDateRangeField(FieldValues):
     def test_initial_value_of_field(self):
         serializer = DateRangeSerializer()
         assert serializer.data['range'] == {'lower': None, 'upper': None, 'bounds': '()'}
+
+    def test_form_data(self):
+        serializer = DateRangeSerializer(data=QueryDict(
+            'range.lower=2001-01-01&range.upper=2001-02-02&range.bounds=%5B%5D'
+        ))
+
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data['range'] == DateRange(
+            datetime.date(2001, 1, 1), datetime.date(2001, 2, 2), '[]'
+        )
+
+    def test_invalid_form_data(self):
+        serializer = DateRangeSerializer(data=QueryDict('range.lower=invalid'))
+
+        assert not serializer.is_valid()
+        assert serializer.errors['range'][0].code == 'invalid'
 
     def test_allow_empty(self):
         serializer = DateRangeWithAllowEmptyFalseSerializer(data={"range": {}})
